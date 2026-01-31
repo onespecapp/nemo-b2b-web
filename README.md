@@ -1,93 +1,133 @@
-# Nemo B2B - Appointment Reminder System
+# Nemo B2B Web
 
-A B2B platform for businesses to send automated phone call reminders to their customers about upcoming appointments.
+Modern dashboard for managing appointment reminders. Built with Next.js 16 and Supabase.
 
-## Project Structure
+## Features
 
-```
-nemo-b2b-web/          # Next.js frontend
-nemo-b2b-backend/      # Express.js API server
-nemo-b2b-livekit/      # LiveKit voice agent (Python)
-```
+- 🔐 **Authentication** - Sign up, sign in, password reset via Supabase Auth
+- 👥 **Customer Management** - Add, edit, delete customers
+- 📅 **Appointment Scheduling** - Create appointments with reminder settings
+- 📊 **Dashboard** - Overview of customers and upcoming appointments
+- 📞 **Call History** - Track reminder call outcomes
+- ⚙️ **Settings** - Configure business details and preferences
 
 ## Tech Stack
 
-- **Frontend**: Next.js 16, React, TailwindCSS
-- **Backend**: Express.js, TypeScript
-- **Database**: PostgreSQL (Supabase)
+- **Framework**: Next.js 16 (App Router + Turbopack)
+- **Styling**: Tailwind CSS
+- **Database**: Supabase (PostgreSQL)
 - **Auth**: Supabase Auth
-- **Voice Calls**: Telnyx + LiveKit
+- **Deployment**: Vercel
 
-## Getting Started
+## Quick Start
 
-### 1. Frontend (Next.js)
+### Prerequisites
+
+- Node.js 18+
+- Supabase project
+
+### Installation
 
 ```bash
+# Clone the repo
+git clone https://github.com/onespecapp/nemo-b2b-web.git
 cd nemo-b2b-web
+
+# Install dependencies
 npm install
+
+# Copy environment variables
+cp .env.example .env.local
+# Edit .env.local with your Supabase credentials
+
+# Run development server
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
 
-### 2. Backend (Express)
-
-```bash
-cd nemo-b2b-backend
-npm install
-npm run dev:b2b
-```
-
-API runs on [http://localhost:6001](http://localhost:6001)
-
 ## Environment Variables
 
-### Frontend (.env.local)
+Create a `.env.local` file:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_key
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-### Backend (.env)
+## Project Structure
 
-```env
-SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_key
-TELNYX_API_KEY=your_telnyx_key
-TELNYX_PHONE_NUMBER=+1XXXXXXXXXX
-PORT=6001
+```
+src/
+├── app/
+│   ├── page.tsx              # Landing page
+│   ├── login/page.tsx        # Sign in
+│   ├── signup/page.tsx       # Sign up
+│   ├── auth/callback/        # OAuth callback
+│   └── dashboard/
+│       ├── page.tsx          # Dashboard overview
+│       ├── customers/        # Customer management
+│       ├── appointments/     # Appointment management
+│       └── settings/         # Business settings
+├── components/
+│   └── SignOutButton.tsx
+└── lib/
+    └── supabase/
+        ├── client.ts         # Browser client
+        ├── server.ts         # Server client
+        └── middleware.ts     # Auth middleware
 ```
 
-## Database Schema
+## Database Tables
 
-Tables in Supabase:
-- `businesses` - Business accounts (linked to auth.users)
-- `customers` - Customer records
-- `appointments` - Scheduled appointments
-- `call_logs` - Call history and outcomes
+The app uses these Supabase tables (with `b2b_` prefix):
 
-## Features
+- `b2b_businesses` - Business accounts
+- `b2b_customers` - Customer records
+- `b2b_appointments` - Scheduled appointments
+- `b2b_call_logs` - Call history
 
-- [x] Business signup/login with Supabase Auth
-- [x] Customer management (CRUD)
-- [x] Appointment scheduling
-- [x] Dashboard with stats
-- [ ] Telnyx integration for calls
-- [ ] LiveKit voice agent
-- [ ] Call scheduling worker
-- [ ] Analytics and reporting
+See the API repo for the full schema and RLS policies.
 
-## Next Steps
+## Deployment
 
-1. Add Telnyx credentials to `.env`
-2. Configure LiveKit agent for voice calls
-3. Set up BullMQ worker for scheduled calls
-4. Deploy to production
+### Vercel (Recommended)
+
+1. Push to GitHub
+2. Import project in Vercel
+3. Add environment variables:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+4. Deploy
+
+### Manual
+
+```bash
+npm run build
+npm start
+```
+
+## Development
+
+```bash
+# Run dev server with Turbopack
+npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
+
+# Lint
+npm run lint
+```
+
+## Related Projects
+
+- [nemo-b2b-api](https://github.com/onespecapp/nemo-b2b-api) - Backend API
+- [Nemo Cares](https://meetnemo.com) - Consumer app
 
 ## License
 
-Private - Nemo Cares
+ISC
