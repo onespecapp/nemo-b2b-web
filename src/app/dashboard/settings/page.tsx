@@ -177,7 +177,10 @@ export default function SettingsPage() {
       const res = await fetch(`${API_URL}/api/test-call`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: testPhoneNumber }),
+        body: JSON.stringify({ 
+          phone: testPhoneNumber,
+          voice_preference: selectedVoice 
+        }),
       })
 
       const data = await res.json()
