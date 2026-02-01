@@ -174,10 +174,10 @@ export default function SettingsPage() {
     setMessage(null)
 
     try {
-      const res = await fetch(`${API_URL}/businesses/${business.id}/test-call`, {
+      const res = await fetch(`${API_URL}/api/test-call`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone_number: testPhoneNumber }),
+        body: JSON.stringify({ phone: testPhoneNumber }),
       })
 
       const data = await res.json()
