@@ -26,9 +26,28 @@ export default function CustomersPage() {
   const supabase = createClient()
 
   const fetchCustomers = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
+    // Get user's business first
+    const { data: business } = await supabase
+      .from('b2b_businesses')
+      .select('id')
+      .eq('owner_id', user.id)
+      .single()
+
+    if (!business) {
+      setLoading(false)
+      return
+    }
+
     const { data } = await supabase
       .from('b2b_customers')
       .select('*')
+      .eq('business_id', business.id)
       .order('created_at', { ascending: false })
     setCustomers(data || [])
     setLoading(false)
@@ -43,10 +62,28 @@ export default function CustomersPage() {
     setSaving(true)
 
     const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      alert('Not authenticated')
+      setSaving(false)
+      return
+    }
+
+    // Get the user's business
+    const { data: business, error: bizError } = await supabase
+      .from('b2b_businesses')
+      .select('id')
+      .eq('owner_id', user.id)
+      .single()
+
+    if (bizError || !business) {
+      alert('No business found. Please set up your business in Settings first.')
+      setSaving(false)
+      return
+    }
     
     const { error } = await supabase.from('b2b_customers').insert({
       ...formData,
-      business_id: user?.id,
+      business_id: business.id,
     })
 
     if (error) {
