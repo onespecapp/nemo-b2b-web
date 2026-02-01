@@ -5,10 +5,25 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
+// Business category options
+const BUSINESS_CATEGORIES = [
+  { value: 'BARBERSHOP', label: 'Barbershop', icon: '💈' },
+  { value: 'SALON', label: 'Hair Salon', icon: '💇' },
+  { value: 'DENTAL', label: 'Dental Office', icon: '🦷' },
+  { value: 'MEDICAL', label: 'Medical Clinic', icon: '🏥' },
+  { value: 'AUTO_REPAIR', label: 'Auto Repair Shop', icon: '🚗' },
+  { value: 'PET_GROOMING', label: 'Pet Grooming', icon: '🐕' },
+  { value: 'SPA', label: 'Spa & Wellness', icon: '💆' },
+  { value: 'FITNESS', label: 'Fitness & Training', icon: '💪' },
+  { value: 'TUTORING', label: 'Tutoring & Education', icon: '📚' },
+  { value: 'OTHER', label: 'Other', icon: '🏢' },
+]
+
 export default function SignupPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [businessName, setBusinessName] = useState('')
+  const [businessCategory, setBusinessCategory] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -19,12 +34,19 @@ export default function SignupPage() {
     setLoading(true)
     setError(null)
 
+    if (!businessCategory) {
+      setError('Please select a business category')
+      setLoading(false)
+      return
+    }
+
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           business_name: businessName,
+          business_category: businessCategory,
         },
       },
     })
@@ -144,8 +166,30 @@ export default function SignupPage() {
                 value={businessName}
                 onChange={(e) => setBusinessName(e.target.value)}
                 className="block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                placeholder="Your Clinic Name"
+                placeholder="Your Business Name"
               />
+            </div>
+
+            <div>
+              <label htmlFor="businessCategory" className="block text-sm font-medium text-gray-700 mb-1.5">
+                Business Type
+              </label>
+              <select
+                id="businessCategory"
+                name="businessCategory"
+                required
+                value={businessCategory}
+                onChange={(e) => setBusinessCategory(e.target.value)}
+                className="block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
+              >
+                <option value="">Select your business type...</option>
+                {BUSINESS_CATEGORIES.map((cat) => (
+                  <option key={cat.value} value={cat.value}>
+                    {cat.icon} {cat.label}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1.5 text-sm text-gray-500">This helps us customize your reminder calls</p>
             </div>
             
             <div>
