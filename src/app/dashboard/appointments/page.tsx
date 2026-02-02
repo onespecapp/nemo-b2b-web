@@ -77,7 +77,7 @@ export default function AppointmentsPage() {
     const { error } = await supabase.from('b2b_appointments').insert({
       ...formData,
       business_id: business.id,
-      status: 'scheduled',
+      status: 'SCHEDULED',
     })
 
     if (error) {
