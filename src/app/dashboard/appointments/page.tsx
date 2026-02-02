@@ -95,13 +95,33 @@ export default function AppointmentsPage() {
   }
 
   const getStatusBadge = (status: string) => {
+    const normalizedStatus = status?.toUpperCase() || ''
     const styles: Record<string, string> = {
-      scheduled: 'bg-blue-50 text-blue-700 border-blue-200',
-      reminded: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-      completed: 'bg-green-50 text-green-700 border-green-200',
-      cancelled: 'bg-red-50 text-red-700 border-red-200',
+      SCHEDULED: 'bg-blue-50 text-blue-700 border-blue-200',
+      REMINDED: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+      CONFIRMED: 'bg-green-50 text-green-700 border-green-200',
+      COMPLETED: 'bg-green-50 text-green-700 border-green-200',
+      RESCHEDULED: 'bg-orange-50 text-orange-700 border-orange-200',
+      CANCELED: 'bg-red-50 text-red-700 border-red-200',
+      CANCELLED: 'bg-red-50 text-red-700 border-red-200',
+      NO_SHOW: 'bg-gray-50 text-gray-700 border-gray-200',
     }
-    return styles[status] || 'bg-gray-50 text-gray-700 border-gray-200'
+    return styles[normalizedStatus] || 'bg-gray-50 text-gray-700 border-gray-200'
+  }
+
+  const formatStatus = (status: string) => {
+    const labels: Record<string, string> = {
+      SCHEDULED: 'Scheduled',
+      REMINDED: 'Reminded',
+      CONFIRMED: '✓ Confirmed',
+      COMPLETED: 'Completed',
+      RESCHEDULED: '↻ Rescheduled',
+      CANCELED: 'Canceled',
+      CANCELLED: 'Canceled',
+      NO_SHOW: 'No Show',
+    }
+    const normalizedStatus = status?.toUpperCase() || ''
+    return labels[normalizedStatus] || status
   }
 
   const isUpcoming = (date: string) => new Date(date) > new Date()
@@ -299,7 +319,7 @@ export default function AppointmentsPage() {
                             </div>
                           </div>
                           <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusBadge(appointment.status)}`}>
-                            {appointment.status}
+                            {formatStatus(appointment.status)}
                           </span>
                         </div>
                         
@@ -365,7 +385,7 @@ export default function AppointmentsPage() {
                             </div>
                           </div>
                           <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusBadge(appointment.status)}`}>
-                            {appointment.status}
+                            {formatStatus(appointment.status)}
                           </span>
                         </div>
                         
