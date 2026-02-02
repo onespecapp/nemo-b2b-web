@@ -74,8 +74,12 @@ export default function AppointmentsPage() {
       return
     }
     
+    // Convert local datetime to ISO string (includes timezone)
+    const scheduledAtUTC = new Date(formData.scheduled_at).toISOString()
+    
     const { error } = await supabase.from('b2b_appointments').insert({
       ...formData,
+      scheduled_at: scheduledAtUTC,
       business_id: business.id,
       status: 'SCHEDULED',
     })
