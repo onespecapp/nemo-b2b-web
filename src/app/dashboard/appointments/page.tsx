@@ -61,9 +61,22 @@ export default function AppointmentsPage() {
 
     const { data: { user } } = await supabase.auth.getUser()
     
+    // Look up the business owned by this user
+    const { data: business, error: bizError } = await supabase
+      .from('b2b_businesses')
+      .select('id')
+      .eq('owner_id', user?.id)
+      .single()
+    
+    if (bizError || !business) {
+      alert('Error: No business found for your account. Please contact support.')
+      setSaving(false)
+      return
+    }
+    
     const { error } = await supabase.from('b2b_appointments').insert({
       ...formData,
-      business_id: user?.id,
+      business_id: business.id,
       status: 'scheduled',
     })
 
