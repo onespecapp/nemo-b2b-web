@@ -1,374 +1,359 @@
 import Link from 'next/link'
 
+const stats = [
+  { value: '50%', label: 'Lower no-show rates' },
+  { value: '3 min', label: 'Average setup time' },
+  { value: '98%', label: 'Call completion rate' },
+]
+
+const steps = [
+  {
+    title: 'Connect your business',
+    description: 'Create your account, set your voice, and choose when reminders go out.',
+  },
+  {
+    title: 'Add customers + appointments',
+    description: 'Import a list or add appointments manually in minutes.',
+  },
+  {
+    title: 'Nemo calls and confirms',
+    description: 'Our AI handles reminders, confirmations, and reschedules automatically.',
+  },
+]
+
+const features = [
+  {
+    title: 'Human-sounding AI calls',
+    description: 'Warm, natural conversations that feel like a real front desk call.',
+  },
+  {
+    title: 'Smart timing controls',
+    description: 'Call 24 hours before, morning-of, or custom windows per service.',
+  },
+  {
+    title: 'Confirm or reschedule',
+    description: 'Captures outcomes instantly and updates appointment status.',
+  },
+  {
+    title: 'Call logs + transcripts',
+    description: 'Review outcomes, durations, and call summaries in your dashboard.',
+  },
+  {
+    title: 'Secure by design',
+    description: 'Supabase-backed data with row-level security and audit-ready logs.',
+  },
+  {
+    title: 'Team-ready workflows',
+    description: 'Multi-user access, templates, and category-specific scripts.',
+  },
+]
+
+const industries = [
+  { name: 'Dental + Medical', detail: 'Reduce missed appointments and protect schedules.' },
+  { name: 'Salons + Spas', detail: 'Keep chairs full with gentle, brand-aligned reminders.' },
+  { name: 'Auto + Repair', detail: 'Confirm drop-offs and reduce last-minute gaps.' },
+  { name: 'Fitness + Coaching', detail: 'Keep sessions on track and memberships engaged.' },
+]
+
+const faqs = [
+  {
+    question: 'Do I need new phone numbers?',
+    answer: 'No. Nemo works with your existing numbers and routes calls through SIP.',
+  },
+  {
+    question: 'How long does setup take?',
+    answer: 'Most teams are live in under 10 minutes with a quick import and voice selection.',
+  },
+  {
+    question: 'Can I customize the script?',
+    answer: 'Yes. Templates and voice preferences let you match your brand tone and policies.',
+  },
+  {
+    question: 'What happens if a customer wants to reschedule?',
+    answer: 'Nemo captures intent and notes the preferred time for your team to follow up.',
+  },
+]
+
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div className="min-h-screen bg-[#f8f5ef] text-[#0f1f1a]">
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute -top-40 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(20,184,166,0.22),rgba(248,245,239,0.05)_65%)] blur-3xl" />
+          <div className="absolute right-0 top-24 h-56 w-56 rounded-full bg-[radial-gradient(circle_at_center,rgba(251,146,60,0.25),rgba(248,245,239,0.1)_70%)] blur-2xl" />
+          <div className="absolute left-8 bottom-10 h-40 w-40 rounded-full bg-[radial-gradient(circle_at_center,rgba(15,118,110,0.22),rgba(248,245,239,0.05)_65%)] blur-2xl" />
+          <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(15,23,26,0.04),transparent,rgba(15,23,26,0.06))]" />
+        </div>
+
+        <header className="relative z-20">
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-5 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0f1f1a] text-white shadow-lg shadow-black/20">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Nemo</span>
+              <div className="flex flex-col">
+                <span className="font-display text-lg">Nemo</span>
+                <span className="text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">B2B</span>
+              </div>
             </div>
-            
-            {/* Desktop nav */}
-            <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Features</a>
-              <a href="#how-it-works" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">How it Works</a>
-              <a href="#pricing" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Pricing</a>
-            </div>
-            
+
+            <nav className="hidden items-center gap-8 text-sm font-medium text-[#0f1f1a]/70 md:flex">
+              <a href="#features" className="transition hover:text-[#0f1f1a]">Features</a>
+              <a href="#how" className="transition hover:text-[#0f1f1a]">How it works</a>
+              <a href="#pricing" className="transition hover:text-[#0f1f1a]">Pricing</a>
+              <a href="#faq" className="transition hover:text-[#0f1f1a]">FAQ</a>
+            </nav>
+
             <div className="flex items-center gap-3">
-              <Link href="/login" className="hidden sm:inline-flex text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-                Sign In
+              <Link href="/login" className="hidden text-sm font-medium text-[#0f1f1a]/70 transition hover:text-[#0f1f1a] sm:inline-flex">
+                Sign in
               </Link>
-              <Link href="/signup" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-full text-sm font-semibold hover:shadow-lg hover:shadow-blue-500/25 transition-all">
-                Get Started Free
+              <Link href="/signup" className="rounded-full bg-[#0f1f1a] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-black/15 transition hover:-translate-y-0.5 hover:shadow-xl">
+                Start free
               </Link>
             </div>
           </div>
-        </nav>
-      </header>
+        </header>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-4xl mx-auto">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm font-medium mb-8">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-              </span>
-              Now with AI-powered voice calls
-            </div>
-            
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
-              Reduce No-Shows by{' '}
-              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">50%</span>{' '}
-              with Automated Reminders
-            </h1>
-            
-            <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mb-10">
-              AI-powered phone calls remind your customers about appointments. 
-              Simple setup, powerful results. Stop losing money to missed appointments.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-              <Link href="/signup" className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:shadow-xl hover:shadow-blue-500/25 transition-all flex items-center justify-center gap-2">
-                Start Free Trial
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </Link>
-              <a href="#how-it-works" className="w-full sm:w-auto text-gray-700 px-8 py-4 rounded-full text-lg font-semibold border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
-                See How It Works
-              </a>
-            </div>
-            
-            {/* Social proof */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-sm text-gray-500">
-              <div className="flex items-center gap-2">
-                <div className="flex -space-x-2">
-                  {[1,2,3,4,5].map((i) => (
-                    <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 border-2 border-white" />
-                  ))}
+        <section className="relative z-10 px-4 pb-20 pt-12 sm:px-6 lg:px-8">
+          <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="space-y-8 animate-fade-up">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#0f1f1a]/10 bg-white/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#0f1f1a]/70 shadow-sm">
+                <span className="h-2 w-2 rounded-full bg-[#f97316]" />
+                AI voice reminders for busy teams
+              </div>
+
+              <div className="space-y-6">
+                <h1 className="font-display text-4xl leading-tight sm:text-5xl lg:text-6xl">
+                  Make every appointment
+                  <span className="block text-[#0f766e]">feel personally confirmed.</span>
+                </h1>
+                <p className="text-lg text-[#0f1f1a]/70 sm:text-xl">
+                  Nemo calls your customers before their visit, confirms attendance, and captures reschedule requests. Your team gets the schedule back without the phone tag.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-4 sm:flex-row">
+                <Link href="/signup" className="inline-flex items-center justify-center rounded-full bg-[#f97316] px-6 py-3 text-base font-semibold text-white shadow-lg shadow-orange-200 transition hover:-translate-y-0.5">
+                  Start free trial
+                </Link>
+                <a href="#demo" className="inline-flex items-center justify-center rounded-full border border-[#0f1f1a]/20 px-6 py-3 text-base font-semibold text-[#0f1f1a] transition hover:border-[#0f1f1a]/40">
+                  Listen to a demo call
+                </a>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-6 text-sm text-[#0f1f1a]/60">
+                <div className="flex items-center gap-2 rounded-full bg-white/70 px-4 py-2">
+                  <span className="h-2 w-2 rounded-full bg-[#0f766e]" />
+                  Avg. 50% fewer no-shows
                 </div>
-                <span>500+ businesses trust us</span>
-              </div>
-              <div className="flex items-center gap-1">
-                {[1,2,3,4,5].map((i) => (
-                  <svg key={i} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
-                <span>4.9/5 rating</span>
+                <div className="flex items-center gap-2 rounded-full bg-white/70 px-4 py-2">
+                  <span className="h-2 w-2 rounded-full bg-[#f97316]" />
+                  500+ businesses onboarded
+                </div>
               </div>
             </div>
-          </div>
-          
-          {/* Hero image/mockup */}
-          <div className="mt-16 relative">
-            <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent z-10 pointer-events-none" />
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden mx-auto max-w-5xl">
-              <div className="bg-gray-800/50 px-4 py-3 flex items-center gap-2">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-red-500" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                  <div className="w-3 h-3 rounded-full bg-green-500" />
+
+            <div className="relative animate-fade-up" style={{ animationDelay: '120ms' }}>
+              <div className="absolute -left-6 top-8 h-20 w-20 rounded-3xl bg-[#0f766e]/20 blur-xl animate-float" />
+              <div className="absolute -right-6 bottom-6 h-16 w-16 rounded-full bg-[#f97316]/30 blur-xl animate-float" style={{ animationDelay: '1.5s' }} />
+
+              <div className="rounded-[28px] border border-white/40 bg-[#0f1f1a] p-6 text-white shadow-2xl shadow-black/25">
+                <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-white/60">
+                  <span>Live call snapshot</span>
+                  <span className="rounded-full bg-white/10 px-2 py-1">02:18</span>
                 </div>
-                <div className="flex-1 text-center text-xs text-gray-400">Nemo Dashboard</div>
-              </div>
-              <div className="p-4 sm:p-8">
-                {/* Mock dashboard */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                  {[
-                    { label: 'Appointments Today', value: '24', change: '+12%' },
-                    { label: 'Calls Made', value: '156', change: '+8%' },
-                    { label: 'No-Show Rate', value: '4.2%', change: '-23%', positive: true },
-                  ].map((stat, i) => (
-                    <div key={i} className="bg-gray-700/50 rounded-xl p-4">
-                      <div className="text-gray-400 text-sm mb-1">{stat.label}</div>
-                      <div className="flex items-end gap-2">
-                        <span className="text-2xl font-bold text-white">{stat.value}</span>
-                        <span className={`text-xs ${stat.positive || stat.change.startsWith('-') ? 'text-green-400' : 'text-blue-400'}`}>{stat.change}</span>
-                      </div>
+
+                <div className="mt-6 space-y-4">
+                  <div className="rounded-2xl bg-white/10 p-4">
+                    <div className="text-sm font-semibold">Outbound reminder</div>
+                    <div className="mt-2 text-xs text-white/60">Bloom Dental • Today 3:30 PM</div>
+                    <div className="mt-3 flex items-center justify-between text-sm">
+                      <span className="text-white/80">Status</span>
+                      <span className="rounded-full bg-emerald-400/20 px-3 py-1 text-xs text-emerald-200">Confirmed</span>
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-[#111f1c] p-4">
+                    <p className="text-sm text-white/80">“Hi Jamie, just confirming your cleaning today at 3:30 PM. Press 1 to confirm or 2 to reschedule.”</p>
+                    <div className="mt-4 flex items-center justify-between text-xs text-white/50">
+                      <span>Voice: Kore</span>
+                      <span>Outcome saved</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-gray-700/50 rounded-xl p-4">
-                  <div className="text-gray-400 text-sm mb-3">Upcoming Reminders</div>
-                  <div className="space-y-2">
-                    {[
-                      { name: 'Sarah Johnson', time: '2:30 PM', type: 'Dental Checkup' },
-                      { name: 'Mike Chen', time: '3:00 PM', type: 'Consultation' },
-                      { name: 'Emily Brown', time: '4:15 PM', type: 'Follow-up' },
-                    ].map((apt, i) => (
-                      <div key={i} className="flex items-center justify-between bg-gray-600/50 rounded-lg p-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500" />
-                          <div>
-                            <div className="text-white text-sm font-medium">{apt.name}</div>
-                            <div className="text-gray-400 text-xs">{apt.type}</div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-white text-sm">{apt.time}</div>
-                          <div className="text-green-400 text-xs">Call scheduled</div>
-                        </div>
-                      </div>
-                    ))}
+
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl bg-white/10 p-4 text-center">
+                    <div className="text-xs uppercase text-white/50">Calls today</div>
+                    <div className="mt-2 text-2xl font-semibold">46</div>
+                  </div>
+                  <div className="rounded-2xl bg-white/10 p-4 text-center">
+                    <div className="text-xs uppercase text-white/50">Recovered slots</div>
+                    <div className="mt-2 text-2xl font-semibold">8</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-[#0f1f1a]/10 bg-white/80 p-4 shadow-sm" id="demo">
+                <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+                  <span>Demo call preview</span>
+                  <span className="rounded-full bg-[#0f1f1a]/10 px-2 py-1">00:36</span>
+                </div>
+                <div className="mt-3 flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-[#f97316]/20" />
+                  <div>
+                    <div className="text-sm font-semibold">“Hey Alex, it’s Nemo calling from Solara Spa…”</div>
+                    <div className="text-xs text-[#0f1f1a]/60">Tap Play in-app to hear the full call.</div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
-      {/* Features Section */}
-      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Everything You Need to Eliminate No-Shows
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Powerful features designed specifically for healthcare providers, salons, and service businesses.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                icon: (
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                ),
-                title: 'AI Voice Calls',
-                description: 'Natural-sounding AI makes personalized reminder calls that feel human. Customers can confirm, reschedule, or cancel.',
-              },
-              {
-                icon: (
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                ),
-                title: 'Smart Scheduling',
-                description: 'Automatically schedule calls at the optimal time before appointments. Set your preferences, we handle the rest.',
-              },
-              {
-                icon: (
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                ),
-                title: 'Analytics Dashboard',
-                description: 'Track call success rates, no-show trends, and ROI. Make data-driven decisions to improve your practice.',
-              },
-              {
-                icon: (
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                ),
-                title: 'Flexible Timing',
-                description: 'Choose when to call - 24 hours before, morning of, or custom intervals. Works around your schedule.',
-              },
-              {
-                icon: (
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
-                  </svg>
-                ),
-                title: 'Custom Messages',
-                description: 'Personalize call scripts with your business name, appointment details, and special instructions.',
-              },
-              {
-                icon: (
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                ),
-                title: 'HIPAA Compliant',
-                description: 'Enterprise-grade security for healthcare providers. Your patient data is protected and encrypted.',
-              },
-            ].map((feature, i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white mb-4">
-                  {feature.icon}
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
-              </div>
-            ))}
+      <section className="border-y border-[#0f1f1a]/10 bg-white/70 px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-6">
+          {stats.map((stat) => (
+            <div key={stat.label} className="min-w-[180px]">
+              <div className="text-3xl font-semibold text-[#0f1f1a]">{stat.value}</div>
+              <div className="text-sm text-[#0f1f1a]/60">{stat.label}</div>
+            </div>
+          ))}
+          <div className="rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-5 py-4 text-sm text-[#0f1f1a]/70">
+            Trusted by clinics, salons, and service teams across the US.
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section id="how-it-works" className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Get Started in Minutes
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              No technical skills required. Set up your account and start reducing no-shows today.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
-            {[
-              {
-                step: '1',
-                title: 'Add Your Customers',
-                description: 'Import your customer list or add them manually. Include phone numbers and preferences.',
-              },
-              {
-                step: '2',
-                title: 'Schedule Appointments',
-                description: 'Create appointments and set when reminder calls should go out.',
-              },
-              {
-                step: '3',
-                title: 'We Handle the Rest',
-                description: 'Our AI makes the calls, tracks responses, and updates you on confirmations.',
-              },
-            ].map((step, i) => (
-              <div key={i} className="relative">
-                {i < 2 && (
-                  <div className="hidden md:block absolute top-12 left-full w-full h-0.5 bg-gradient-to-r from-blue-200 to-transparent -translate-x-8" />
-                )}
-                <div className="text-center">
-                  <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto mb-6 shadow-lg shadow-blue-500/25">
-                    {step.step}
+      <section id="how" className="px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-10 lg:grid-cols-[0.45fr_0.55fr]">
+            <div className="space-y-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">How it works</p>
+              <h2 className="font-display text-3xl sm:text-4xl">Set it once. Nemo handles the rest.</h2>
+              <p className="text-base text-[#0f1f1a]/70">
+                Your team stops chasing confirmations. Customers get a call that sounds personal, not robotic.
+              </p>
+            </div>
+
+            <div className="grid gap-6 sm:grid-cols-3">
+              {steps.map((step, index) => (
+                <div key={step.title} className="rounded-3xl border border-[#0f1f1a]/10 bg-white p-6 shadow-sm">
+                  <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#0f1f1a] text-sm font-semibold text-white">
+                    {index + 1}
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">{step.title}</h3>
-                  <p className="text-gray-600">{step.description}</p>
+                  <h3 className="text-lg font-semibold text-[#0f1f1a]">{step.title}</h3>
+                  <p className="mt-3 text-sm text-[#0f1f1a]/60">{step.description}</p>
                 </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="features" className="px-4 pb-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Features</p>
+              <h2 className="font-display text-3xl sm:text-4xl">A full reminder system, not just calls.</h2>
+            </div>
+            <div className="rounded-full border border-[#0f1f1a]/10 bg-white px-5 py-2 text-sm text-[#0f1f1a]/70">
+              Works with LiveKit + Telnyx voice infrastructure
+            </div>
+          </div>
+
+          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {features.map((feature) => (
+              <div key={feature.title} className="group rounded-3xl border border-[#0f1f1a]/10 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+                <div className="mb-4 h-12 w-12 rounded-2xl bg-[#f97316]/15" />
+                <h3 className="text-lg font-semibold text-[#0f1f1a]">{feature.title}</h3>
+                <p className="mt-3 text-sm text-[#0f1f1a]/60">{feature.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-600 to-indigo-700">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              { value: '50%', label: 'Reduction in no-shows' },
-              { value: '10K+', label: 'Calls made daily' },
-              { value: '98%', label: 'Call completion rate' },
-              { value: '4.9★', label: 'Customer rating' },
-            ].map((stat, i) => (
-              <div key={i} className="text-center">
-                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-2">{stat.value}</div>
-                <div className="text-blue-100">{stat.label}</div>
-              </div>
-            ))}
+      <section className="px-4 pb-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl rounded-[32px] border border-[#0f1f1a]/10 bg-[#0f1f1a] px-6 py-12 text-white sm:px-10">
+          <div className="grid gap-10 lg:grid-cols-[1fr_1fr]">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/60">Industries</p>
+              <h2 className="mt-4 font-display text-3xl sm:text-4xl">Built for the businesses that live on schedule.</h2>
+              <p className="mt-4 text-white/70">
+                Nemo is tuned for high-volume appointment teams that can’t afford empty slots.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {industries.map((industry) => (
+                <div key={industry.name} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                  <div className="text-sm font-semibold">{industry.name}</div>
+                  <div className="mt-2 text-sm text-white/60">{industry.detail}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Simple, Transparent Pricing
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Start free, scale as you grow. No hidden fees.
-            </p>
+      <section id="pricing" className="px-4 pb-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="text-center">
+            <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Pricing</p>
+            <h2 className="mt-4 font-display text-3xl sm:text-4xl">Clear tiers for every team size.</h2>
+            <p className="mt-3 text-[#0f1f1a]/60">Start free, scale when your call volume grows.</p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+
+          <div className="mt-10 grid gap-6 lg:grid-cols-3">
             {[
               {
                 name: 'Starter',
                 price: 'Free',
-                period: 'forever',
-                description: 'Perfect for trying out Nemo',
-                features: ['50 calls/month', '1 user', 'Basic analytics', 'Email support'],
-                cta: 'Get Started',
-                popular: false,
+                detail: 'Best for trying Nemo',
+                features: ['50 calls / month', 'Single location', 'Core analytics', 'Email support'],
+                cta: 'Get started',
+                highlight: false,
               },
               {
-                name: 'Pro',
+                name: 'Growth',
                 price: '$49',
-                period: '/month',
-                description: 'For growing practices',
-                features: ['500 calls/month', '5 users', 'Advanced analytics', 'Priority support', 'Custom messages', 'API access'],
-                cta: 'Start Free Trial',
-                popular: true,
+                detail: 'For growing practices',
+                features: ['500 calls / month', 'Multi-user access', 'Advanced analytics', 'Custom templates'],
+                cta: 'Start free trial',
+                highlight: true,
               },
               {
                 name: 'Enterprise',
                 price: 'Custom',
-                period: '',
-                description: 'For large organizations',
-                features: ['Unlimited calls', 'Unlimited users', 'Dedicated support', 'Custom integrations', 'SLA guarantee', 'HIPAA BAA'],
-                cta: 'Contact Sales',
-                popular: false,
+                detail: 'For multi-location orgs',
+                features: ['Unlimited calls', 'Dedicated success', 'HIPAA BAA', 'Custom integrations'],
+                cta: 'Talk to sales',
+                highlight: false,
               },
-            ].map((plan, i) => (
-              <div key={i} className={`relative rounded-2xl p-8 ${plan.popular ? 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-xl shadow-blue-500/25 scale-105' : 'bg-white border-2 border-gray-100'}`}>
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-yellow-400 text-yellow-900 text-sm font-semibold px-4 py-1 rounded-full">
-                    Most Popular
-                  </div>
-                )}
-                <div className="text-lg font-semibold mb-2">{plan.name}</div>
-                <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-4xl font-bold">{plan.price}</span>
-                  <span className={plan.popular ? 'text-blue-100' : 'text-gray-500'}>{plan.period}</span>
-                </div>
-                <p className={`mb-6 ${plan.popular ? 'text-blue-100' : 'text-gray-600'}`}>{plan.description}</p>
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, j) => (
-                    <li key={j} className="flex items-center gap-2">
-                      <svg className={`w-5 h-5 ${plan.popular ? 'text-blue-200' : 'text-blue-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
+            ].map((plan) => (
+              <div
+                key={plan.name}
+                className={`rounded-3xl border p-6 shadow-sm ${plan.highlight ? 'border-[#0f1f1a] bg-[#0f1f1a] text-white' : 'border-[#0f1f1a]/10 bg-white'}`}
+              >
+                <div className="text-sm uppercase tracking-[0.3em] text-current/60">{plan.name}</div>
+                <div className="mt-4 text-3xl font-semibold">{plan.price}</div>
+                <div className="mt-2 text-sm text-current/70">{plan.detail}</div>
+                <div className="mt-6 space-y-3 text-sm">
+                  {plan.features.map((feature) => (
+                    <div key={feature} className="flex items-center gap-2">
+                      <span className={`h-1.5 w-1.5 rounded-full ${plan.highlight ? 'bg-[#f97316]' : 'bg-[#0f1f1a]'}`} />
                       <span>{feature}</span>
-                    </li>
+                    </div>
                   ))}
-                </ul>
-                <Link 
-                  href="/signup" 
-                  className={`block w-full py-3 rounded-full text-center font-semibold transition-all ${
-                    plan.popular 
-                      ? 'bg-white text-blue-600 hover:shadow-lg' 
-                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-blue-500/25'
-                  }`}
+                </div>
+                <Link
+                  href="/signup"
+                  className={`mt-8 inline-flex w-full items-center justify-center rounded-full px-4 py-3 text-sm font-semibold transition ${plan.highlight ? 'bg-white text-[#0f1f1a]' : 'bg-[#0f1f1a] text-white'}`}
                 >
                   {plan.cta}
                 </Link>
@@ -378,113 +363,58 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Loved by Businesses Like Yours
-            </h2>
+      <section id="faq" className="px-4 pb-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl">
+          <div className="text-center">
+            <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">FAQ</p>
+            <h2 className="mt-4 font-display text-3xl sm:text-4xl">Questions we hear a lot.</h2>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                quote: "Our no-show rate dropped from 15% to under 5% in just two months. The ROI is incredible.",
-                author: "Dr. Sarah Chen",
-                role: "Dental Practice Owner",
-              },
-              {
-                quote: "The AI calls sound so natural, our patients love it. Setup took less than 10 minutes.",
-                author: "Michael Torres",
-                role: "Physical Therapy Clinic",
-              },
-              {
-                quote: "Finally, a reminder system that actually works. My staff saves hours every week.",
-                author: "Jennifer Kim",
-                role: "Salon Owner",
-              },
-            ].map((testimonial, i) => (
-              <div key={i} className="bg-white rounded-2xl p-8 shadow-sm">
-                <div className="flex gap-1 mb-4">
-                  {[1,2,3,4,5].map((star) => (
-                    <svg key={star} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </div>
-                <p className="text-gray-700 mb-6">"{testimonial.quote}"</p>
-                <div>
-                  <div className="font-semibold text-gray-900">{testimonial.author}</div>
-                  <div className="text-gray-500 text-sm">{testimonial.role}</div>
-                </div>
+          <div className="mt-10 space-y-4">
+            {faqs.map((faq) => (
+              <div key={faq.question} className="rounded-2xl border border-[#0f1f1a]/10 bg-white p-6">
+                <div className="text-base font-semibold text-[#0f1f1a]">{faq.question}</div>
+                <div className="mt-2 text-sm text-[#0f1f1a]/60">{faq.answer}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
-            Ready to Eliminate No-Shows?
-          </h2>
-          <p className="text-lg text-gray-600 mb-10">
-            Join 500+ businesses saving time and money with automated appointment reminders.
+      <section className="px-4 pb-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl rounded-[36px] border border-[#0f1f1a]/10 bg-gradient-to-br from-[#f97316]/20 via-white to-[#0f766e]/15 p-12 text-center shadow-lg">
+          <h2 className="font-display text-3xl sm:text-4xl">Give your team their time back.</h2>
+          <p className="mt-4 text-[#0f1f1a]/70">
+            Start for free and see your next week of appointments confirm themselves.
           </p>
-          <Link href="/signup" className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:shadow-xl hover:shadow-blue-500/25 transition-all">
-            Start Your Free Trial
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </Link>
-          <p className="mt-4 text-gray-500 text-sm">No credit card required · 14-day free trial</p>
+          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Link href="/signup" className="rounded-full bg-[#0f1f1a] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-black/15">
+              Start free trial
+            </Link>
+            <Link href="/login" className="rounded-full border border-[#0f1f1a]/20 px-6 py-3 text-sm font-semibold text-[#0f1f1a]">
+              Sign in
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
-            <div className="col-span-2 md:col-span-1">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                </div>
-                <span className="text-xl font-bold text-white">Nemo</span>
-              </div>
-              <p className="text-sm">Automated appointment reminders powered by AI.</p>
+      <footer className="border-t border-[#0f1f1a]/10 bg-white/70 px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-6 text-sm text-[#0f1f1a]/60">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-[#0f1f1a] text-white flex items-center justify-center">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              </svg>
             </div>
             <div>
-              <h4 className="text-white font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Integrations</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">HIPAA</a></li>
-              </ul>
+              <div className="font-display text-base text-[#0f1f1a]">Nemo</div>
+              <div className="text-xs uppercase tracking-[0.2em]">B2B</div>
             </div>
           </div>
-          <div className="border-t border-gray-800 pt-8 text-center text-sm">
-            <p>© 2025 Nemo. Powered by Nemo Cares. All rights reserved.</p>
+          <div>© 2026 Nemo. All rights reserved.</div>
+          <div className="flex items-center gap-4">
+            <a href="#features" className="hover:text-[#0f1f1a]">Features</a>
+            <a href="#pricing" className="hover:text-[#0f1f1a]">Pricing</a>
+            <a href="#faq" className="hover:text-[#0f1f1a]">FAQ</a>
           </div>
         </div>
       </footer>
