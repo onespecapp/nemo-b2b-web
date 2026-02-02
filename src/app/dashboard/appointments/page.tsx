@@ -4,6 +4,15 @@ import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
+// Helper to parse UTC timestamps from database and convert to local Date
+const parseUTCDate = (dateStr: string): Date => {
+  // If the string doesn't have timezone info, treat it as UTC
+  if (!dateStr.endsWith('Z') && !dateStr.includes('+')) {
+    return new Date(dateStr + 'Z')
+  }
+  return new Date(dateStr)
+}
+
 interface Customer {
   id: string
   name: string
@@ -141,8 +150,8 @@ export default function AppointmentsPage() {
     return labels[normalizedStatus] || status
   }
 
-  const isUpcoming = (date: string) => new Date(date) > new Date()
-  const isPast = (date: string) => new Date(date) < new Date()
+  const isUpcoming = (date: string) => parseUTCDate(date) > new Date()
+  const isPast = (date: string) => parseUTCDate(date) < new Date()
 
   if (loading) {
     return (
@@ -315,10 +324,10 @@ export default function AppointmentsPage() {
                       {/* Date badge */}
                       <div className="hidden sm:flex flex-col items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl text-white flex-shrink-0">
                         <span className="text-2xl font-bold leading-none">
-                          {new Date(appointment.scheduled_at).getDate()}
+                          {parseUTCDate(appointment.scheduled_at).getDate()}
                         </span>
                         <span className="text-xs uppercase">
-                          {new Date(appointment.scheduled_at).toLocaleDateString('en-US', { month: 'short' })}
+                          {parseUTCDate(appointment.scheduled_at).toLocaleDateString('en-US', { month: 'short' })}
                         </span>
                       </div>
                       
@@ -329,10 +338,10 @@ export default function AppointmentsPage() {
                             <h3 className="font-semibold text-gray-900">{appointment.title}</h3>
                             <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
                               <span className="sm:hidden">
-                                {new Date(appointment.scheduled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                {parseUTCDate(appointment.scheduled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                 {' · '}
                               </span>
-                              {new Date(appointment.scheduled_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                              {parseUTCDate(appointment.scheduled_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
                             </div>
                           </div>
                           <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusBadge(appointment.status)}`}>
@@ -382,10 +391,10 @@ export default function AppointmentsPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                       <div className="hidden sm:flex flex-col items-center justify-center w-16 h-16 bg-gray-200 rounded-xl text-gray-600 flex-shrink-0">
                         <span className="text-2xl font-bold leading-none">
-                          {new Date(appointment.scheduled_at).getDate()}
+                          {parseUTCDate(appointment.scheduled_at).getDate()}
                         </span>
                         <span className="text-xs uppercase">
-                          {new Date(appointment.scheduled_at).toLocaleDateString('en-US', { month: 'short' })}
+                          {parseUTCDate(appointment.scheduled_at).toLocaleDateString('en-US', { month: 'short' })}
                         </span>
                       </div>
                       
@@ -395,10 +404,10 @@ export default function AppointmentsPage() {
                             <h3 className="font-semibold text-gray-700">{appointment.title}</h3>
                             <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
                               <span className="sm:hidden">
-                                {new Date(appointment.scheduled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                {parseUTCDate(appointment.scheduled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                 {' · '}
                               </span>
-                              {new Date(appointment.scheduled_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                              {parseUTCDate(appointment.scheduled_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
                             </div>
                           </div>
                           <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusBadge(appointment.status)}`}>
