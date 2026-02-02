@@ -215,11 +215,12 @@ export default function AppointmentsPage() {
                     onChange={(e) => setFormData({ ...formData, reminder_minutes_before: parseInt(e.target.value) })}
                     className="block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   >
-                    <option value={15}>15 minutes</option>
-                    <option value={30}>30 minutes</option>
-                    <option value={60}>1 hour</option>
-                    <option value={120}>2 hours</option>
-                    <option value={1440}>1 day</option>
+                    <option value={0}>On time (at scheduled time)</option>
+                    <option value={15}>15 minutes before</option>
+                    <option value={30}>30 minutes before</option>
+                    <option value={60}>1 hour before</option>
+                    <option value={120}>2 hours before</option>
+                    <option value={1440}>1 day before</option>
                   </select>
                 </div>
                 <div className="sm:col-span-2">
