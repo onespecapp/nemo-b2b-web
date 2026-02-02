@@ -50,7 +50,6 @@ export default function SettingsPage() {
         return
       }
 
-      // Fetch business for this user
       const { data: businessData, error } = await supabase
         .from('b2b_businesses')
         .select('*')
@@ -74,7 +73,6 @@ export default function SettingsPage() {
           voice: businessData.voice_preference || 'Puck'
         })
       } else {
-        // No business exists - will show create form
         setBusinessEmail(user.email || '')
       }
     } catch (error) {
@@ -135,7 +133,7 @@ export default function SettingsPage() {
 
     setIsSaving(true)
     setMessage(null)
-    
+
     try {
       const { error } = await supabase
         .from('b2b_businesses')
@@ -177,9 +175,9 @@ export default function SettingsPage() {
       const res = await fetch(`${API_URL}/api/test-call`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           phone: testPhoneNumber,
-          voice_preference: selectedVoice 
+          voice_preference: selectedVoice
         }),
       })
 
@@ -207,39 +205,35 @@ export default function SettingsPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <div className="animate-pulse bg-white shadow rounded-lg p-6">
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="h-10 bg-gray-200 rounded w-full"></div>
-        </div>
+        <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Settings</p>
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#0f1f1a]/20 border-t-[#f97316]" />
       </div>
     )
   }
 
-  // No business exists - show create form
   if (!business) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Welcome to Nemo!</h1>
-        <p className="text-gray-600">Let&apos;s set up your business to get started.</p>
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Welcome</p>
+          <h1 className="font-display text-3xl sm:text-4xl">Let&apos;s set up your business</h1>
+          <p className="mt-2 text-sm text-[#0f1f1a]/60">We&apos;ll use this to personalize reminder calls.</p>
+        </div>
 
         {message && (
-          <div className={`p-4 rounded-lg ${message.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+          <div className={`rounded-2xl border px-4 py-3 text-sm ${message.type === 'success' ? 'border-[#0f766e]/30 bg-[#0f766e]/10 text-[#0f766e]' : 'border-[#ef4444]/30 bg-[#ef4444]/10 text-[#991b1b]'}`}>
             {message.text}
           </div>
         )}
 
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Business Information</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Tell us about your business
-            </p>
-          </div>
-          <div className="p-6 space-y-4">
+        <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
+          <h3 className="font-display text-2xl">Business information</h3>
+          <p className="mt-2 text-sm text-[#0f1f1a]/60">Tell us where your reminders should sound like they came from.</p>
+
+          <div className="mt-6 space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                Business Name <span className="text-red-500">*</span>
+              <label htmlFor="name" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+                Business name *
               </label>
               <input
                 type="text"
@@ -247,12 +241,12 @@ export default function SettingsPage() {
                 value={businessName}
                 onChange={(e) => setBusinessName(e.target.value)}
                 placeholder="Acme Healthcare"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
               />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Business Email
+              <label htmlFor="email" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+                Business email
               </label>
               <input
                 type="email"
@@ -260,12 +254,12 @@ export default function SettingsPage() {
                 value={businessEmail}
                 onChange={(e) => setBusinessEmail(e.target.value)}
                 placeholder="contact@acme.com"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
               />
             </div>
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                Business Phone
+              <label htmlFor="phone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+                Business phone
               </label>
               <input
                 type="tel"
@@ -273,55 +267,49 @@ export default function SettingsPage() {
                 value={businessPhone}
                 onChange={(e) => setBusinessPhone(e.target.value)}
                 placeholder="+1 (555) 123-4567"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
               />
             </div>
+          </div>
 
-            <div className="pt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Choose AI Voice
-              </label>
-              <div className="space-y-3">
-                {VOICES.map((voice) => (
-                  <label
-                    key={voice.id}
-                    className={`flex items-start p-3 border rounded-lg cursor-pointer transition-colors ${
-                      selectedVoice === voice.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="voice"
-                      value={voice.id}
-                      checked={selectedVoice === voice.id}
-                      onChange={(e) => setSelectedVoice(e.target.value)}
-                      className="mt-0.5 h-4 w-4 text-blue-600 focus:ring-blue-500"
-                    />
-                    <div className="ml-3">
-                      <span className="block text-sm font-medium text-gray-900">{voice.name}</span>
-                      <span className="block text-xs text-gray-500">{voice.description}</span>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="pt-4">
-              <button
-                onClick={handleCreateBusiness}
-                disabled={isCreating || !businessName.trim()}
-                className={`w-full px-4 py-3 rounded-md text-sm font-medium text-white ${
-                  !isCreating && businessName.trim()
-                    ? 'bg-blue-600 hover:bg-blue-700'
-                    : 'bg-gray-400 cursor-not-allowed'
-                }`}
-              >
-                {isCreating ? 'Creating...' : 'Create Business'}
-              </button>
+          <div className="mt-8">
+            <p className="text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Choose AI voice</p>
+            <div className="mt-4 grid gap-3">
+              {VOICES.map((voice) => (
+                <label
+                  key={voice.id}
+                  className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm transition ${
+                    selectedVoice === voice.id
+                      ? 'border-[#0f1f1a] bg-[#0f1f1a] text-white'
+                      : 'border-[#0f1f1a]/10 bg-white'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="voice"
+                    value={voice.id}
+                    checked={selectedVoice === voice.id}
+                    onChange={(e) => setSelectedVoice(e.target.value)}
+                    className="mt-1 h-4 w-4"
+                  />
+                  <div>
+                    <span className="block font-semibold">{voice.name}</span>
+                    <span className={`block text-xs ${selectedVoice === voice.id ? 'text-white/70' : 'text-[#0f1f1a]/60'}`}>
+                      {voice.description}
+                    </span>
+                  </div>
+                </label>
+              ))}
             </div>
           </div>
+
+          <button
+            onClick={handleCreateBusiness}
+            disabled={isCreating || !businessName.trim()}
+            className="mt-8 w-full rounded-full bg-[#f97316] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition disabled:opacity-60"
+          >
+            {isCreating ? 'Creating...' : 'Create business'}
+          </button>
         </div>
       </div>
     )
@@ -329,155 +317,124 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+      <div>
+        <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Settings</p>
+        <h1 className="font-display text-3xl sm:text-4xl">Business controls</h1>
+        <p className="mt-2 text-sm text-[#0f1f1a]/60">Update your profile, voice, and call settings.</p>
+      </div>
 
-      {/* Message */}
       {message && (
-        <div className={`p-4 rounded-lg ${message.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+        <div className={`rounded-2xl border px-4 py-3 text-sm ${message.type === 'success' ? 'border-[#0f766e]/30 bg-[#0f766e]/10 text-[#0f766e]' : 'border-[#ef4444]/30 bg-[#ef4444]/10 text-[#991b1b]'}`}>
           {message.text}
         </div>
       )}
 
-      {/* Business Profile */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Business Profile</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Your business information
-          </p>
-        </div>
-        <div className="p-6 space-y-4">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Business Name
-            </label>
-            <input
-              type="text"
-              id="name"
-              value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Business Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={businessEmail}
-              onChange={(e) => setBusinessEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-              Business Phone
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              value={businessPhone}
-              onChange={(e) => setBusinessPhone(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
+      <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="space-y-6">
+          <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
+            <h3 className="font-display text-2xl">Business profile</h3>
+            <p className="mt-2 text-sm text-[#0f1f1a]/60">Keep your information current.</p>
 
-          {/* Subscription Info */}
-          <div className="pt-4 border-t border-gray-200">
-            <div className="flex items-center justify-between">
+            <div className="mt-6 space-y-4">
               <div>
-                <span className="text-sm font-medium text-gray-700">Subscription</span>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    business.subscription_tier === 'FREE' ? 'bg-gray-100 text-gray-800' :
-                    business.subscription_tier === 'PRO' ? 'bg-blue-100 text-blue-800' :
-                    'bg-purple-100 text-purple-800'
-                  }`}>
-                    {business.subscription_tier}
-                  </span>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    business.subscription_status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
-                    'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {business.subscription_status}
-                  </span>
+                <label htmlFor="name" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+                  Business name
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label htmlFor="email" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+                  Business email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  value={businessEmail}
+                  onChange={(e) => setBusinessEmail(e.target.value)}
+                  className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label htmlFor="phone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+                  Business phone
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  value={businessPhone}
+                  onChange={(e) => setBusinessPhone(e.target.value)}
+                  className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+                />
+              </div>
+
+              <div className="rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] p-4">
+                <div className="text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">Subscription</div>
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold">
+                  <span className="rounded-full bg-white px-3 py-1 text-[#0f1f1a]">{business.subscription_tier}</span>
+                  <span className="rounded-full bg-[#0f1f1a]/10 px-3 py-1 text-[#0f1f1a]/70">{business.subscription_status}</span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Voice Selection */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">AI Voice</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Choose the voice for your AI appointment reminder calls
-          </p>
-        </div>
-        <div className="p-6">
-          <div className="space-y-4">
-            {VOICES.map((voice) => (
-              <label
-                key={voice.id}
-                className={`flex items-start p-4 border rounded-lg cursor-pointer transition-colors ${
-                  selectedVoice === voice.id
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
+          <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
+            <h3 className="font-display text-2xl">AI voice</h3>
+            <p className="mt-2 text-sm text-[#0f1f1a]/60">Choose the tone customers will hear.</p>
+
+            <div className="mt-4 grid gap-3">
+              {VOICES.map((voice) => (
+                <label
+                  key={voice.id}
+                  className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm transition ${
+                    selectedVoice === voice.id
+                      ? 'border-[#0f1f1a] bg-[#0f1f1a] text-white'
+                      : 'border-[#0f1f1a]/10 bg-white'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="voice"
+                    value={voice.id}
+                    checked={selectedVoice === voice.id}
+                    onChange={(e) => setSelectedVoice(e.target.value)}
+                    className="mt-1 h-4 w-4"
+                  />
+                  <div>
+                    <span className="block font-semibold">{voice.name}</span>
+                    <span className={`block text-xs ${selectedVoice === voice.id ? 'text-white/70' : 'text-[#0f1f1a]/60'}`}>
+                      {voice.description}
+                    </span>
+                  </div>
+                </label>
+              ))}
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={handleSave}
+                disabled={isSaving || !hasChanges}
+                className="rounded-full bg-[#0f1f1a] px-6 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition disabled:opacity-60"
               >
-                <input
-                  type="radio"
-                  name="voice"
-                  value={voice.id}
-                  checked={selectedVoice === voice.id}
-                  onChange={(e) => setSelectedVoice(e.target.value)}
-                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500"
-                />
-                <div className="ml-3">
-                  <span className="block text-sm font-medium text-gray-900">
-                    {voice.name}
-                  </span>
-                  <span className="block text-sm text-gray-500">
-                    {voice.description}
-                  </span>
-                </div>
-              </label>
-            ))}
-          </div>
-
-          <div className="mt-6 flex justify-end">
-            <button
-              onClick={handleSave}
-              disabled={isSaving || !hasChanges}
-              className={`px-4 py-2 rounded-md text-sm font-medium text-white ${
-                hasChanges && !isSaving
-                  ? 'bg-blue-600 hover:bg-blue-700'
-                  : 'bg-gray-400 cursor-not-allowed'
-              }`}
-            >
-              {isSaving ? 'Saving...' : 'Save Changes'}
-            </button>
+                {isSaving ? 'Saving...' : 'Save changes'}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Test Call */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Test Call</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Try out the AI voice by making a test call to your phone
-          </p>
-        </div>
-        <div className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <label htmlFor="testPhone" className="block text-sm font-medium text-gray-700 mb-1">
-                Phone Number
+        <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
+          <h3 className="font-display text-2xl">Test call</h3>
+          <p className="mt-2 text-sm text-[#0f1f1a]/60">Hear the selected voice before you go live.</p>
+
+          <div className="mt-6 space-y-4">
+            <div>
+              <label htmlFor="testPhone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+                Phone number
               </label>
               <input
                 type="tel"
@@ -485,42 +442,23 @@ export default function SettingsPage() {
                 value={testPhoneNumber}
                 onChange={(e) => setTestPhoneNumber(e.target.value)}
                 placeholder="+1 (555) 123-4567"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
               />
             </div>
-            <div className="flex items-end">
-              <button
-                onClick={handleTestCall}
-                disabled={isCalling || !testPhoneNumber.trim()}
-                className={`px-6 py-2 rounded-md text-sm font-medium text-white ${
-                  !isCalling && testPhoneNumber.trim()
-                    ? 'bg-green-600 hover:bg-green-700'
-                    : 'bg-gray-400 cursor-not-allowed'
-                }`}
-              >
-                {isCalling ? (
-                  <span className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Calling...
-                  </span>
-                ) : (
-                  <span className="flex items-center">
-                    <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                    Make Test Call
-                  </span>
-                )}
-              </button>
-            </div>
+
+            <button
+              onClick={handleTestCall}
+              disabled={isCalling || !testPhoneNumber.trim()}
+              className="w-full rounded-full bg-[#f97316] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition disabled:opacity-60"
+            >
+              {isCalling ? 'Calling...' : 'Make test call'}
+            </button>
+
+            <p className="text-xs text-[#0f1f1a]/60">
+              The test call will use the currently selected voice ({selectedVoice}).
+              {hasChanges && ' Save your changes first to test the new voice.'}
+            </p>
           </div>
-          <p className="mt-3 text-xs text-gray-500">
-            The test call will use the currently selected voice ({selectedVoice}). 
-            {hasChanges && ' Save your changes first to test the new voice.'}
-          </p>
         </div>
       </div>
     </div>

@@ -12,6 +12,51 @@ interface Customer {
   created_at: string
 }
 
+interface Appointment {
+  id: string
+  title: string
+  scheduled_at: string
+  status: string
+}
+
+interface CallLog {
+  id: string
+  call_type: string
+  call_outcome: string | null
+  duration_sec: number | null
+  summary: string | null
+  created_at: string
+}
+
+const callTypeLabels: Record<string, string> = {
+  REMINDER: 'Reminder call',
+  TEST: 'Test call',
+  FOLLOW_UP: 'Follow-up call',
+  CONFIRMATION: 'Confirmation call',
+}
+
+const callOutcomeLabels: Record<string, string> = {
+  CONFIRMED: 'Confirmed',
+  RESCHEDULED: 'Rescheduled',
+  CANCELED: 'Canceled',
+  ANSWERED: 'Answered',
+  NO_ANSWER: 'No Answer',
+  VOICEMAIL: 'Voicemail',
+  BUSY: 'Busy',
+  FAILED: 'Failed',
+}
+
+const callOutcomeStyles: Record<string, string> = {
+  CONFIRMED: 'bg-[#0f766e]/15 text-[#0f766e]',
+  RESCHEDULED: 'bg-[#f97316]/20 text-[#b45309]',
+  CANCELED: 'bg-[#ef4444]/15 text-[#991b1b]',
+  ANSWERED: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70',
+  NO_ANSWER: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70',
+  VOICEMAIL: 'bg-[#6366f1]/15 text-[#4338ca]',
+  BUSY: 'bg-[#fb7185]/15 text-[#be123c]',
+  FAILED: 'bg-[#ef4444]/15 text-[#991b1b]',
+}
+
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
@@ -23,6 +68,18 @@ export default function CustomersPage() {
     notes: '',
   })
   const [saving, setSaving] = useState(false)
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    notes: '',
+  })
+  const [editSaving, setEditSaving] = useState(false)
+  const [customerAppointments, setCustomerAppointments] = useState<Appointment[]>([])
+  const [customerCalls, setCustomerCalls] = useState<CallLog[]>([])
+  const [detailsLoading, setDetailsLoading] = useState(false)
+  const [detailsError, setDetailsError] = useState<string | null>(null)
   const supabase = createClient()
 
   const fetchCustomers = useCallback(async () => {
@@ -32,7 +89,6 @@ export default function CustomersPage() {
       return
     }
 
-    // Get user's business first
     const { data: business } = await supabase
       .from('b2b_businesses')
       .select('id')
@@ -49,6 +105,7 @@ export default function CustomersPage() {
       .select('*')
       .eq('business_id', business.id)
       .order('created_at', { ascending: false })
+
     setCustomers(data || [])
     setLoading(false)
   }, [supabase])
@@ -68,7 +125,6 @@ export default function CustomersPage() {
       return
     }
 
-    // Get the user's business
     const { data: business, error: bizError } = await supabase
       .from('b2b_businesses')
       .select('id')
@@ -80,7 +136,7 @@ export default function CustomersPage() {
       setSaving(false)
       return
     }
-    
+
     const { error } = await supabase.from('b2b_customers').insert({
       ...formData,
       business_id: business.id,
@@ -98,7 +154,7 @@ export default function CustomersPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this customer?')) return
-    
+
     const { error } = await supabase.from('b2b_customers').delete().eq('id', id)
     if (error) {
       alert('Error deleting customer: ' + error.message)
@@ -107,93 +163,192 @@ export default function CustomersPage() {
     }
   }
 
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    })
+  }
+
+  const formatDuration = (seconds: number | null) => {
+    if (!seconds) return '-'
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+
+  const formatStatus = (status: string) => {
+    const labels: Record<string, string> = {
+      SCHEDULED: 'Scheduled',
+      REMINDED: 'Reminded',
+      CONFIRMED: 'Confirmed',
+      COMPLETED: 'Completed',
+      RESCHEDULED: 'Rescheduled',
+      CANCELED: 'Canceled',
+      CANCELLED: 'Canceled',
+      NO_SHOW: 'No Show',
+    }
+    const normalizedStatus = status?.toUpperCase() || ''
+    return labels[normalizedStatus] || status
+  }
+
+  const getStatusBadge = (status: string) => {
+    const normalizedStatus = status?.toUpperCase() || ''
+    const styles: Record<string, string> = {
+      SCHEDULED: 'bg-[#0f1f1a] text-white',
+      REMINDED: 'bg-[#f97316]/15 text-[#b45309]',
+      CONFIRMED: 'bg-[#0f766e]/15 text-[#0f766e]',
+      COMPLETED: 'bg-[#0f766e]/15 text-[#0f766e]',
+      RESCHEDULED: 'bg-[#fb7185]/15 text-[#be123c]',
+      CANCELED: 'bg-[#ef4444]/15 text-[#991b1b]',
+      CANCELLED: 'bg-[#ef4444]/15 text-[#991b1b]',
+      NO_SHOW: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70',
+    }
+    return styles[normalizedStatus] || 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70'
+  }
+
+  const openEdit = async (customer: Customer) => {
+    setEditingCustomer(customer)
+    setEditFormData({
+      name: customer.name,
+      phone: customer.phone,
+      email: customer.email || '',
+      notes: customer.notes || '',
+    })
+
+    setCustomerAppointments([])
+    setCustomerCalls([])
+    setDetailsError(null)
+    setDetailsLoading(true)
+
+    const [appointmentsRes, callsRes] = await Promise.all([
+      supabase
+        .from('b2b_appointments')
+        .select('id, title, scheduled_at, status')
+        .eq('customer_id', customer.id)
+        .order('scheduled_at', { ascending: false }),
+      supabase
+        .from('b2b_call_logs')
+        .select('id, call_type, call_outcome, duration_sec, summary, created_at')
+        .eq('customer_id', customer.id)
+        .order('created_at', { ascending: false }),
+    ])
+
+    if (appointmentsRes.error || callsRes.error) {
+      setDetailsError(appointmentsRes.error?.message || callsRes.error?.message || 'Unable to load details.')
+    } else {
+      setCustomerAppointments(appointmentsRes.data || [])
+      setCustomerCalls(callsRes.data || [])
+    }
+
+    setDetailsLoading(false)
+  }
+
+  const handleEditSave = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingCustomer) return
+    setEditSaving(true)
+
+    const { error } = await supabase
+      .from('b2b_customers')
+      .update({
+        name: editFormData.name,
+        phone: editFormData.phone,
+        email: editFormData.email,
+        notes: editFormData.notes,
+      })
+      .eq('id', editingCustomer.id)
+
+    if (error) {
+      alert('Error updating customer: ' + error.message)
+    } else {
+      setEditingCustomer(null)
+      fetchCustomers()
+    }
+    setEditSaving(false)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#0f1f1a]/20 border-t-[#f97316]" />
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Customers</h1>
-          <p className="mt-1 text-gray-500">{customers.length} customer{customers.length !== 1 ? 's' : ''}</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Customers</p>
+          <h1 className="font-display text-3xl sm:text-4xl">People you remind</h1>
+          <p className="mt-1 text-sm text-[#0f1f1a]/60">
+            {customers.length} customer{customers.length !== 1 ? 's' : ''} in your roster.
+          </p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all ${
-            showForm 
-              ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
-              : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-blue-500/25'
+          className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+            showForm
+              ? 'border border-[#0f1f1a]/15 bg-white text-[#0f1f1a]/70'
+              : 'bg-[#0f1f1a] text-white shadow-lg shadow-black/15'
           }`}
         >
-          {showForm ? (
-            <>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              Cancel
-            </>
-          ) : (
-            <>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Add Customer
-            </>
-          )}
+          {showForm ? 'Close form' : 'Add customer'}
         </button>
       </div>
 
-      {/* Add Form */}
       {showForm && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">New Customer</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-2xl">New customer</h2>
+            <span className="text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">Required *</span>
+          </div>
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Name *</label>
+                <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Name *</label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="John Doe"
+                  className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+                  placeholder="Jordan Lee"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone *</label>
+                <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Phone *</label>
                 <input
                   type="tel"
                   required
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                   placeholder="+1 (555) 123-4567"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Email</label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="john@example.com"
+                  className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+                  placeholder="jordan@example.com"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Notes</label>
+                <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Notes</label>
                 <input
                   type="text"
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  className="block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                   placeholder="Prefers morning appointments"
                 />
               </div>
@@ -201,120 +356,87 @@ export default function CustomersPage() {
             <button
               type="submit"
               disabled={saving}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-medium hover:shadow-lg hover:shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="inline-flex items-center justify-center rounded-full bg-[#f97316] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition disabled:opacity-60"
             >
-              {saving ? (
-                <>
-                  <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Save Customer
-                </>
-              )}
+              {saving ? 'Saving...' : 'Save customer'}
             </button>
           </form>
         </div>
       )}
 
-      {/* Customer List */}
       {customers.length > 0 ? (
         <>
-          {/* Mobile Cards */}
           <div className="sm:hidden space-y-4">
             {customers.map((customer) => (
-              <div key={customer.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+              <div key={customer.id} className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-4 shadow-sm">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f1f1a] text-sm font-semibold text-white">
                       {customer.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">{customer.name}</h3>
-                      <a href={`tel:${customer.phone}`} className="text-sm text-blue-600">{customer.phone}</a>
+                      <h3 className="text-sm font-semibold text-[#0f1f1a]">{customer.name}</h3>
+                      <a href={`tel:${customer.phone}`} className="text-xs text-[#0f1f1a]/60">{customer.phone}</a>
                     </div>
                   </div>
                   <button
-                    onClick={() => handleDelete(customer.id)}
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    onClick={() => openEdit(customer)}
+                    className="rounded-full border border-[#0f1f1a]/10 px-3 py-1 text-xs text-[#0f1f1a]/60"
                   >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
+                    Edit
                   </button>
                 </div>
                 {customer.email && (
-                  <div className="mt-3 text-sm text-gray-500 flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    {customer.email}
-                  </div>
+                  <div className="mt-3 text-xs text-[#0f1f1a]/60">{customer.email}</div>
                 )}
                 {customer.notes && (
-                  <div className="mt-2 text-sm text-gray-500 flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                    </svg>
-                    {customer.notes}
-                  </div>
+                  <div className="mt-2 text-xs text-[#0f1f1a]/60">{customer.notes}</div>
                 )}
-                <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400">
+                <div className="mt-3 text-[11px] uppercase tracking-[0.2em] text-[#0f1f1a]/40">
                   Added {new Date(customer.created_at).toLocaleDateString()}
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Desktop Table */}
-          <div className="hidden sm:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-100">
-              <thead className="bg-gray-50">
+          <div className="hidden sm:block rounded-3xl border border-[#0f1f1a]/10 bg-white/90 shadow-sm">
+            <table className="min-w-full divide-y divide-[#0f1f1a]/10">
+              <thead className="bg-[#f8f5ef]">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Phone</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-4 text-left text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">Customer</th>
+                  <th className="px-6 py-4 text-left text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">Phone</th>
+                  <th className="px-6 py-4 text-left text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">Email</th>
+                  <th className="px-6 py-4 text-left text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">Created</th>
+                  <th className="px-6 py-4 text-right text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
+              <tbody className="divide-y divide-[#0f1f1a]/10">
                 {customers.map((customer) => (
-                  <tr key={customer.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  <tr key={customer.id} className="hover:bg-[#f8f5ef]">
+                    <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f1f1a] text-sm font-semibold text-white">
                           {customer.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <div className="font-medium text-gray-900">{customer.name}</div>
-                          {customer.notes && <div className="text-sm text-gray-500">{customer.notes}</div>}
+                          <div className="text-sm font-semibold text-[#0f1f1a]">{customer.name}</div>
+                          {customer.notes && <div className="text-xs text-[#0f1f1a]/60">{customer.notes}</div>}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <a href={`tel:${customer.phone}`} className="text-sm text-blue-600 hover:text-blue-700">{customer.phone}</a>
+                    <td className="px-6 py-4 text-sm text-[#0f1f1a]/70">
+                      <a href={`tel:${customer.phone}`} className="hover:text-[#0f1f1a]">{customer.phone}</a>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{customer.email || '-'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 text-sm text-[#0f1f1a]/60">{customer.email || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-[#0f1f1a]/60">
                       {new Date(customer.created_at).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <td className="px-6 py-4 text-right">
                       <button
-                        onClick={() => handleDelete(customer.id)}
-                        className="inline-flex items-center gap-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors"
+                        onClick={() => openEdit(customer)}
+                        className="rounded-full border border-[#0f1f1a]/10 px-3 py-1 text-xs text-[#0f1f1a]/60 hover:border-[#0f1f1a]/30"
                       >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        Delete
+                        Edit
                       </button>
                     </td>
                   </tr>
@@ -324,23 +446,203 @@ export default function CustomersPage() {
           </div>
         </>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 sm:p-12 text-center">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No customers yet</h3>
-          <p className="text-gray-500 mb-6 max-w-sm mx-auto">Add your first customer to start scheduling appointments and sending reminders.</p>
+        <div className="rounded-3xl border border-dashed border-[#0f1f1a]/20 bg-white/80 p-10 text-center">
+          <h3 className="font-display text-2xl">No customers yet</h3>
+          <p className="mt-2 text-sm text-[#0f1f1a]/60">Add your first customer to start scheduling reminders.</p>
           <button
             onClick={() => setShowForm(true)}
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all"
+            className="mt-5 inline-flex items-center justify-center rounded-full bg-[#0f1f1a] px-5 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            Add Your First Customer
+            Add customer
           </button>
+        </div>
+      )}
+
+      {editingCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-3xl border border-[#0f1f1a]/10 bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-[#0f1f1a]/10 px-6 py-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Edit customer</p>
+                <h3 className="font-display text-2xl">{editingCustomer.name}</h3>
+              </div>
+              <button
+                onClick={() => setEditingCustomer(null)}
+                className="rounded-full border border-[#0f1f1a]/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="max-h-[calc(90vh-140px)] overflow-y-auto px-6 py-6">
+              <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+                <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-5">
+                  <h4 className="font-display text-xl">Customer details</h4>
+                  <form onSubmit={handleEditSave} className="mt-6 space-y-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Name *</label>
+                        <input
+                          type="text"
+                          required
+                          value={editFormData.name}
+                          onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                          className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Phone *</label>
+                        <input
+                          type="tel"
+                          required
+                          value={editFormData.phone}
+                          onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                          className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Email</label>
+                        <input
+                          type="email"
+                          value={editFormData.email}
+                          onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                          className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Notes</label>
+                        <input
+                          type="text"
+                          value={editFormData.notes}
+                          onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                          className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="sticky bottom-0 mt-6 flex flex-wrap items-center gap-3 border-t border-[#0f1f1a]/10 bg-white/95 pb-4 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setEditingCustomer(null)}
+                        className="rounded-full border border-[#0f1f1a]/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/60"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={editSaving}
+                        className="inline-flex items-center justify-center rounded-full bg-[#f97316] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition disabled:opacity-60"
+                      >
+                        {editSaving ? 'Saving...' : 'Save changes'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(editingCustomer.id)}
+                        className="ml-auto rounded-full border border-[#ef4444]/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#b91c1c] hover:bg-[#fef2f2]"
+                      >
+                        Delete customer
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="rounded-3xl border border-[#0f1f1a]/10 bg-[#f8f5ef] p-5">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-display text-xl">Appointments</h4>
+                      <span className="text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">
+                        {customerAppointments.length} total
+                      </span>
+                    </div>
+
+                    {detailsLoading ? (
+                      <div className="mt-6 flex items-center gap-3 text-sm text-[#0f1f1a]/60">
+                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#0f1f1a]/20 border-t-[#f97316]" />
+                        Loading details...
+                      </div>
+                    ) : detailsError ? (
+                      <div className="mt-6 rounded-2xl border border-dashed border-[#0f1f1a]/20 bg-white/70 px-5 py-6 text-sm text-[#0f1f1a]/60">
+                        {detailsError}
+                      </div>
+                    ) : customerAppointments.length === 0 ? (
+                      <div className="mt-6 rounded-2xl border border-dashed border-[#0f1f1a]/20 bg-white/70 px-5 py-6 text-sm text-[#0f1f1a]/60">
+                        No appointments yet for this customer.
+                      </div>
+                    ) : (
+                      <div className="mt-5 space-y-3">
+                        {customerAppointments.map((appointment) => (
+                          <div key={appointment.id} className="rounded-2xl border border-[#0f1f1a]/10 bg-white px-4 py-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold text-[#0f1f1a]">{appointment.title}</p>
+                                <p className="mt-1 text-xs text-[#0f1f1a]/60">
+                                  {formatDateTime(appointment.scheduled_at)}
+                                </p>
+                              </div>
+                              <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold ${getStatusBadge(appointment.status)}`}>
+                                {formatStatus(appointment.status)}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-5">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-display text-xl">Call history</h4>
+                      <span className="text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">
+                        {customerCalls.length} calls
+                      </span>
+                    </div>
+
+                    {detailsLoading ? (
+                      <div className="mt-6 flex items-center gap-3 text-sm text-[#0f1f1a]/60">
+                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#0f1f1a]/20 border-t-[#f97316]" />
+                        Loading details...
+                      </div>
+                    ) : detailsError ? (
+                      <div className="mt-6 rounded-2xl border border-dashed border-[#0f1f1a]/20 bg-[#f8f5ef] px-5 py-6 text-sm text-[#0f1f1a]/60">
+                        {detailsError}
+                      </div>
+                    ) : customerCalls.length === 0 ? (
+                      <div className="mt-6 rounded-2xl border border-dashed border-[#0f1f1a]/20 bg-[#f8f5ef] px-5 py-6 text-sm text-[#0f1f1a]/60">
+                        No calls yet for this customer.
+                      </div>
+                    ) : (
+                      <div className="mt-5 space-y-3">
+                        {customerCalls.map((call) => (
+                          <div key={call.id} className="rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-4 py-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold text-[#0f1f1a]">
+                                  {callTypeLabels[call.call_type] || call.call_type} • {formatDateTime(call.created_at)}
+                                </p>
+                                <p className="mt-1 text-xs text-[#0f1f1a]/60">
+                                  Outcome: {callOutcomeLabels[call.call_outcome || ''] || call.call_outcome || 'Pending'}
+                                  {' · '}
+                                  Duration: {formatDuration(call.duration_sec)}
+                                </p>
+                                {call.summary && (
+                                  <p className="mt-2 text-xs text-[#0f1f1a]/60">{call.summary}</p>
+                                )}
+                              </div>
+                              <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold ${
+                                callOutcomeStyles[call.call_outcome || ''] || 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70'
+                              }`}>
+                                {callOutcomeLabels[call.call_outcome || ''] || call.call_outcome || 'Pending'}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
