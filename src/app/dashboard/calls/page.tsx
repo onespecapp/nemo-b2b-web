@@ -261,7 +261,7 @@ export default function CallHistoryPage() {
                               : 'bg-[#f8f5ef] text-[#0f1f1a]'
                           }`}>
                             <p className="text-[11px] uppercase tracking-[0.2em] opacity-70">
-                              {msg.role === 'agent' ? 'Nemo' : 'Customer'}
+                              {msg.role === 'agent' ? 'OneSpec' : 'Customer'}
                             </p>
                             <p>{msg.content}</p>
                           </div>

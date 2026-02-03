@@ -1,4 +1,4 @@
-# Nemo B2B Web
+# OneSpec B2B Web
 
 Modern dashboard for managing appointment reminders. Built with Next.js 16 and Supabase.
 

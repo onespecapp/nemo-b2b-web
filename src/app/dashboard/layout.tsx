@@ -107,7 +107,7 @@ export default function DashboardLayout({
                 </svg>
               </div>
               <div className="flex flex-col">
-                <span className="font-display text-base">Nemo</span>
+                <span className="font-display text-base">OneSpec</span>
                 <span className="text-xs uppercase tracking-[0.25em] text-[#0f1f1a]/60">Dashboard</span>
               </div>
             </Link>
@@ -154,7 +154,7 @@ export default function DashboardLayout({
                 </svg>
               </div>
               <div className="flex flex-col">
-                <span className="font-display text-lg">Nemo</span>
+                <span className="font-display text-lg">OneSpec</span>
                 <span className="text-xs uppercase tracking-[0.25em] text-[#0f1f1a]/60">B2B</span>
               </div>
             </Link>

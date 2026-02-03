@@ -15,11 +15,11 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Nemo - Automated Appointment Reminders",
+  title: "OneSpec - Automated Appointment Reminders",
   description: "Reduce no-shows by 50% with AI-powered phone call reminders. Simple setup, powerful results for healthcare providers, salons, and service businesses.",
   keywords: ["appointment reminders", "no-show reduction", "AI phone calls", "healthcare", "salon software"],
   openGraph: {
-    title: "Nemo - Automated Appointment Reminders",
+    title: "OneSpec - Automated Appointment Reminders",
     description: "Reduce no-shows by 50% with AI-powered phone call reminders.",
     type: "website",
   },

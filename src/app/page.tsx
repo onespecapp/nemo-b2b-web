@@ -16,7 +16,7 @@ const steps = [
     description: 'Import a list or add appointments manually in minutes.',
   },
   {
-    title: 'Nemo calls and confirms',
+    title: 'OneSpec calls and confirms',
     description: 'Our AI handles reminders, confirmations, and reschedules automatically.',
   },
 ]
@@ -58,7 +58,7 @@ const industries = [
 const faqs = [
   {
     question: 'Do I need new phone numbers?',
-    answer: 'No. Nemo works with your existing numbers and routes calls through SIP.',
+    answer: 'No. OneSpec works with your existing numbers and routes calls through SIP.',
   },
   {
     question: 'How long does setup take?',
@@ -70,7 +70,7 @@ const faqs = [
   },
   {
     question: 'What happens if a customer wants to reschedule?',
-    answer: 'Nemo captures intent and notes the preferred time for your team to follow up.',
+    answer: 'OneSpec captures intent and notes the preferred time for your team to follow up.',
   },
 ]
 
@@ -94,7 +94,7 @@ export default function HomePage() {
                 </svg>
               </div>
               <div className="flex flex-col">
-                <span className="font-display text-lg">Nemo</span>
+                <span className="font-display text-lg">OneSpec</span>
                 <span className="text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">B2B</span>
               </div>
             </div>
@@ -131,7 +131,7 @@ export default function HomePage() {
                   <span className="block text-[#0f766e]">feel personally confirmed.</span>
                 </h1>
                 <p className="text-lg text-[#0f1f1a]/70 sm:text-xl">
-                  Nemo calls your customers before their visit, confirms attendance, and captures reschedule requests. Your team gets the schedule back without the phone tag.
+                  OneSpec calls your customers before their visit, confirms attendance, and captures reschedule requests. Your team gets the schedule back without the phone tag.
                 </p>
               </div>
 
@@ -205,7 +205,7 @@ export default function HomePage() {
                 <div className="mt-3 flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-[#f97316]/20" />
                   <div>
-                    <div className="text-sm font-semibold">“Hey Alex, it’s Nemo calling from Solara Spa…”</div>
+                    <div className="text-sm font-semibold">"Hey Alex, it's OneSpec calling from Solara Spa…"</div>
                     <div className="text-xs text-[#0f1f1a]/60">Tap Play in-app to hear the full call.</div>
                   </div>
                 </div>
@@ -234,7 +234,7 @@ export default function HomePage() {
           <div className="grid gap-10 lg:grid-cols-[0.45fr_0.55fr]">
             <div className="space-y-4">
               <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">How it works</p>
-              <h2 className="font-display text-3xl sm:text-4xl">Set it once. Nemo handles the rest.</h2>
+              <h2 className="font-display text-3xl sm:text-4xl">Set it once. OneSpec handles the rest.</h2>
               <p className="text-base text-[#0f1f1a]/70">
                 Your team stops chasing confirmations. Customers get a call that sounds personal, not robotic.
               </p>
@@ -286,7 +286,7 @@ export default function HomePage() {
               <p className="text-xs uppercase tracking-[0.3em] text-white/60">Industries</p>
               <h2 className="mt-4 font-display text-3xl sm:text-4xl">Built for the businesses that live on schedule.</h2>
               <p className="mt-4 text-white/70">
-                Nemo is tuned for high-volume appointment teams that can’t afford empty slots.
+                OneSpec is tuned for high-volume appointment teams that can't afford empty slots.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -314,7 +314,7 @@ export default function HomePage() {
               {
                 name: 'Starter',
                 price: 'Free',
-                detail: 'Best for trying Nemo',
+                detail: 'Best for trying OneSpec',
                 features: ['50 calls / month', 'Single location', 'Core analytics', 'Email support'],
                 cta: 'Get started',
                 highlight: false,
@@ -406,11 +406,11 @@ export default function HomePage() {
               </svg>
             </div>
             <div>
-              <div className="font-display text-base text-[#0f1f1a]">Nemo</div>
+              <div className="font-display text-base text-[#0f1f1a]">OneSpec</div>
               <div className="text-xs uppercase tracking-[0.2em]">B2B</div>
             </div>
           </div>
-          <div>© 2026 Nemo. All rights reserved.</div>
+          <div>© 2026 OneSpec. All rights reserved.</div>
           <div className="flex items-center gap-4">
             <a href="#features" className="hover:text-[#0f1f1a]">Features</a>
             <a href="#pricing" className="hover:text-[#0f1f1a]">Pricing</a>

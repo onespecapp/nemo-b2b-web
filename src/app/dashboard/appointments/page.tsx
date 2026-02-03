@@ -1015,7 +1015,7 @@ export default function AppointmentsPage() {
                                           : 'bg-white text-[#0f1f1a]'
                                       }`}>
                                         <p className="text-[10px] uppercase tracking-[0.2em] opacity-70">
-                                          {msg.role === 'agent' ? 'Nemo' : 'Customer'}
+                                          {msg.role === 'agent' ? 'OneSpec' : 'Customer'}
                                         </p>
                                         <p>{msg.content}</p>
                                       </div>
