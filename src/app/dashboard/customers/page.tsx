@@ -81,6 +81,7 @@ export default function CustomersPage() {
   const [customerCalls, setCustomerCalls] = useState<CallLog[]>([])
   const [detailsLoading, setDetailsLoading] = useState(false)
   const [detailsError, setDetailsError] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
   const supabase = createClient()
 
   const fetchCustomers = useCallback(async () => {
@@ -273,6 +274,22 @@ export default function CustomersPage() {
     setEditSaving(false)
   }
 
+  const normalizedSearch = searchTerm.trim().toLowerCase()
+  const filteredCustomers = customers.filter((customer) => {
+    if (!normalizedSearch) return true
+    const haystack = [
+      customer.name,
+      customer.phone,
+      customer.email,
+      customer.notes,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+    return haystack.includes(normalizedSearch)
+  })
+  const showingCount = normalizedSearch ? filteredCustomers.length : customers.length
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -288,7 +305,12 @@ export default function CustomersPage() {
           <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Customers</p>
           <h1 className="font-display text-3xl sm:text-4xl">People you remind</h1>
           <p className="mt-1 text-sm text-[#0f1f1a]/60">
-            {customers.length} customer{customers.length !== 1 ? 's' : ''} in your roster.
+            {showingCount} customer{showingCount !== 1 ? 's' : ''} in your roster.
+            {normalizedSearch && (
+              <span className="ml-2 text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/40">
+                of {customers.length}
+              </span>
+            )}
           </p>
         </div>
         <button
@@ -367,8 +389,35 @@ export default function CustomersPage() {
 
       {customers.length > 0 ? (
         <>
-          <div className="sm:hidden space-y-4">
-            {customers.map((customer) => (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex-1 rounded-full border border-[#0f1f1a]/10 bg-white px-4 py-2 text-sm shadow-sm">
+              <label htmlFor="customer-search" className="sr-only">Search customers</label>
+              <input
+                id="customer-search"
+                type="search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by name, phone, email, or notes..."
+                className="w-full bg-transparent text-sm text-[#0f1f1a] placeholder:text-[#0f1f1a]/40 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {filteredCustomers.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-[#0f1f1a]/20 bg-white/80 p-10 text-center">
+              <h3 className="font-display text-2xl">No matches</h3>
+              <p className="mt-2 text-sm text-[#0f1f1a]/60">Try a different name, phone, or email.</p>
+              <button
+                onClick={() => setSearchTerm('')}
+                className="mt-5 inline-flex items-center justify-center rounded-full border border-[#0f1f1a]/15 bg-white px-5 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/70"
+              >
+                Clear search
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="sm:hidden space-y-4">
+            {filteredCustomers.map((customer) => (
               <div key={customer.id} className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-4 shadow-sm">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -412,7 +461,7 @@ export default function CustomersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#0f1f1a]/10">
-                {customers.map((customer) => (
+                {filteredCustomers.map((customer) => (
                   <tr key={customer.id} className="hover:bg-[#f8f5ef]">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -445,6 +494,8 @@ export default function CustomersPage() {
               </tbody>
             </table>
           </div>
+            </>
+          )}
         </>
       ) : (
         <div className="rounded-3xl border border-dashed border-[#0f1f1a]/20 bg-white/80 p-10 text-center">
