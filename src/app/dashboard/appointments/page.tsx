@@ -101,6 +101,8 @@ export default function AppointmentsPage() {
   const [editCallsError, setEditCallsError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [dateStart, setDateStart] = useState('')
+  const [dateEnd, setDateEnd] = useState('')
   const supabase = createClient()
   const searchParams = useSearchParams()
   const customerIdFromQuery = searchParams.get('customerId') || searchParams.get('customer_id') || ''
@@ -379,6 +381,19 @@ export default function AppointmentsPage() {
       || normalizedStatus === statusFilter
       || (statusFilter === 'CANCELED' && normalizedStatus === 'CANCELLED')
     if (!matchesStatus) return false
+
+    if (dateStart || dateEnd) {
+      const apptDate = parseUTCDate(appointment.scheduled_at)
+      if (dateStart) {
+        const start = new Date(`${dateStart}T00:00:00`)
+        if (apptDate < start) return false
+      }
+      if (dateEnd) {
+        const end = new Date(`${dateEnd}T23:59:59.999`)
+        if (apptDate > end) return false
+      }
+    }
+
     if (!normalizedSearch) return true
 
     const haystack = [
@@ -430,6 +445,36 @@ export default function AppointmentsPage() {
             placeholder="Search by customer, phone, or title..."
             className="w-full bg-transparent text-sm text-[#0f1f1a] placeholder:text-[#0f1f1a]/40 focus:outline-none"
           />
+        </div>
+        <div className="flex flex-wrap items-center gap-2 rounded-full border border-[#0f1f1a]/10 bg-white px-4 py-2 text-sm shadow-sm">
+          <span className="text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">Date</span>
+          <input
+            type="date"
+            value={dateStart}
+            onChange={(e) => setDateStart(e.target.value)}
+            className="bg-transparent text-xs text-[#0f1f1a] focus:outline-none"
+            aria-label="Start date"
+          />
+          <span className="text-xs text-[#0f1f1a]/40">to</span>
+          <input
+            type="date"
+            value={dateEnd}
+            onChange={(e) => setDateEnd(e.target.value)}
+            className="bg-transparent text-xs text-[#0f1f1a] focus:outline-none"
+            aria-label="End date"
+          />
+          {(dateStart || dateEnd) && (
+            <button
+              type="button"
+              onClick={() => {
+                setDateStart('')
+                setDateEnd('')
+              }}
+              className="rounded-full border border-[#0f1f1a]/15 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-[#0f1f1a]/60"
+            >
+              Clear
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-3 rounded-full border border-[#0f1f1a]/10 bg-white px-4 py-2 text-sm shadow-sm">
           <label htmlFor="status-filter" className="text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">Status</label>
