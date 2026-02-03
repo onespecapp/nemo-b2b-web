@@ -81,7 +81,8 @@ export default function AppointmentsPage() {
     scheduled_at: '',
     reminder_minutes_before: 30,
   })
-  const [customerSearch, setCustomerSearch] = useState('')
+  const [customerQuery, setCustomerQuery] = useState('')
+  const [customerMenuOpen, setCustomerMenuOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
   const [editFormData, setEditFormData] = useState({
@@ -92,7 +93,8 @@ export default function AppointmentsPage() {
     reminder_minutes_before: 30,
     status: 'SCHEDULED',
   })
-  const [editCustomerSearch, setEditCustomerSearch] = useState('')
+  const [editCustomerQuery, setEditCustomerQuery] = useState('')
+  const [editCustomerMenuOpen, setEditCustomerMenuOpen] = useState(false)
   const [editSaving, setEditSaving] = useState(false)
   const [editCalls, setEditCalls] = useState<CallLog[]>([])
   const [editCallsLoading, setEditCallsLoading] = useState(false)
@@ -130,6 +132,12 @@ export default function AppointmentsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
+
+    if (!formData.customer_id) {
+      alert('Please select a customer.')
+      setSaving(false)
+      return
+    }
 
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -232,28 +240,33 @@ export default function AppointmentsPage() {
     })
   }
 
-  const getFilteredCustomers = (filterValue: string, selectedId: string) => {
-    const normalized = filterValue.trim().toLowerCase()
-    let list = normalized
-      ? customers.filter((customer) => (
-        [customer.name, customer.phone].filter(Boolean).join(' ').toLowerCase().includes(normalized)
-      ))
-      : customers
+  const getCustomerLabel = (customer: Customer) => `${customer.name} (${customer.phone})`
 
-    if (selectedId) {
-      const selected = customers.find((customer) => customer.id === selectedId)
-      if (selected && !list.some((customer) => customer.id === selectedId)) {
-        list = [selected, ...list]
-      }
-    }
-
-    return list
+  const filterCustomers = (query: string) => {
+    const normalized = query.trim().toLowerCase()
+    if (!normalized) return customers
+    return customers.filter((customer) => {
+      const haystack = `${customer.name} ${customer.phone} ${getCustomerLabel(customer)}`.toLowerCase()
+      return haystack.includes(normalized)
+    })
   }
 
-  const filteredCustomers = getFilteredCustomers(customerSearch, formData.customer_id)
-  const filteredEditCustomers = getFilteredCustomers(editCustomerSearch, editFormData.customer_id)
+  const selectedCustomer = customers.find((customer) => customer.id === formData.customer_id) || null
+  const selectedEditCustomer = customers.find((customer) => customer.id === editFormData.customer_id) || null
+  const filteredCustomers = filterCustomers(customerQuery)
+  const filteredEditCustomers = filterCustomers(editCustomerQuery)
+
+  useEffect(() => {
+    if (formData.customer_id && selectedCustomer && customerQuery.trim() === '') {
+      setCustomerQuery(getCustomerLabel(selectedCustomer))
+    }
+  }, [formData.customer_id, selectedCustomer, customerQuery])
 
   const openEdit = async (appointment: Appointment) => {
+    const appointmentCustomer = appointment.customer
+      || customers.find((customer) => customer.id === appointment.customer_id)
+      || null
+
     setEditingAppointment(appointment)
     setEditFormData({
       customer_id: appointment.customer_id,
@@ -263,6 +276,8 @@ export default function AppointmentsPage() {
       reminder_minutes_before: appointment.reminder_minutes_before ?? 30,
       status: appointment.status || 'SCHEDULED',
     })
+    setEditCustomerQuery(appointmentCustomer ? getCustomerLabel(appointmentCustomer) : '')
+    setEditCustomerMenuOpen(false)
 
     setEditCalls([])
     setEditCallsError(null)
@@ -285,6 +300,12 @@ export default function AppointmentsPage() {
     e.preventDefault()
     if (!editingAppointment) return
     setEditSaving(true)
+
+    if (!editFormData.customer_id) {
+      alert('Please select a customer.')
+      setEditSaving(false)
+      return
+    }
 
     const scheduledAtUTC = new Date(editFormData.scheduled_at).toISOString()
 
@@ -444,26 +465,63 @@ export default function AppointmentsPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Customer *</label>
-                  <input
-                    type="search"
-                    value={customerSearch}
-                    onChange={(e) => setCustomerSearch(e.target.value)}
-                    placeholder="Search by name or phone"
-                    className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/10 bg-white px-4 py-2 text-xs text-[#0f1f1a] placeholder:text-[#0f1f1a]/40 focus:border-[#f97316] focus:outline-none"
-                  />
-                  <select
-                    required
-                    value={formData.customer_id}
-                    onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
-                    className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
-                  >
-                    <option value="">Select a customer</option>
-                    {filteredCustomers.map((customer) => (
-                      <option key={customer.id} value={customer.id}>
-                        {customer.name} ({customer.phone})
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative mt-2">
+                    <input
+                      type="text"
+                      value={customerQuery}
+                      onFocus={() => setCustomerMenuOpen(true)}
+                      onBlur={() => setTimeout(() => setCustomerMenuOpen(false), 120)}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        setCustomerQuery(value)
+                        if (selectedCustomer && value !== getCustomerLabel(selectedCustomer)) {
+                          setFormData({ ...formData, customer_id: '' })
+                        }
+                        if (!value) {
+                          setFormData({ ...formData, customer_id: '' })
+                        }
+                      }}
+                      placeholder="Start typing a customer name..."
+                      className="w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+                    />
+                    {formData.customer_id && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData({ ...formData, customer_id: '' })
+                          setCustomerQuery('')
+                          setCustomerMenuOpen(false)
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50"
+                      >
+                        Clear
+                      </button>
+                    )}
+                    {customerMenuOpen && (
+                      <div className="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-[#0f1f1a]/10 bg-white py-2 text-sm shadow-lg">
+                        {filteredCustomers.length === 0 ? (
+                          <div className="px-4 py-2 text-xs text-[#0f1f1a]/50">No matching customers</div>
+                        ) : (
+                          filteredCustomers.map((customer) => (
+                            <button
+                              key={customer.id}
+                              type="button"
+                              onMouseDown={(event) => {
+                                event.preventDefault()
+                                setFormData({ ...formData, customer_id: customer.id })
+                                setCustomerQuery(getCustomerLabel(customer))
+                                setCustomerMenuOpen(false)
+                              }}
+                              className="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-[#0f1f1a] hover:bg-[#f8f5ef]"
+                            >
+                              <span className="font-semibold">{customer.name}</span>
+                              <span className="text-xs text-[#0f1f1a]/60">{customer.phone}</span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Title *</label>
@@ -700,26 +758,63 @@ export default function AppointmentsPage() {
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
                           <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Customer *</label>
-                          <input
-                            type="search"
-                            value={editCustomerSearch}
-                            onChange={(e) => setEditCustomerSearch(e.target.value)}
-                            placeholder="Search by name or phone"
-                            className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/10 bg-white px-4 py-2 text-xs text-[#0f1f1a] placeholder:text-[#0f1f1a]/40 focus:border-[#f97316] focus:outline-none"
-                          />
-                          <select
-                            required
-                            value={editFormData.customer_id}
-                            onChange={(e) => setEditFormData({ ...editFormData, customer_id: e.target.value })}
-                            className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
-                          >
-                            <option value="">Select a customer</option>
-                            {filteredEditCustomers.map((customer) => (
-                              <option key={customer.id} value={customer.id}>
-                                {customer.name} ({customer.phone})
-                              </option>
-                            ))}
-                          </select>
+                          <div className="relative mt-2">
+                            <input
+                              type="text"
+                              value={editCustomerQuery}
+                              onFocus={() => setEditCustomerMenuOpen(true)}
+                              onBlur={() => setTimeout(() => setEditCustomerMenuOpen(false), 120)}
+                              onChange={(e) => {
+                                const value = e.target.value
+                                setEditCustomerQuery(value)
+                                if (selectedEditCustomer && value !== getCustomerLabel(selectedEditCustomer)) {
+                                  setEditFormData({ ...editFormData, customer_id: '' })
+                                }
+                                if (!value) {
+                                  setEditFormData({ ...editFormData, customer_id: '' })
+                                }
+                              }}
+                              placeholder="Start typing a customer name..."
+                              className="w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+                            />
+                            {editFormData.customer_id && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditFormData({ ...editFormData, customer_id: '' })
+                                  setEditCustomerQuery('')
+                                  setEditCustomerMenuOpen(false)
+                                }}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50"
+                              >
+                                Clear
+                              </button>
+                            )}
+                            {editCustomerMenuOpen && (
+                              <div className="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-[#0f1f1a]/10 bg-white py-2 text-sm shadow-lg">
+                                {filteredEditCustomers.length === 0 ? (
+                                  <div className="px-4 py-2 text-xs text-[#0f1f1a]/50">No matching customers</div>
+                                ) : (
+                                  filteredEditCustomers.map((customer) => (
+                                    <button
+                                      key={customer.id}
+                                      type="button"
+                                      onMouseDown={(event) => {
+                                        event.preventDefault()
+                                        setEditFormData({ ...editFormData, customer_id: customer.id })
+                                        setEditCustomerQuery(getCustomerLabel(customer))
+                                        setEditCustomerMenuOpen(false)
+                                      }}
+                                      className="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-[#0f1f1a] hover:bg-[#f8f5ef]"
+                                    >
+                                      <span className="font-semibold">{customer.name}</span>
+                                      <span className="text-xs text-[#0f1f1a]/60">{customer.phone}</span>
+                                    </button>
+                                  ))
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div>
                           <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Title *</label>
