@@ -482,12 +482,20 @@ export default function CustomersPage() {
                       {new Date(customer.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => openEdit(customer)}
-                        className="rounded-full border border-[#0f1f1a]/10 px-3 py-1 text-xs text-[#0f1f1a]/60 hover:border-[#0f1f1a]/30"
-                      >
-                        Edit
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href={`/dashboard/appointments?customerId=${customer.id}`}
+                          className="rounded-full bg-[#0f1f1a] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white"
+                        >
+                          New appointment
+                        </Link>
+                        <button
+                          onClick={() => openEdit(customer)}
+                          className="rounded-full border border-[#0f1f1a]/10 px-3 py-1 text-xs text-[#0f1f1a]/60 hover:border-[#0f1f1a]/30"
+                        >
+                          Edit
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
