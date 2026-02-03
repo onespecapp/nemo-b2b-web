@@ -201,14 +201,13 @@ export default function DashboardLayout({
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex flex-col items-center justify-center gap-1 py-3 text-[11px] font-semibold uppercase tracking-[0.2em] ${
+                className={`flex items-center justify-center py-4 ${
                   pathname === link.href
                     ? 'text-[#0f1f1a]'
                     : 'text-[#0f1f1a]/40'
                 }`}
               >
                 {link.icon}
-                <span className="text-[9px]">{link.label}</span>
               </Link>
             ))}
           </div>
