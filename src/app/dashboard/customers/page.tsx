@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 
 interface Customer {
   id: string
@@ -466,12 +467,20 @@ export default function CustomersPage() {
                 <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Edit customer</p>
                 <h3 className="font-display text-2xl">{editingCustomer.name}</h3>
               </div>
-              <button
-                onClick={() => setEditingCustomer(null)}
-                className="rounded-full border border-[#0f1f1a]/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60"
-              >
-                Close
-              </button>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/dashboard/appointments?customerId=${editingCustomer.id}`}
+                  className="rounded-full bg-[#0f1f1a] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white"
+                >
+                  New appointment
+                </Link>
+                <button
+                  onClick={() => setEditingCustomer(null)}
+                  className="rounded-full border border-[#0f1f1a]/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60"
+                >
+                  Close
+                </button>
+              </div>
             </div>
 
             <div className="max-h-[calc(90vh-140px)] overflow-y-auto px-6 py-6">

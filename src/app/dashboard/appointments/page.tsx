@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
 const parseUTCDate = (dateStr: string): Date => {
   if (!dateStr.endsWith('Z') && !dateStr.includes('+')) {
@@ -80,6 +81,7 @@ export default function AppointmentsPage() {
     scheduled_at: '',
     reminder_minutes_before: 30,
   })
+  const [customerSearch, setCustomerSearch] = useState('')
   const [saving, setSaving] = useState(false)
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
   const [editFormData, setEditFormData] = useState({
@@ -90,6 +92,7 @@ export default function AppointmentsPage() {
     reminder_minutes_before: 30,
     status: 'SCHEDULED',
   })
+  const [editCustomerSearch, setEditCustomerSearch] = useState('')
   const [editSaving, setEditSaving] = useState(false)
   const [editCalls, setEditCalls] = useState<CallLog[]>([])
   const [editCallsLoading, setEditCallsLoading] = useState(false)
@@ -97,6 +100,8 @@ export default function AppointmentsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const supabase = createClient()
+  const searchParams = useSearchParams()
+  const customerIdFromQuery = searchParams.get('customerId') || searchParams.get('customer_id') || ''
 
   const fetchData = useCallback(async () => {
     const [appointmentsRes, customersRes] = await Promise.all([
@@ -115,6 +120,12 @@ export default function AppointmentsPage() {
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  useEffect(() => {
+    if (!customerIdFromQuery) return
+    setShowForm(true)
+    setFormData((prev) => ({ ...prev, customer_id: customerIdFromQuery }))
+  }, [customerIdFromQuery])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -220,6 +231,27 @@ export default function AppointmentsPage() {
       minute: '2-digit',
     })
   }
+
+  const getFilteredCustomers = (filterValue: string, selectedId: string) => {
+    const normalized = filterValue.trim().toLowerCase()
+    let list = normalized
+      ? customers.filter((customer) => (
+        [customer.name, customer.phone].filter(Boolean).join(' ').toLowerCase().includes(normalized)
+      ))
+      : customers
+
+    if (selectedId) {
+      const selected = customers.find((customer) => customer.id === selectedId)
+      if (selected && !list.some((customer) => customer.id === selectedId)) {
+        list = [selected, ...list]
+      }
+    }
+
+    return list
+  }
+
+  const filteredCustomers = getFilteredCustomers(customerSearch, formData.customer_id)
+  const filteredEditCustomers = getFilteredCustomers(editCustomerSearch, editFormData.customer_id)
 
   const openEdit = async (appointment: Appointment) => {
     setEditingAppointment(appointment)
@@ -412,6 +444,13 @@ export default function AppointmentsPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Customer *</label>
+                  <input
+                    type="search"
+                    value={customerSearch}
+                    onChange={(e) => setCustomerSearch(e.target.value)}
+                    placeholder="Search by name or phone"
+                    className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/10 bg-white px-4 py-2 text-xs text-[#0f1f1a] placeholder:text-[#0f1f1a]/40 focus:border-[#f97316] focus:outline-none"
+                  />
                   <select
                     required
                     value={formData.customer_id}
@@ -419,7 +458,7 @@ export default function AppointmentsPage() {
                     className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                   >
                     <option value="">Select a customer</option>
-                    {customers.map((customer) => (
+                    {filteredCustomers.map((customer) => (
                       <option key={customer.id} value={customer.id}>
                         {customer.name} ({customer.phone})
                       </option>
@@ -661,6 +700,13 @@ export default function AppointmentsPage() {
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
                           <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Customer *</label>
+                          <input
+                            type="search"
+                            value={editCustomerSearch}
+                            onChange={(e) => setEditCustomerSearch(e.target.value)}
+                            placeholder="Search by name or phone"
+                            className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/10 bg-white px-4 py-2 text-xs text-[#0f1f1a] placeholder:text-[#0f1f1a]/40 focus:border-[#f97316] focus:outline-none"
+                          />
                           <select
                             required
                             value={editFormData.customer_id}
@@ -668,7 +714,7 @@ export default function AppointmentsPage() {
                             className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                           >
                             <option value="">Select a customer</option>
-                            {customers.map((customer) => (
+                            {filteredEditCustomers.map((customer) => (
                               <option key={customer.id} value={customer.id}>
                                 {customer.name} ({customer.phone})
                               </option>
