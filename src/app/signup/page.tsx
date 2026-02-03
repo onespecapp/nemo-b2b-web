@@ -7,16 +7,16 @@ import Link from 'next/link'
 
 // Business category options
 const BUSINESS_CATEGORIES = [
-  { value: 'BARBERSHOP', label: 'Barbershop', icon: '💈' },
-  { value: 'SALON', label: 'Hair Salon', icon: '💇' },
-  { value: 'DENTAL', label: 'Dental Office', icon: '🦷' },
-  { value: 'MEDICAL', label: 'Medical Clinic', icon: '🏥' },
-  { value: 'AUTO_REPAIR', label: 'Auto Repair Shop', icon: '🚗' },
-  { value: 'PET_GROOMING', label: 'Pet Grooming', icon: '🐕' },
-  { value: 'SPA', label: 'Spa & Wellness', icon: '💆' },
-  { value: 'FITNESS', label: 'Fitness & Training', icon: '💪' },
-  { value: 'TUTORING', label: 'Tutoring & Education', icon: '📚' },
-  { value: 'OTHER', label: 'Other', icon: '🏢' },
+  { value: 'BARBERSHOP', label: 'Barbershop' },
+  { value: 'SALON', label: 'Hair Salon' },
+  { value: 'DENTAL', label: 'Dental Office' },
+  { value: 'MEDICAL', label: 'Medical Clinic' },
+  { value: 'AUTO_REPAIR', label: 'Auto Repair Shop' },
+  { value: 'PET_GROOMING', label: 'Pet Grooming' },
+  { value: 'SPA', label: 'Spa & Wellness' },
+  { value: 'FITNESS', label: 'Fitness & Training' },
+  { value: 'TUTORING', label: 'Tutoring & Education' },
+  { value: 'OTHER', label: 'Other' },
 ]
 
 export default function SignupPage() {
@@ -66,24 +66,31 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left side - branding (hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-indigo-700 p-12 flex-col justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
+      <div className="hidden lg:flex lg:w-1/2 bg-[#0f1f1a] p-12 flex-col justify-between relative overflow-hidden">
+        {/* Decorative gradient orbs */}
+        <div className="absolute top-1/4 -left-32 w-96 h-96 bg-[#0f766e]/30 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-[#f97316]/20 rounded-full blur-3xl" />
+
+        <Link href="/" className="flex items-center gap-3 relative z-10">
+          <div className="w-10 h-10 bg-white/10 backdrop-blur rounded-xl flex items-center justify-center">
             <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
             </svg>
           </div>
-          <span className="text-2xl font-bold text-white">Nemo</span>
+          <div className="flex flex-col">
+            <span className="text-2xl font-display font-bold text-white">OneSpec</span>
+            <span className="text-xs text-white/50 tracking-widest uppercase">B2B</span>
+          </div>
         </Link>
-        
-        <div>
-          <h1 className="text-4xl font-bold text-white mb-4">
+
+        <div className="relative z-10">
+          <h1 className="text-4xl font-display font-bold text-white mb-4">
             Start your free trial
           </h1>
-          <p className="text-blue-100 text-lg mb-8">
+          <p className="text-white/70 text-lg mb-8">
             No credit card required. Get started in minutes and reduce no-shows with AI-powered reminders.
           </p>
-          
+
           <div className="space-y-4">
             {[
               '50 free calls per month',
@@ -102,8 +109,8 @@ export default function SignupPage() {
             ))}
           </div>
         </div>
-        
-        <div className="flex items-center gap-4 text-blue-100 text-sm">
+
+        <div className="flex items-center gap-4 text-white/70 text-sm relative z-10">
           <div className="flex items-center gap-2">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -118,32 +125,35 @@ export default function SignupPage() {
           </div>
         </div>
       </div>
-      
+
       {/* Right side - form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-white">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-[#f8f5ef]">
         <div className="w-full max-w-md">
           {/* Mobile logo */}
-          <Link href="/" className="lg:hidden flex items-center gap-2 mb-8">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+          <Link href="/" className="lg:hidden flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 bg-[#0f1f1a] rounded-xl flex items-center justify-center shadow-lg">
               <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
               </svg>
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Nemo</span>
+            <div className="flex flex-col">
+              <span className="text-2xl font-display font-bold text-[#0f1f1a]">OneSpec</span>
+              <span className="text-xs text-[#0f1f1a]/50 tracking-widest uppercase">B2B</span>
+            </div>
           </Link>
-          
+
           <div className="mb-8">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+            <h2 className="text-2xl sm:text-3xl font-display font-bold text-[#0f1f1a] mb-2">
               Create your account
             </h2>
-            <p className="text-gray-600">
+            <p className="text-[#0f1f1a]/60">
               Already have an account?{' '}
-              <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+              <Link href="/login" className="text-[#0f766e] hover:text-[#0f766e]/80 font-medium">
                 Sign in
               </Link>
             </p>
           </div>
-          
+
           <form className="space-y-5" onSubmit={handleSignup}>
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
@@ -153,9 +163,9 @@ export default function SignupPage() {
                 {error}
               </div>
             )}
-            
+
             <div>
-              <label htmlFor="businessName" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="businessName" className="block text-sm font-medium text-[#0f1f1a] mb-1.5">
                 Business Name
               </label>
               <input
@@ -165,13 +175,13 @@ export default function SignupPage() {
                 required
                 value={businessName}
                 onChange={(e) => setBusinessName(e.target.value)}
-                className="block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                className="block w-full px-4 py-3 bg-white border border-[#0f1f1a]/20 rounded-xl shadow-sm placeholder-[#0f1f1a]/40 focus:outline-none focus:ring-2 focus:ring-[#0f766e] focus:border-[#0f766e] transition-colors"
                 placeholder="Your Business Name"
               />
             </div>
 
             <div>
-              <label htmlFor="businessCategory" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="businessCategory" className="block text-sm font-medium text-[#0f1f1a] mb-1.5">
                 Business Type
               </label>
               <select
@@ -180,20 +190,20 @@ export default function SignupPage() {
                 required
                 value={businessCategory}
                 onChange={(e) => setBusinessCategory(e.target.value)}
-                className="block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
+                className="block w-full px-4 py-3 bg-white border border-[#0f1f1a]/20 rounded-xl shadow-sm text-[#0f1f1a] focus:outline-none focus:ring-2 focus:ring-[#0f766e] focus:border-[#0f766e] transition-colors"
               >
                 <option value="">Select your business type...</option>
                 {BUSINESS_CATEGORIES.map((cat) => (
                   <option key={cat.value} value={cat.value}>
-                    {cat.icon} {cat.label}
+                    {cat.label}
                   </option>
                 ))}
               </select>
-              <p className="mt-1.5 text-sm text-gray-500">This helps us customize your reminder calls</p>
+              <p className="mt-1.5 text-sm text-[#0f1f1a]/50">This helps us customize your reminder calls</p>
             </div>
-            
+
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="email" className="block text-sm font-medium text-[#0f1f1a] mb-1.5">
                 Email address
               </label>
               <input
@@ -204,13 +214,13 @@ export default function SignupPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                className="block w-full px-4 py-3 bg-white border border-[#0f1f1a]/20 rounded-xl shadow-sm placeholder-[#0f1f1a]/40 focus:outline-none focus:ring-2 focus:ring-[#0f766e] focus:border-[#0f766e] transition-colors"
                 placeholder="you@company.com"
               />
             </div>
-            
+
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="password" className="block text-sm font-medium text-[#0f1f1a] mb-1.5">
                 Password
               </label>
               <input
@@ -222,16 +232,16 @@ export default function SignupPage() {
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                className="block w-full px-4 py-3 bg-white border border-[#0f1f1a]/20 rounded-xl shadow-sm placeholder-[#0f1f1a]/40 focus:outline-none focus:ring-2 focus:ring-[#0f766e] focus:border-[#0f766e] transition-colors"
                 placeholder="••••••••"
               />
-              <p className="mt-1.5 text-sm text-gray-500">At least 6 characters</p>
+              <p className="mt-1.5 text-sm text-[#0f1f1a]/50">At least 6 characters</p>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-xl text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-lg hover:shadow-blue-500/25 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-full text-base font-semibold text-white bg-[#0f1f1a] hover:shadow-lg hover:shadow-black/15 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0f766e] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {loading ? (
                 <>
@@ -245,29 +255,29 @@ export default function SignupPage() {
                 'Create account'
               )}
             </button>
-            
-            <p className="text-center text-xs text-gray-500">
+
+            <p className="text-center text-xs text-[#0f1f1a]/50">
               By signing up, you agree to our{' '}
-              <a href="#" className="text-blue-600 hover:underline">Terms of Service</a>
+              <a href="#" className="text-[#0f766e] hover:underline">Terms of Service</a>
               {' '}and{' '}
-              <a href="#" className="text-blue-600 hover:underline">Privacy Policy</a>
+              <a href="#" className="text-[#0f766e] hover:underline">Privacy Policy</a>
             </p>
           </form>
-          
+
           <div className="mt-8">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
+                <div className="w-full border-t border-[#0f1f1a]/10" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500">Or continue with</span>
+                <span className="px-4 bg-[#f8f5ef] text-[#0f1f1a]/50">Or continue with</span>
               </div>
             </div>
-            
+
             <div className="mt-6 grid grid-cols-2 gap-3">
               <button
                 type="button"
-                className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-3 border border-[#0f1f1a]/20 rounded-full text-sm font-medium text-[#0f1f1a] bg-white hover:bg-gray-50 transition-colors"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -279,7 +289,7 @@ export default function SignupPage() {
               </button>
               <button
                 type="button"
-                className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-3 border border-[#0f1f1a]/20 rounded-full text-sm font-medium text-[#0f1f1a] bg-white hover:bg-gray-50 transition-colors"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" />
