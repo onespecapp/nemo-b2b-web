@@ -108,12 +108,34 @@ export default function AppointmentsPage() {
   const customerIdFromQuery = searchParams.get('customerId') || searchParams.get('customer_id') || ''
 
   const fetchData = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
+    const { data: business } = await supabase
+      .from('b2b_businesses')
+      .select('id')
+      .eq('owner_id', user.id)
+      .single()
+
+    if (!business) {
+      setLoading(false)
+      return
+    }
+
     const [appointmentsRes, customersRes] = await Promise.all([
       supabase
         .from('b2b_appointments')
         .select(`*, customer:b2b_customers(id, name, phone)`)
+        .eq('business_id', business.id)
         .order('scheduled_at', { ascending: true }),
-      supabase.from('b2b_customers').select('id, name, phone').order('name'),
+      supabase
+        .from('b2b_customers')
+        .select('id, name, phone')
+        .eq('business_id', business.id)
+        .order('name'),
     ])
 
     setAppointments(appointmentsRes.data || [])
