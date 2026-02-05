@@ -11,6 +11,21 @@ const VOICES = [
   { id: 'Aoede', name: 'Aoede', description: 'Soft and soothing - best for relaxed conversations' },
 ]
 
+// Phone number validation (E.164 format)
+const E164_PHONE_REGEX = /^\+?[1-9]\d{1,14}$/
+
+function isValidPhoneNumber(phone: string): boolean {
+  // Remove common formatting characters before validation
+  const cleaned = phone.replace(/[\s\-\(\)]/g, '')
+  return E164_PHONE_REGEX.test(cleaned)
+}
+
+function formatPhoneForApi(phone: string): string {
+  // Remove formatting and ensure + prefix
+  const cleaned = phone.replace(/[\s\-\(\)]/g, '')
+  return cleaned.startsWith('+') ? cleaned : `+${cleaned}`
+}
+
 interface Business {
   id: string
   name: string
@@ -168,16 +183,34 @@ export default function SettingsPage() {
       return
     }
 
+    // Validate phone number format
+    if (!isValidPhoneNumber(testPhoneNumber)) {
+      setMessage({ type: 'error', text: 'Please enter a valid phone number (e.g., +1234567890)' })
+      return
+    }
+
     setIsCalling(true)
     setMessage(null)
 
     try {
+      // Get current session for auth token
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setMessage({ type: 'error', text: 'Please sign in to make test calls' })
+        setIsCalling(false)
+        return
+      }
+
       const res = await fetch(`${API_URL}/api/test-call`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
-          phone: testPhoneNumber,
-          voice_preference: selectedVoice
+          phone: formatPhoneForApi(testPhoneNumber),
+          voice_preference: selectedVoice,
+          business_id: business.id,
         }),
       })
 
@@ -185,6 +218,10 @@ export default function SettingsPage() {
 
       if (res.ok && data.success) {
         setMessage({ type: 'success', text: `Test call initiated! Your phone should ring shortly. Using voice: ${selectedVoice}` })
+      } else if (res.status === 401) {
+        setMessage({ type: 'error', text: 'Session expired. Please refresh the page and try again.' })
+      } else if (res.status === 429) {
+        setMessage({ type: 'error', text: 'Too many requests. Please wait a minute before trying again.' })
       } else {
         setMessage({ type: 'error', text: data.error || 'Failed to initiate test call' })
       }
