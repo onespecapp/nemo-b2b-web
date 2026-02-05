@@ -4,12 +4,37 @@ import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
+const TIMEZONES = [
+  { value: 'America/New_York', label: 'Eastern Time (New York)' },
+  { value: 'America/Chicago', label: 'Central Time (Chicago)' },
+  { value: 'America/Denver', label: 'Mountain Time (Denver)' },
+  { value: 'America/Los_Angeles', label: 'Pacific Time (Los Angeles)' },
+  { value: 'America/Anchorage', label: 'Alaska Time (Anchorage)' },
+  { value: 'Pacific/Honolulu', label: 'Hawaii Time (Honolulu)' },
+  { value: 'America/Toronto', label: 'Eastern Time (Toronto)' },
+  { value: 'America/Vancouver', label: 'Pacific Time (Vancouver)' },
+  { value: 'America/Edmonton', label: 'Mountain Time (Edmonton)' },
+  { value: 'America/Winnipeg', label: 'Central Time (Winnipeg)' },
+  { value: 'America/Halifax', label: 'Atlantic Time (Halifax)' },
+  { value: 'Europe/London', label: 'GMT (London)' },
+  { value: 'Europe/Paris', label: 'CET (Paris)' },
+  { value: 'Europe/Berlin', label: 'CET (Berlin)' },
+  { value: 'Asia/Tokyo', label: 'JST (Tokyo)' },
+  { value: 'Asia/Shanghai', label: 'CST (Shanghai)' },
+  { value: 'Asia/Kolkata', label: 'IST (Kolkata)' },
+  { value: 'Asia/Dubai', label: 'GST (Dubai)' },
+  { value: 'Australia/Sydney', label: 'AEST (Sydney)' },
+  { value: 'Australia/Melbourne', label: 'AEST (Melbourne)' },
+  { value: 'Pacific/Auckland', label: 'NZST (Auckland)' },
+]
+
 interface Customer {
   id: string
   name: string
   phone: string
   email?: string
   notes?: string
+  timezone?: string | null
   created_at: string
 }
 
@@ -67,6 +92,7 @@ export default function CustomersPage() {
     phone: '',
     email: '',
     notes: '',
+    timezone: '',
   })
   const [saving, setSaving] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
@@ -75,6 +101,7 @@ export default function CustomersPage() {
     phone: '',
     email: '',
     notes: '',
+    timezone: '',
   })
   const [editSaving, setEditSaving] = useState(false)
   const [customerAppointments, setCustomerAppointments] = useState<Appointment[]>([])
@@ -82,6 +109,7 @@ export default function CustomersPage() {
   const [detailsLoading, setDetailsLoading] = useState(false)
   const [detailsError, setDetailsError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [businessTimezone, setBusinessTimezone] = useState('America/Los_Angeles')
   const supabase = createClient()
 
   const fetchCustomers = useCallback(async () => {
@@ -93,7 +121,7 @@ export default function CustomersPage() {
 
     const { data: business } = await supabase
       .from('b2b_businesses')
-      .select('id')
+      .select('id, timezone')
       .eq('owner_id', user.id)
       .single()
 
@@ -101,6 +129,8 @@ export default function CustomersPage() {
       setLoading(false)
       return
     }
+
+    setBusinessTimezone(business.timezone || 'America/Los_Angeles')
 
     const { data } = await supabase
       .from('b2b_customers')
@@ -140,14 +170,18 @@ export default function CustomersPage() {
     }
 
     const { error } = await supabase.from('b2b_customers').insert({
-      ...formData,
+      name: formData.name,
+      phone: formData.phone,
+      email: formData.email,
+      notes: formData.notes,
+      timezone: formData.timezone || null,
       business_id: business.id,
     })
 
     if (error) {
       alert('Error creating customer: ' + error.message)
     } else {
-      setFormData({ name: '', phone: '', email: '', notes: '' })
+      setFormData({ name: '', phone: '', email: '', notes: '', timezone: '' })
       setShowForm(false)
       fetchCustomers()
     }
@@ -220,6 +254,7 @@ export default function CustomersPage() {
       phone: customer.phone,
       email: customer.email || '',
       notes: customer.notes || '',
+      timezone: customer.timezone || '',
     })
 
     setCustomerAppointments([])
@@ -262,6 +297,7 @@ export default function CustomersPage() {
         phone: editFormData.phone,
         email: editFormData.email,
         notes: editFormData.notes,
+        timezone: editFormData.timezone || null,
       })
       .eq('id', editingCustomer.id)
 
@@ -374,6 +410,19 @@ export default function CustomersPage() {
                   className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                   placeholder="Prefers morning appointments"
                 />
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Timezone</label>
+                <select
+                  value={formData.timezone}
+                  onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
+                  className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+                >
+                  <option value="">Business default ({TIMEZONES.find(tz => tz.value === businessTimezone)?.label || businessTimezone})</option>
+                  {TIMEZONES.map((tz) => (
+                    <option key={tz.value} value={tz.value}>{tz.label}</option>
+                  ))}
+                </select>
               </div>
             </div>
             <button
@@ -585,6 +634,19 @@ export default function CustomersPage() {
                           onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
                           className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                         />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Timezone</label>
+                        <select
+                          value={editFormData.timezone}
+                          onChange={(e) => setEditFormData({ ...editFormData, timezone: e.target.value })}
+                          className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+                        >
+                          <option value="">Business default ({TIMEZONES.find(tz => tz.value === businessTimezone)?.label || businessTimezone})</option>
+                          {TIMEZONES.map((tz) => (
+                            <option key={tz.value} value={tz.value}>{tz.label}</option>
+                          ))}
+                        </select>
                       </div>
                     </div>
 

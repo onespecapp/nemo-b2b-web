@@ -3,6 +3,30 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+const TIMEZONES = [
+  { value: 'America/New_York', label: 'Eastern Time (New York)' },
+  { value: 'America/Chicago', label: 'Central Time (Chicago)' },
+  { value: 'America/Denver', label: 'Mountain Time (Denver)' },
+  { value: 'America/Los_Angeles', label: 'Pacific Time (Los Angeles)' },
+  { value: 'America/Anchorage', label: 'Alaska Time (Anchorage)' },
+  { value: 'Pacific/Honolulu', label: 'Hawaii Time (Honolulu)' },
+  { value: 'America/Toronto', label: 'Eastern Time (Toronto)' },
+  { value: 'America/Vancouver', label: 'Pacific Time (Vancouver)' },
+  { value: 'America/Edmonton', label: 'Mountain Time (Edmonton)' },
+  { value: 'America/Winnipeg', label: 'Central Time (Winnipeg)' },
+  { value: 'America/Halifax', label: 'Atlantic Time (Halifax)' },
+  { value: 'Europe/London', label: 'GMT (London)' },
+  { value: 'Europe/Paris', label: 'CET (Paris)' },
+  { value: 'Europe/Berlin', label: 'CET (Berlin)' },
+  { value: 'Asia/Tokyo', label: 'JST (Tokyo)' },
+  { value: 'Asia/Shanghai', label: 'CST (Shanghai)' },
+  { value: 'Asia/Kolkata', label: 'IST (Kolkata)' },
+  { value: 'Asia/Dubai', label: 'GST (Dubai)' },
+  { value: 'Australia/Sydney', label: 'AEST (Sydney)' },
+  { value: 'Australia/Melbourne', label: 'AEST (Melbourne)' },
+  { value: 'Pacific/Auckland', label: 'NZST (Auckland)' },
+]
+
 const VOICES = [
   { id: 'Puck', name: 'Puck', description: 'Friendly and warm - great for welcoming calls' },
   { id: 'Charon', name: 'Charon', description: 'Calm and professional - ideal for business reminders' },
@@ -32,6 +56,7 @@ interface Business {
   email: string | null
   phone: string | null
   voice_preference: string
+  timezone: string | null
   subscription_tier: string
   subscription_status: string
 }
@@ -42,7 +67,8 @@ export default function SettingsPage() {
   const [businessEmail, setBusinessEmail] = useState('')
   const [businessPhone, setBusinessPhone] = useState('')
   const [selectedVoice, setSelectedVoice] = useState('Puck')
-  const [originalValues, setOriginalValues] = useState({ name: '', email: '', phone: '', voice: 'Puck' })
+  const [selectedTimezone, setSelectedTimezone] = useState('America/Los_Angeles')
+  const [originalValues, setOriginalValues] = useState({ name: '', email: '', phone: '', voice: 'Puck', timezone: 'America/Los_Angeles' })
   const [testPhoneNumber, setTestPhoneNumber] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -81,14 +107,20 @@ export default function SettingsPage() {
         setBusinessEmail(businessData.email || user.email || '')
         setBusinessPhone(businessData.phone || '')
         setSelectedVoice(businessData.voice_preference || 'Puck')
+        setSelectedTimezone(businessData.timezone || 'America/Los_Angeles')
         setOriginalValues({
           name: businessData.name || '',
           email: businessData.email || '',
           phone: businessData.phone || '',
-          voice: businessData.voice_preference || 'Puck'
+          voice: businessData.voice_preference || 'Puck',
+          timezone: businessData.timezone || 'America/Los_Angeles'
         })
       } else {
         setBusinessEmail(user.email || '')
+        const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone
+        if (TIMEZONES.some(tz => tz.value === browserTz)) {
+          setSelectedTimezone(browserTz)
+        }
       }
     } catch (error) {
       console.error('Failed to load business:', error)
@@ -120,7 +152,8 @@ export default function SettingsPage() {
           email: businessEmail.trim() || null,
           phone: businessPhone.trim() || null,
           owner_id: user.id,
-          voice_preference: selectedVoice
+          voice_preference: selectedVoice,
+          timezone: selectedTimezone
         })
         .select()
         .single()
@@ -132,7 +165,8 @@ export default function SettingsPage() {
         name: data.name,
         email: data.email || '',
         phone: data.phone || '',
-        voice: data.voice_preference
+        voice: data.voice_preference,
+        timezone: data.timezone || 'America/Los_Angeles'
       })
       setMessage({ type: 'success', text: 'Business created successfully!' })
     } catch (error: any) {
@@ -156,7 +190,8 @@ export default function SettingsPage() {
           name: businessName.trim(),
           email: businessEmail.trim() || null,
           phone: businessPhone.trim() || null,
-          voice_preference: selectedVoice
+          voice_preference: selectedVoice,
+          timezone: selectedTimezone
         })
         .eq('id', business.id)
 
@@ -166,7 +201,8 @@ export default function SettingsPage() {
         name: businessName,
         email: businessEmail,
         phone: businessPhone,
-        voice: selectedVoice
+        voice: selectedVoice,
+        timezone: selectedTimezone
       })
       setMessage({ type: 'success', text: 'Settings saved successfully!' })
     } catch (error: any) {
@@ -236,7 +272,8 @@ export default function SettingsPage() {
     businessName !== originalValues.name ||
     businessEmail !== originalValues.email ||
     businessPhone !== originalValues.phone ||
-    selectedVoice !== originalValues.voice
+    selectedVoice !== originalValues.voice ||
+    selectedTimezone !== originalValues.timezone
   )
 
   if (isLoading) {
@@ -306,6 +343,21 @@ export default function SettingsPage() {
                 placeholder="+1 (555) 123-4567"
                 className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
               />
+            </div>
+            <div>
+              <label htmlFor="setup-timezone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+                Timezone
+              </label>
+              <select
+                id="setup-timezone"
+                value={selectedTimezone}
+                onChange={(e) => setSelectedTimezone(e.target.value)}
+                className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+              >
+                {TIMEZONES.map((tz) => (
+                  <option key={tz.value} value={tz.value}>{tz.label}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -408,6 +460,21 @@ export default function SettingsPage() {
                   onChange={(e) => setBusinessPhone(e.target.value)}
                   className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                 />
+              </div>
+              <div>
+                <label htmlFor="timezone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+                  Timezone
+                </label>
+                <select
+                  id="timezone"
+                  value={selectedTimezone}
+                  onChange={(e) => setSelectedTimezone(e.target.value)}
+                  className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+                >
+                  {TIMEZONES.map((tz) => (
+                    <option key={tz.value} value={tz.value}>{tz.label}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] p-4">
