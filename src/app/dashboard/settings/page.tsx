@@ -66,9 +66,9 @@ export default function SettingsPage() {
   const [businessName, setBusinessName] = useState('')
   const [businessEmail, setBusinessEmail] = useState('')
   const [businessPhone, setBusinessPhone] = useState('')
-  const [selectedVoice, setSelectedVoice] = useState('Puck')
+  const [selectedVoice, setSelectedVoice] = useState('Kore')
   const [selectedTimezone, setSelectedTimezone] = useState('America/Los_Angeles')
-  const [originalValues, setOriginalValues] = useState({ name: '', email: '', phone: '', voice: 'Puck', timezone: 'America/Los_Angeles' })
+  const [originalValues, setOriginalValues] = useState({ name: '', email: '', phone: '', voice: 'Kore', timezone: 'America/Los_Angeles' })
   const [testPhoneNumber, setTestPhoneNumber] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -106,13 +106,13 @@ export default function SettingsPage() {
         setBusinessName(businessData.name || '')
         setBusinessEmail(businessData.email || user.email || '')
         setBusinessPhone(businessData.phone || '')
-        setSelectedVoice(businessData.voice_preference || 'Puck')
+        setSelectedVoice(businessData.voice_preference || 'Kore')
         setSelectedTimezone(businessData.timezone || 'America/Los_Angeles')
         setOriginalValues({
           name: businessData.name || '',
           email: businessData.email || '',
           phone: businessData.phone || '',
-          voice: businessData.voice_preference || 'Puck',
+          voice: businessData.voice_preference || 'Kore',
           timezone: businessData.timezone || 'America/Los_Angeles'
         })
       } else {
