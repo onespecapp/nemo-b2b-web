@@ -179,7 +179,7 @@ export default function HomePage() {
                   <div className="rounded-2xl border border-white/10 bg-[#111f1c] p-4">
                     <p className="text-sm text-white/80">“Hi Jamie, just confirming your cleaning today at 3:30 PM. Press 1 to confirm or 2 to reschedule.”</p>
                     <div className="mt-4 flex items-center justify-between text-xs text-white/50">
-                      <span>Voice: Kore</span>
+                      <span>Voice: Aoede</span>
                       <span>Outcome saved</span>
                     </div>
                   </div>
