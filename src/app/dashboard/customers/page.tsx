@@ -110,36 +110,50 @@ export default function CustomersPage() {
   const [detailsError, setDetailsError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [businessTimezone, setBusinessTimezone] = useState('America/Los_Angeles')
+  const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
 
   const fetchCustomers = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+    setError(null)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setLoading(false)
+        return
+      }
+
+      const { data: business, error: bizError } = await supabase
+        .from('b2b_businesses')
+        .select('*')
+        .eq('owner_id', user.id)
+        .single()
+
+      if (bizError || !business) {
+        setError(bizError?.message || 'No business found. Please set up your business in Settings first.')
+        setLoading(false)
+        return
+      }
+
+      setBusinessTimezone(business.timezone || 'America/Los_Angeles')
+
+      const { data, error: custError } = await supabase
+        .from('b2b_customers')
+        .select('*')
+        .eq('business_id', business.id)
+        .order('created_at', { ascending: false })
+
+      if (custError) {
+        setError(custError.message)
+        setLoading(false)
+        return
+      }
+
+      setCustomers(data || [])
       setLoading(false)
-      return
-    }
-
-    const { data: business } = await supabase
-      .from('b2b_businesses')
-      .select('id, timezone')
-      .eq('owner_id', user.id)
-      .single()
-
-    if (!business) {
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred.')
       setLoading(false)
-      return
     }
-
-    setBusinessTimezone(business.timezone || 'America/Los_Angeles')
-
-    const { data } = await supabase
-      .from('b2b_customers')
-      .select('*')
-      .eq('business_id', business.id)
-      .order('created_at', { ascending: false })
-
-    setCustomers(data || [])
-    setLoading(false)
   }, [supabase])
 
   useEffect(() => {
@@ -330,6 +344,23 @@ export default function CustomersPage() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#0f1f1a]/20 border-t-[#f97316]" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="rounded-3xl border border-dashed border-[#ef4444]/30 bg-white/80 p-10 text-center">
+          <h3 className="font-display text-2xl">Something went wrong</h3>
+          <p className="mt-2 text-sm text-[#0f1f1a]/60">{error}</p>
+          <button
+            onClick={() => { setLoading(true); fetchCustomers() }}
+            className="mt-5 inline-flex items-center justify-center rounded-full bg-[#0f1f1a] px-5 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white"
+          >
+            Try again
+          </button>
+        </div>
       </div>
     )
   }
