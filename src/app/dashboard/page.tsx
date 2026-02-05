@@ -1,6 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 
+const parseUTCDate = (dateStr: string): Date => {
+  if (!dateStr.endsWith('Z') && !dateStr.includes('+')) {
+    return new Date(dateStr + 'Z')
+  }
+  return new Date(dateStr)
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -117,8 +124,8 @@ export default async function DashboardPage() {
                       </div>
                     </div>
                     <div className="text-right text-xs text-[#0f1f1a]/60">
-                      <div>{new Date(appointment.scheduled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
-                      <div>{new Date(appointment.scheduled_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</div>
+                      <div>{parseUTCDate(appointment.scheduled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                      <div>{parseUTCDate(appointment.scheduled_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</div>
                     </div>
                   </div>
                 </div>

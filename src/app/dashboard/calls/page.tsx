@@ -90,8 +90,15 @@ export default function CallHistoryPage() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
+  const parseUTCDate = (dateStr: string): Date => {
+    if (!dateStr.endsWith('Z') && !dateStr.includes('+')) {
+      return new Date(dateStr + 'Z')
+    }
+    return new Date(dateStr)
+  }
+
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
+    const date = parseUTCDate(dateString)
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
