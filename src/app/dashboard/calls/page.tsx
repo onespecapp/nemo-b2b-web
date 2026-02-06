@@ -32,6 +32,9 @@ const outcomeColors: Record<string, string> = {
   VOICEMAIL: 'bg-[#6366f1]/15 text-[#4338ca]',
   BUSY: 'bg-[#fb7185]/15 text-[#be123c]',
   FAILED: 'bg-[#ef4444]/15 text-[#991b1b]',
+  BOOKED: 'bg-[#0f766e]/15 text-[#0f766e]',
+  REVIEW_SENT: 'bg-[#6366f1]/15 text-[#4338ca]',
+  DECLINED: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/50',
 }
 
 const outcomeLabels: Record<string, string> = {
@@ -43,6 +46,15 @@ const outcomeLabels: Record<string, string> = {
   VOICEMAIL: 'Voicemail',
   BUSY: 'Busy',
   FAILED: 'Failed',
+  BOOKED: 'Booked',
+  REVIEW_SENT: 'Review Sent',
+  DECLINED: 'Declined',
+}
+
+const campaignCallTypes: Record<string, { label: string; color: string }> = {
+  RE_ENGAGEMENT: { label: 'Re-engagement', color: 'bg-[#0f766e]/10 text-[#0f766e]' },
+  REVIEW_COLLECTION: { label: 'Review', color: 'bg-[#f97316]/10 text-[#b45309]' },
+  NO_SHOW_FOLLOWUP: { label: 'No-Show', color: 'bg-[#6366f1]/10 text-[#4338ca]' },
 }
 
 export default function CallHistoryPage() {
@@ -126,12 +138,16 @@ export default function CallHistoryPage() {
             className="bg-transparent text-sm font-semibold text-[#0f1f1a] focus:outline-none"
           >
             <option value="all">All Calls</option>
-            <option value="CONFIRMED">Confirmed</option>
-            <option value="RESCHEDULED">Rescheduled</option>
-            <option value="CANCELED">Canceled</option>
-            <option value="ANSWERED">Answered</option>
-            <option value="NO_ANSWER">No Answer</option>
-            <option value="VOICEMAIL">Voicemail</option>
+            <optgroup label="Outcomes">
+              <option value="CONFIRMED">Confirmed</option>
+              <option value="RESCHEDULED">Rescheduled</option>
+              <option value="CANCELED">Canceled</option>
+              <option value="ANSWERED">Answered</option>
+              <option value="NO_ANSWER">No Answer</option>
+              <option value="VOICEMAIL">Voicemail</option>
+              <option value="BOOKED">Booked</option>
+              <option value="DECLINED">Declined</option>
+            </optgroup>
           </select>
         </div>
       </div>
@@ -161,9 +177,16 @@ export default function CallHistoryPage() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#0f1f1a]">
-                      {call.customer?.name || 'Unknown Customer'}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-[#0f1f1a]">
+                        {call.customer?.name || 'Unknown Customer'}
+                      </p>
+                      {campaignCallTypes[call.call_type] && (
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${campaignCallTypes[call.call_type].color}`}>
+                          {campaignCallTypes[call.call_type].label}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-[#0f1f1a]/60">
                       {call.appointment?.title || 'No appointment'} • {call.customer?.phone}
                     </p>
