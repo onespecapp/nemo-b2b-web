@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 
 // Business category options
 const BUSINESS_CATEGORIES = [
@@ -71,16 +72,8 @@ export default function SignupPage() {
         <div className="absolute top-1/4 -left-32 w-96 h-96 bg-[#0f766e]/30 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-[#f97316]/20 rounded-full blur-3xl" />
 
-        <Link href="/" className="flex items-center gap-3 relative z-10">
-          <div className="w-10 h-10 bg-white/10 backdrop-blur rounded-xl flex items-center justify-center">
-            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-            </svg>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-2xl font-display font-bold text-white">OneSpec</span>
-            <span className="text-xs text-white/50 tracking-widest uppercase">B2B</span>
-          </div>
+        <Link href="/" className="relative z-10">
+          <Image src="/logo.png" alt="OneSpec" width={250} height={60} className="w-full max-w-[220px] brightness-0 invert" />
         </Link>
 
         <div className="relative z-10">
@@ -130,16 +123,8 @@ export default function SignupPage() {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-[#f8f5ef]">
         <div className="w-full max-w-md">
           {/* Mobile logo */}
-          <Link href="/" className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 bg-[#0f1f1a] rounded-xl flex items-center justify-center shadow-lg">
-              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-2xl font-display font-bold text-[#0f1f1a]">OneSpec</span>
-              <span className="text-xs text-[#0f1f1a]/50 tracking-widest uppercase">B2B</span>
-            </div>
+          <Link href="/" className="lg:hidden mb-8 inline-block">
+            <Image src="/logo.png" alt="OneSpec" width={250} height={60} className="w-full max-w-[200px]" />
           </Link>
 
           <div className="mb-8">
