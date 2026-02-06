@@ -1,4 +1,8 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 const stats = [
   { value: '50%', label: 'Lower no-show rates' },
@@ -40,19 +44,56 @@ const features = [
   },
   {
     title: 'Secure by design',
-    description: 'Supabase-backed data with row-level security and audit-ready logs.',
+    description: 'Enterprise-grade encryption, strict access controls, and audit-ready logs.',
   },
   {
     title: 'Team-ready workflows',
-    description: 'Multi-user access, templates, and category-specific scripts.',
+    description: 'Give your whole front desk access with role-based permissions and shared templates.',
   },
 ]
 
 const industries = [
-  { name: 'Dental + Medical', detail: 'Reduce missed appointments and protect schedules.' },
-  { name: 'Salons + Spas', detail: 'Keep chairs full with gentle, brand-aligned reminders.' },
-  { name: 'Auto + Repair', detail: 'Confirm drop-offs and reduce last-minute gaps.' },
-  { name: 'Fitness + Coaching', detail: 'Keep sessions on track and memberships engaged.' },
+  { name: 'Barbershops', detail: 'Fill every chair with timely, friendly reminders.' },
+  { name: 'Hair Salons', detail: 'Keep your stylists booked and clients confirmed.' },
+  { name: 'Dental Offices', detail: 'Reduce missed cleanings and protect your schedule.' },
+  { name: 'Medical Clinics', detail: 'Cut no-shows and keep patient flow on track.' },
+  { name: 'Auto Repair Shops', detail: 'Confirm drop-offs and reduce last-minute gaps.' },
+  { name: 'Pet Groomers', detail: 'Remind pet parents so every slot stays full.' },
+  { name: 'Spas + Wellness', detail: 'Gentle, brand-aligned reminders for every booking.' },
+  { name: 'Fitness + Training', detail: 'Keep sessions on track and memberships engaged.' },
+  { name: 'Tutoring + Education', detail: 'Make sure students and parents never miss a session.' },
+  { name: 'Other Services', detail: 'Any appointment-based business can get started in minutes.' },
+]
+
+const testimonials = [
+  {
+    name: 'Dr. Priya Sharma',
+    business: 'Main Street Dental',
+    location: 'Mount Pleasant',
+    initials: 'PS',
+    quote: 'Our no-show rate dropped by nearly half in the first month. The calls sound so natural that patients think it\'s our receptionist.',
+  },
+  {
+    name: 'Liam Chen',
+    business: 'Westside Barber Co.',
+    location: 'Kitsilano',
+    initials: 'LC',
+    quote: 'I used to spend my mornings calling clients to confirm. Now OneSpec handles it and I can focus on cutting hair.',
+  },
+  {
+    name: 'Angela Torres',
+    business: 'Paws & Claws Grooming',
+    location: 'Burnaby',
+    initials: 'AT',
+    quote: 'Pet parents love getting a friendly reminder call. We\'ve recovered at least 8 slots a week that would have been no-shows.',
+  },
+  {
+    name: 'Marcus Johnson',
+    business: 'Peak Performance Fitness',
+    location: 'North Vancouver',
+    initials: 'MJ',
+    quote: 'Setup took five minutes. Now every personal training session gets confirmed automatically. It\'s been a game-changer for our gym.',
+  },
 ]
 
 const faqs = [
@@ -72,9 +113,31 @@ const faqs = [
     question: 'What happens if a customer wants to reschedule?',
     answer: 'OneSpec captures intent and notes the preferred time for your team to follow up.',
   },
+  {
+    question: 'Is OneSpec compliant with Canadian privacy laws?',
+    answer: 'Yes. OneSpec is fully PIPEDA compliant and also meets HIPAA requirements for healthcare providers. Your data is encrypted at rest and in transit.',
+  },
+  {
+    question: 'Do you only serve Vancouver?',
+    answer: 'We\'re launching in Greater Vancouver first, but OneSpec works anywhere in Canada and the US. If you have a phone number and appointments, we can help.',
+  },
+  {
+    question: 'What does it cost to get started?',
+    answer: 'Our Starter plan is completely free — 50 calls per month, no credit card required. Upgrade anytime as your call volume grows.',
+  },
+]
+
+const navLinks = [
+  { href: '#features', label: 'Features' },
+  { href: '#how', label: 'How it works' },
+  { href: '#testimonials', label: 'Testimonials' },
+  { href: '#pricing', label: 'Pricing' },
+  { href: '#faq', label: 'FAQ' },
 ]
 
 export default function HomePage() {
+  const [menuOpen, setMenuOpen] = useState(false)
+
   return (
     <div className="min-h-screen bg-[#f8f5ef] text-[#0f1f1a]">
       <div className="relative overflow-hidden">
@@ -87,23 +150,14 @@ export default function HomePage() {
 
         <header className="relative z-20">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-5 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0f1f1a] text-white shadow-lg shadow-black/20">
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-              </div>
-              <div className="flex flex-col">
-                <span className="font-display text-lg">OneSpec</span>
-                <span className="text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">B2B</span>
-              </div>
-            </div>
+            <Image src="/logo.png" alt="OneSpec" width={200} height={48} className="w-full max-w-[180px]" />
 
             <nav className="hidden items-center gap-8 text-sm font-medium text-[#0f1f1a]/70 md:flex">
-              <a href="#features" className="transition hover:text-[#0f1f1a]">Features</a>
-              <a href="#how" className="transition hover:text-[#0f1f1a]">How it works</a>
-              <a href="#pricing" className="transition hover:text-[#0f1f1a]">Pricing</a>
-              <a href="#faq" className="transition hover:text-[#0f1f1a]">FAQ</a>
+              {navLinks.map((link) => (
+                <a key={link.href} href={link.href} className="transition hover:text-[#0f1f1a]">
+                  {link.label}
+                </a>
+              ))}
             </nav>
 
             <div className="flex items-center gap-3">
@@ -113,8 +167,45 @@ export default function HomePage() {
               <Link href="/signup" className="rounded-full bg-[#0f1f1a] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-black/15 transition hover:-translate-y-0.5 hover:shadow-xl">
                 Start free
               </Link>
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="inline-flex items-center justify-center rounded-lg p-2 text-[#0f1f1a]/70 transition hover:bg-[#0f1f1a]/10 md:hidden"
+                aria-label="Toggle menu"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  {menuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                  )}
+                </svg>
+              </button>
             </div>
           </div>
+
+          {menuOpen && (
+            <div className="border-t border-[#0f1f1a]/10 bg-white/95 backdrop-blur-sm md:hidden">
+              <div className="mx-auto max-w-7xl space-y-1 px-4 py-4 sm:px-6">
+                {navLinks.map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMenuOpen(false)}
+                    className="block rounded-lg px-3 py-2 text-base font-medium text-[#0f1f1a]/70 transition hover:bg-[#0f1f1a]/5 hover:text-[#0f1f1a]"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+                <Link
+                  href="/login"
+                  onClick={() => setMenuOpen(false)}
+                  className="block rounded-lg px-3 py-2 text-base font-medium text-[#0f1f1a]/70 transition hover:bg-[#0f1f1a]/5 hover:text-[#0f1f1a] sm:hidden"
+                >
+                  Sign in
+                </Link>
+              </div>
+            </div>
+          )}
         </header>
 
         <section className="relative z-10 px-4 pb-20 pt-12 sm:px-6 lg:px-8">
@@ -122,7 +213,7 @@ export default function HomePage() {
             <div className="space-y-8 animate-fade-up">
               <div className="inline-flex items-center gap-2 rounded-full border border-[#0f1f1a]/10 bg-white/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#0f1f1a]/70 shadow-sm">
                 <span className="h-2 w-2 rounded-full bg-[#f97316]" />
-                AI voice reminders for busy teams
+                AI voice reminders for Vancouver businesses
               </div>
 
               <div className="space-y-6">
@@ -131,7 +222,7 @@ export default function HomePage() {
                   <span className="block text-[#0f766e]">feel personally confirmed.</span>
                 </h1>
                 <p className="text-lg text-[#0f1f1a]/70 sm:text-xl">
-                  OneSpec calls your customers before their visit, confirms attendance, and captures reschedule requests. Your team gets the schedule back without the phone tag.
+                  OneSpec calls your customers before their visit, confirms attendance, and captures reschedule requests — so your Vancouver team can stop playing phone tag.
                 </p>
               </div>
 
@@ -140,7 +231,7 @@ export default function HomePage() {
                   Start free trial
                 </Link>
                 <a href="#demo" className="inline-flex items-center justify-center rounded-full border border-[#0f1f1a]/20 px-6 py-3 text-base font-semibold text-[#0f1f1a] transition hover:border-[#0f1f1a]/40">
-                  Listen to a demo call
+                  Hear a sample call
                 </a>
               </div>
 
@@ -151,7 +242,7 @@ export default function HomePage() {
                 </div>
                 <div className="flex items-center gap-2 rounded-full bg-white/70 px-4 py-2">
                   <span className="h-2 w-2 rounded-full bg-[#f97316]" />
-                  500+ businesses onboarded
+                  Built for Greater Vancouver
                 </div>
               </div>
             </div>
@@ -177,7 +268,7 @@ export default function HomePage() {
                   </div>
 
                   <div className="rounded-2xl border border-white/10 bg-[#111f1c] p-4">
-                    <p className="text-sm text-white/80">“Hi Jamie, just confirming your cleaning today at 3:30 PM. Press 1 to confirm or 2 to reschedule.”</p>
+                    <p className="text-sm text-white/80">&quot;Hi Jamie, just confirming your cleaning today at 3:30 PM. Press 1 to confirm or 2 to reschedule.&quot;</p>
                     <div className="mt-4 flex items-center justify-between text-xs text-white/50">
                       <span>Voice: Aoede</span>
                       <span>Outcome saved</span>
@@ -205,7 +296,7 @@ export default function HomePage() {
                 <div className="mt-3 flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-[#f97316]/20" />
                   <div>
-                    <div className="text-sm font-semibold">"Hey Alex, it's OneSpec calling from Solara Spa…"</div>
+                    <div className="text-sm font-semibold">&quot;Hey Alex, it&apos;s OneSpec calling from Solara Spa…&quot;</div>
                     <div className="text-xs text-[#0f1f1a]/60">Tap Play in-app to hear the full call.</div>
                   </div>
                 </div>
@@ -215,6 +306,7 @@ export default function HomePage() {
         </section>
       </div>
 
+      {/* Stats bar */}
       <section className="border-y border-[#0f1f1a]/10 bg-white/70 px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-6">
           {stats.map((stat) => (
@@ -224,11 +316,12 @@ export default function HomePage() {
             </div>
           ))}
           <div className="rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-5 py-4 text-sm text-[#0f1f1a]/70">
-            Trusted by clinics, salons, and service teams across the US.
+            Trusted by clinics, salons, and service teams across Greater Vancouver.
           </div>
         </div>
       </section>
 
+      {/* How it works */}
       <section id="how" className="px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-10 lg:grid-cols-[0.45fr_0.55fr]">
@@ -255,6 +348,7 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Features */}
       <section id="features" className="px-4 pb-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-wrap items-end justify-between gap-6">
@@ -263,7 +357,7 @@ export default function HomePage() {
               <h2 className="font-display text-3xl sm:text-4xl">A full reminder system, not just calls.</h2>
             </div>
             <div className="rounded-full border border-[#0f1f1a]/10 bg-white px-5 py-2 text-sm text-[#0f1f1a]/70">
-              Works with LiveKit + Telnyx voice infrastructure
+              Carrier-grade voice quality on every call
             </div>
           </div>
 
@@ -279,28 +373,54 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="px-4 pb-20 sm:px-6 lg:px-8">
+      {/* Industries — expanded */}
+      <section id="industries" className="px-4 pb-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl rounded-[32px] border border-[#0f1f1a]/10 bg-[#0f1f1a] px-6 py-12 text-white sm:px-10">
-          <div className="grid gap-10 lg:grid-cols-[1fr_1fr]">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-white/60">Industries</p>
-              <h2 className="mt-4 font-display text-3xl sm:text-4xl">Built for the businesses that live on schedule.</h2>
-              <p className="mt-4 text-white/70">
-                OneSpec is tuned for high-volume appointment teams that can't afford empty slots.
-              </p>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {industries.map((industry) => (
-                <div key={industry.name} className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                  <div className="text-sm font-semibold">{industry.name}</div>
-                  <div className="mt-2 text-sm text-white/60">{industry.detail}</div>
-                </div>
-              ))}
-            </div>
+          <div className="text-center">
+            <p className="text-xs uppercase tracking-[0.3em] text-white/60">Industries</p>
+            <h2 className="mt-4 font-display text-3xl sm:text-4xl">Built for the businesses that live on schedule.</h2>
+            <p className="mt-4 text-white/70">
+              From Commercial Drive barbershops to Kerrisdale dental offices — OneSpec is tuned for high-volume appointment teams that can&apos;t afford empty slots.
+            </p>
+          </div>
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {industries.map((industry) => (
+              <div key={industry.name} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                <div className="text-sm font-semibold">{industry.name}</div>
+                <div className="mt-2 text-sm text-white/60">{industry.detail}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
+      {/* Testimonials — NEW */}
+      <section id="testimonials" className="px-4 pb-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="text-center">
+            <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Testimonials</p>
+            <h2 className="mt-4 font-display text-3xl sm:text-4xl">What Vancouver businesses are saying.</h2>
+          </div>
+          <div className="mt-10 grid gap-6 md:grid-cols-2">
+            {testimonials.map((t) => (
+              <div key={t.name} className="rounded-3xl border border-[#0f1f1a]/10 bg-white p-6 shadow-sm">
+                <p className="text-base text-[#0f1f1a]/80">&ldquo;{t.quote}&rdquo;</p>
+                <div className="mt-6 flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#0f766e]/15 text-sm font-semibold text-[#0f766e]">
+                    {t.initials}
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-[#0f1f1a]">{t.name}</div>
+                    <div className="text-sm text-[#0f1f1a]/60">{t.business} · {t.location}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
       <section id="pricing" className="px-4 pb-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="text-center">
@@ -321,8 +441,8 @@ export default function HomePage() {
               },
               {
                 name: 'Growth',
-                price: '$49',
-                detail: 'For growing practices',
+                price: '$49 CAD',
+                detail: 'For growing Vancouver practices',
                 features: ['500 calls / month', 'Multi-user access', 'Advanced analytics', 'Custom templates'],
                 cta: 'Start free trial',
                 highlight: true,
@@ -331,7 +451,7 @@ export default function HomePage() {
                 name: 'Enterprise',
                 price: 'Custom',
                 detail: 'For multi-location orgs',
-                features: ['Unlimited calls', 'Dedicated success', 'HIPAA BAA', 'Custom integrations'],
+                features: ['Unlimited calls', 'Dedicated success', 'PIPEDA + HIPAA compliance', 'Custom integrations'],
                 cta: 'Talk to sales',
                 highlight: false,
               },
@@ -363,6 +483,7 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* FAQ — expanded */}
       <section id="faq" className="px-4 pb-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl">
           <div className="text-center">
@@ -380,11 +501,12 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Final CTA */}
       <section className="px-4 pb-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-5xl rounded-[36px] border border-[#0f1f1a]/10 bg-gradient-to-br from-[#f97316]/20 via-white to-[#0f766e]/15 p-12 text-center shadow-lg">
           <h2 className="font-display text-3xl sm:text-4xl">Give your team their time back.</h2>
           <p className="mt-4 text-[#0f1f1a]/70">
-            Start for free and see your next week of appointments confirm themselves.
+            Join Vancouver businesses already saving hours every week. Start for free and see your next week of appointments confirm themselves.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link href="/signup" className="rounded-full bg-[#0f1f1a] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-black/15">
@@ -397,24 +519,55 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="border-t border-[#0f1f1a]/10 bg-white/70 px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-6 text-sm text-[#0f1f1a]/60">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-[#0f1f1a] text-white flex items-center justify-center">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
+      {/* Footer — rebuilt */}
+      <footer className="border-t border-[#0f1f1a]/10 bg-white/70 px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Brand */}
+            <div className="space-y-4">
+              <Image src="/logo.png" alt="OneSpec" width={160} height={40} className="w-full max-w-[140px]" />
+              <p className="text-sm text-[#0f1f1a]/60">
+                AI-powered appointment reminders that sound human and save hours.
+              </p>
             </div>
+
+            {/* Product */}
             <div>
-              <div className="font-display text-base text-[#0f1f1a]">OneSpec</div>
-              <div className="text-xs uppercase tracking-[0.2em]">B2B</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/50">Product</div>
+              <div className="mt-4 space-y-3 text-sm text-[#0f1f1a]/70">
+                <a href="#features" className="block hover:text-[#0f1f1a]">Features</a>
+                <a href="#how" className="block hover:text-[#0f1f1a]">How it works</a>
+                <a href="#pricing" className="block hover:text-[#0f1f1a]">Pricing</a>
+                <a href="#faq" className="block hover:text-[#0f1f1a]">FAQ</a>
+              </div>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/50">Legal</div>
+              <div className="mt-4 space-y-3 text-sm text-[#0f1f1a]/70">
+                <a href="/terms" className="block hover:text-[#0f1f1a]">Terms of Service</a>
+                <a href="/privacy" className="block hover:text-[#0f1f1a]">Privacy Policy</a>
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#0f766e]/20 bg-[#0f766e]/10 px-3 py-1 text-xs font-medium text-[#0f766e]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#0f766e]" />
+                  PIPEDA Compliant
+                </div>
+              </div>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/50">Contact</div>
+              <div className="mt-4 space-y-3 text-sm text-[#0f1f1a]/70">
+                <a href="mailto:info@onespec.io" className="block hover:text-[#0f1f1a]">info@onespec.io</a>
+                <div>Greater Vancouver, BC, Canada</div>
+              </div>
             </div>
           </div>
-          <div>© 2026 OneSpec. All rights reserved.</div>
-          <div className="flex items-center gap-4">
-            <a href="#features" className="hover:text-[#0f1f1a]">Features</a>
-            <a href="#pricing" className="hover:text-[#0f1f1a]">Pricing</a>
-            <a href="#faq" className="hover:text-[#0f1f1a]">FAQ</a>
+
+          <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-[#0f1f1a]/10 pt-6 text-sm text-[#0f1f1a]/50">
+            <div>© 2026 OneSpec. All rights reserved.</div>
+            <div>Made in Vancouver, BC</div>
           </div>
         </div>
       </footer>

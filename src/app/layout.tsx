@@ -15,13 +15,27 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "OneSpec - Automated Appointment Reminders",
-  description: "Reduce no-shows by 50% with AI-powered phone call reminders. Simple setup, powerful results for healthcare providers, salons, and service businesses.",
-  keywords: ["appointment reminders", "no-show reduction", "AI phone calls", "healthcare", "salon software"],
+  title: "OneSpec - AI Appointment Reminders for Vancouver Businesses",
+  description: "Reduce no-shows by 50% with AI-powered phone call reminders built for Greater Vancouver businesses. Simple setup, powerful results for dental offices, salons, clinics, and service teams across BC.",
+  keywords: [
+    "appointment reminders Vancouver",
+    "no-show reduction",
+    "AI phone calls",
+    "Vancouver dental reminders",
+    "salon appointment software BC",
+    "medical clinic reminders Vancouver",
+    "auto repair scheduling",
+    "pet groomer reminders",
+    "PIPEDA compliant reminders",
+    "Canadian appointment software",
+    "Greater Vancouver business tools",
+    "BC healthcare scheduling",
+  ],
   openGraph: {
-    title: "OneSpec - Automated Appointment Reminders",
-    description: "Reduce no-shows by 50% with AI-powered phone call reminders.",
+    title: "OneSpec - AI Appointment Reminders for Vancouver Businesses",
+    description: "Reduce no-shows by 50% with AI-powered phone call reminders built for Greater Vancouver businesses.",
     type: "website",
+    locale: "en_CA",
   },
 };
 
@@ -31,7 +45,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en-CA" className="scroll-smooth">
       <body className={`${fraunces.variable} ${manrope.variable} font-sans antialiased`}>
         {children}
       </body>
