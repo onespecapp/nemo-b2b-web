@@ -13,14 +13,16 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   let businessId: string | null = null
+  let businessTimezone = 'America/Los_Angeles'
   if (user) {
     const { data: business } = await supabase
       .from('b2b_businesses')
-      .select('id')
+      .select('id, timezone')
       .eq('owner_id', user.id)
       .single()
 
     businessId = business?.id ?? null
+    businessTimezone = business?.timezone || 'America/Los_Angeles'
   }
 
   const { count: customerCount } = businessId
@@ -124,8 +126,8 @@ export default async function DashboardPage() {
                       </div>
                     </div>
                     <div className="text-right text-xs text-[#0f1f1a]/60">
-                      <div>{parseUTCDate(appointment.scheduled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
-                      <div>{parseUTCDate(appointment.scheduled_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</div>
+                      <div>{parseUTCDate(appointment.scheduled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: businessTimezone })}</div>
+                      <div>{parseUTCDate(appointment.scheduled_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: businessTimezone })}</div>
                     </div>
                   </div>
                 </div>
