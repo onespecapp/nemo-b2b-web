@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState, useCallback } from 'react'
+import AccessibleModal from '@/components/AccessibleModal'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001'
 
@@ -419,15 +420,20 @@ export default function CampaignsPage() {
       </div>
 
       {/* Configuration Modal */}
-      {showConfig && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+      <AccessibleModal
+        isOpen={showConfig}
+        onClose={() => setShowConfig(false)}
+        ariaLabel={editingCampaign ? 'Configure campaign' : 'Create campaign'}
+        backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+        panelClassName="w-full max-w-lg rounded-3xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto"
+      >
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-display text-xl font-bold">
                 {editingCampaign ? 'Configure Campaign' : 'Create Campaign'}
               </h2>
               <button
                 onClick={() => setShowConfig(false)}
+                aria-label="Close"
                 className="rounded-full p-2 text-[#0f1f1a]/40 hover:bg-[#0f1f1a]/5"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -439,8 +445,9 @@ export default function CampaignsPage() {
             <div className="space-y-5">
               {/* Campaign Name */}
               <div>
-                <label className="text-xs font-semibold uppercase tracking-[0.15em] text-[#0f1f1a]/60">Campaign Name</label>
+                <label htmlFor="campaign-name" className="text-xs font-semibold uppercase tracking-[0.15em] text-[#0f1f1a]/60">Campaign Name</label>
                 <input
+                  id="campaign-name"
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
@@ -451,13 +458,14 @@ export default function CampaignsPage() {
               {/* Days Since Last Appointment */}
               {(editingType === 'RE_ENGAGEMENT' || editingCampaign?.campaign_type === 'RE_ENGAGEMENT') && (
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.15em] text-[#0f1f1a]/60">
+                  <label htmlFor="campaign-days-since" className="text-xs font-semibold uppercase tracking-[0.15em] text-[#0f1f1a]/60">
                     Days Since Last Appointment
                   </label>
                   <p className="mt-1 text-xs text-[#0f1f1a]/40">
                     Customers who haven&apos;t had an appointment in this many days will be contacted
                   </p>
                   <input
+                    id="campaign-days-since"
                     type="number"
                     value={formDaysSince}
                     onChange={(e) => setFormDaysSince(parseInt(e.target.value) || 30)}
@@ -471,8 +479,9 @@ export default function CampaignsPage() {
               {/* Call Window */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.15em] text-[#0f1f1a]/60">Window Start</label>
+                  <label htmlFor="campaign-window-start" className="text-xs font-semibold uppercase tracking-[0.15em] text-[#0f1f1a]/60">Window Start</label>
                   <input
+                    id="campaign-window-start"
                     type="time"
                     value={formWindowStart}
                     onChange={(e) => setFormWindowStart(e.target.value)}
@@ -480,8 +489,9 @@ export default function CampaignsPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.15em] text-[#0f1f1a]/60">Window End</label>
+                  <label htmlFor="campaign-window-end" className="text-xs font-semibold uppercase tracking-[0.15em] text-[#0f1f1a]/60">Window End</label>
                   <input
+                    id="campaign-window-end"
                     type="time"
                     value={formWindowEnd}
                     onChange={(e) => setFormWindowEnd(e.target.value)}
@@ -519,8 +529,9 @@ export default function CampaignsPage() {
               {/* Throttling */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="opacity-50">
-                  <label className="text-xs font-semibold uppercase tracking-[0.15em] text-[#0f1f1a]/60">Max Concurrent</label>
+                  <label htmlFor="campaign-max-concurrent" className="text-xs font-semibold uppercase tracking-[0.15em] text-[#0f1f1a]/60">Max Concurrent</label>
                   <input
+                    id="campaign-max-concurrent"
                     type="number"
                     value={2}
                     disabled
@@ -529,8 +540,9 @@ export default function CampaignsPage() {
                   <p className="mt-1 text-[10px] text-[#0f1f1a]/40">Fixed at 2</p>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.15em] text-[#0f1f1a]/60">Min. Between (min)</label>
+                  <label htmlFor="campaign-min-between" className="text-xs font-semibold uppercase tracking-[0.15em] text-[#0f1f1a]/60">Min. Between (min)</label>
                   <input
+                    id="campaign-min-between"
                     type="number"
                     value={formMinBetween}
                     onChange={(e) => setFormMinBetween(parseInt(e.target.value) || 5)}
@@ -543,11 +555,12 @@ export default function CampaignsPage() {
 
               {/* Cycle Frequency */}
               <div>
-                <label className="text-xs font-semibold uppercase tracking-[0.15em] text-[#0f1f1a]/60">Cycle Frequency (days)</label>
+                <label htmlFor="campaign-cycle-frequency" className="text-xs font-semibold uppercase tracking-[0.15em] text-[#0f1f1a]/60">Cycle Frequency (days)</label>
                 <p className="mt-1 text-xs text-[#0f1f1a]/40">
                   How often a customer can be re-targeted by this campaign
                 </p>
                 <input
+                  id="campaign-cycle-frequency"
                   type="number"
                   value={formCycleFrequency}
                   onChange={(e) => setFormCycleFrequency(parseInt(e.target.value) || 30)}
@@ -576,18 +589,21 @@ export default function CampaignsPage() {
                 </button>
               )}
             </div>
-          </div>
-        </div>
-      )}
+      </AccessibleModal>
 
       {/* Call History Modal */}
-      {showCalls && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+      <AccessibleModal
+        isOpen={showCalls}
+        onClose={() => setShowCalls(false)}
+        ariaLabel="Campaign call history"
+        backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+        panelClassName="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto"
+      >
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-display text-xl font-bold">Campaign Call History</h2>
               <button
                 onClick={() => setShowCalls(false)}
+                aria-label="Close"
                 className="rounded-full p-2 text-[#0f1f1a]/40 hover:bg-[#0f1f1a]/5"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -665,9 +681,7 @@ export default function CampaignsPage() {
                 ))}
               </div>
             )}
-          </div>
-        </div>
-      )}
+      </AccessibleModal>
     </div>
   )
 }

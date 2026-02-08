@@ -1,8 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import AccessibleModal from '@/components/AccessibleModal'
 import { createClient } from '@/lib/supabase/client'
+import { validatePhone } from '@/lib/validation'
 import Link from 'next/link'
+import { useToast } from '@/components/ToastProvider'
 
 const TIMEZONES = [
   { value: 'America/New_York', label: 'Eastern Time (New York)' },
@@ -84,6 +87,7 @@ const callOutcomeStyles: Record<string, string> = {
 }
 
 export default function CustomersPage() {
+  const { showToast } = useToast()
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -111,6 +115,8 @@ export default function CustomersPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [businessTimezone, setBusinessTimezone] = useState('America/Los_Angeles')
   const [error, setError] = useState<string | null>(null)
+  const [phoneError, setPhoneError] = useState<string | null>(null)
+  const [editPhoneError, setEditPhoneError] = useState<string | null>(null)
   const supabase = createClient()
 
   const fetchCustomers = useCallback(async () => {
@@ -162,11 +168,19 @@ export default function CustomersPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    const phoneResult = validatePhone(formData.phone)
+    if (!phoneResult.valid) {
+      setPhoneError(phoneResult.error || 'Invalid phone number.')
+      return
+    }
+    setPhoneError(null)
+
     setSaving(true)
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      alert('Not authenticated')
+      showToast('Not authenticated', 'error')
       setSaving(false)
       return
     }
@@ -178,7 +192,7 @@ export default function CustomersPage() {
       .single()
 
     if (bizError || !business) {
-      alert('No business found. Please set up your business in Settings first.')
+      showToast('No business found. Please set up your business in Settings first.', 'error')
       setSaving(false)
       return
     }
@@ -193,9 +207,10 @@ export default function CustomersPage() {
     })
 
     if (error) {
-      alert('Error creating customer: ' + error.message)
+      showToast('Error creating customer: ' + error.message, 'error')
     } else {
       setFormData({ name: '', phone: '', email: '', notes: '', timezone: '' })
+      setPhoneError(null)
       setShowForm(false)
       fetchCustomers()
     }
@@ -207,7 +222,7 @@ export default function CustomersPage() {
 
     const { error } = await supabase.from('b2b_customers').delete().eq('id', id)
     if (error) {
-      alert('Error deleting customer: ' + error.message)
+      showToast('Error deleting customer: ' + error.message, 'error')
     } else {
       fetchCustomers()
     }
@@ -271,6 +286,7 @@ export default function CustomersPage() {
       timezone: customer.timezone || '',
     })
 
+    setEditPhoneError(null)
     setCustomerAppointments([])
     setCustomerCalls([])
     setDetailsError(null)
@@ -302,6 +318,14 @@ export default function CustomersPage() {
   const handleEditSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editingCustomer) return
+
+    const phoneResult = validatePhone(editFormData.phone)
+    if (!phoneResult.valid) {
+      setEditPhoneError(phoneResult.error || 'Invalid phone number.')
+      return
+    }
+    setEditPhoneError(null)
+
     setEditSaving(true)
 
     const { error } = await supabase
@@ -316,9 +340,10 @@ export default function CustomersPage() {
       .eq('id', editingCustomer.id)
 
     if (error) {
-      alert('Error updating customer: ' + error.message)
+      showToast('Error updating customer: ' + error.message, 'error')
     } else {
       setEditingCustomer(null)
+      setEditPhoneError(null)
       fetchCustomers()
     }
     setEditSaving(false)
@@ -401,8 +426,9 @@ export default function CustomersPage() {
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Name *</label>
+                <label htmlFor="new-customer-name" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Name *</label>
                 <input
+                  id="new-customer-name"
                   type="text"
                   required
                   value={formData.name}
@@ -412,19 +438,41 @@ export default function CustomersPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Phone *</label>
+                <label htmlFor="new-customer-phone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Phone *</label>
                 <input
+                  id="new-customer-phone"
                   type="tel"
                   required
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+                  onChange={(e) => {
+                    setFormData({ ...formData, phone: e.target.value })
+                    if (phoneError) {
+                      const result = validatePhone(e.target.value)
+                      if (result.valid) setPhoneError(null)
+                    }
+                  }}
+                  onBlur={() => {
+                    if (formData.phone.trim()) {
+                      const result = validatePhone(formData.phone)
+                      if (!result.valid) setPhoneError(result.error || 'Invalid phone number.')
+                      else setPhoneError(null)
+                    }
+                  }}
+                  className={`mt-2 w-full rounded-2xl border bg-white px-4 py-3 text-sm focus:outline-none ${
+                    phoneError
+                      ? 'border-red-500 focus:border-red-500'
+                      : 'border-[#0f1f1a]/20 focus:border-[#f97316]'
+                  }`}
                   placeholder="+1 (555) 123-4567"
                 />
+                {phoneError && (
+                  <p className="mt-1 text-sm text-red-500">{phoneError}</p>
+                )}
               </div>
               <div>
-                <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Email</label>
+                <label htmlFor="new-customer-email" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Email</label>
                 <input
+                  id="new-customer-email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -433,8 +481,9 @@ export default function CustomersPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Notes</label>
+                <label htmlFor="new-customer-notes" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Notes</label>
                 <input
+                  id="new-customer-notes"
                   type="text"
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -443,8 +492,9 @@ export default function CustomersPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Timezone</label>
+                <label htmlFor="new-customer-timezone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Timezone</label>
                 <select
+                  id="new-customer-timezone"
                   value={formData.timezone}
                   onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
                   className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
@@ -598,9 +648,14 @@ export default function CustomersPage() {
         </div>
       )}
 
-      {editingCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-3xl border border-[#0f1f1a]/10 bg-white shadow-xl">
+      <AccessibleModal
+        isOpen={!!editingCustomer}
+        onClose={() => setEditingCustomer(null)}
+        ariaLabel={`Edit customer: ${editingCustomer?.name || ''}`}
+        panelClassName="max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-3xl border border-[#0f1f1a]/10 bg-white shadow-xl"
+      >
+        {editingCustomer && (
+          <>
             <div className="flex items-center justify-between border-b border-[#0f1f1a]/10 px-6 py-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Edit customer</p>
@@ -615,6 +670,7 @@ export default function CustomersPage() {
                 </Link>
                 <button
                   onClick={() => setEditingCustomer(null)}
+                  aria-label="Close"
                   className="rounded-full border border-[#0f1f1a]/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60"
                 >
                   Close
@@ -629,8 +685,9 @@ export default function CustomersPage() {
                   <form onSubmit={handleEditSave} className="mt-6 space-y-4">
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Name *</label>
+                        <label htmlFor="edit-customer-name" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Name *</label>
                         <input
+                          id="edit-customer-name"
                           type="text"
                           required
                           value={editFormData.name}
@@ -639,18 +696,40 @@ export default function CustomersPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Phone *</label>
+                        <label htmlFor="edit-customer-phone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Phone *</label>
                         <input
+                          id="edit-customer-phone"
                           type="tel"
                           required
                           value={editFormData.phone}
-                          onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                          className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+                          onChange={(e) => {
+                            setEditFormData({ ...editFormData, phone: e.target.value })
+                            if (editPhoneError) {
+                              const result = validatePhone(e.target.value)
+                              if (result.valid) setEditPhoneError(null)
+                            }
+                          }}
+                          onBlur={() => {
+                            if (editFormData.phone.trim()) {
+                              const result = validatePhone(editFormData.phone)
+                              if (!result.valid) setEditPhoneError(result.error || 'Invalid phone number.')
+                              else setEditPhoneError(null)
+                            }
+                          }}
+                          className={`mt-2 w-full rounded-2xl border bg-white px-4 py-3 text-sm focus:outline-none ${
+                            editPhoneError
+                              ? 'border-red-500 focus:border-red-500'
+                              : 'border-[#0f1f1a]/20 focus:border-[#f97316]'
+                          }`}
                         />
+                        {editPhoneError && (
+                          <p className="mt-1 text-sm text-red-500">{editPhoneError}</p>
+                        )}
                       </div>
                       <div>
-                        <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Email</label>
+                        <label htmlFor="edit-customer-email" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Email</label>
                         <input
+                          id="edit-customer-email"
                           type="email"
                           value={editFormData.email}
                           onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
@@ -658,8 +737,9 @@ export default function CustomersPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Notes</label>
+                        <label htmlFor="edit-customer-notes" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Notes</label>
                         <input
+                          id="edit-customer-notes"
                           type="text"
                           value={editFormData.notes}
                           onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
@@ -667,8 +747,9 @@ export default function CustomersPage() {
                         />
                       </div>
                       <div className="sm:col-span-2">
-                        <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Timezone</label>
+                        <label htmlFor="edit-customer-timezone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Timezone</label>
                         <select
+                          id="edit-customer-timezone"
                           value={editFormData.timezone}
                           onChange={(e) => setEditFormData({ ...editFormData, timezone: e.target.value })}
                           className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
@@ -803,9 +884,9 @@ export default function CustomersPage() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </AccessibleModal>
     </div>
   )
 }

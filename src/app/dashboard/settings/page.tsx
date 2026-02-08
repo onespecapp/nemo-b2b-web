@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { isValidE164Phone, formatPhoneForApi } from '@/lib/validation'
 
 const TIMEZONES = [
   { value: 'America/New_York', label: 'Eastern Time (New York)' },
@@ -34,21 +35,6 @@ const VOICES = [
   { id: 'Fenrir', name: 'Fenrir', description: 'Confident and clear - suited for important notices' },
   { id: 'Aoede', name: 'Aoede', description: 'Soft and soothing - best for relaxed conversations' },
 ]
-
-// Phone number validation (E.164 format)
-const E164_PHONE_REGEX = /^\+?[1-9]\d{1,14}$/
-
-function isValidPhoneNumber(phone: string): boolean {
-  // Remove common formatting characters before validation
-  const cleaned = phone.replace(/[\s\-\(\)]/g, '')
-  return E164_PHONE_REGEX.test(cleaned)
-}
-
-function formatPhoneForApi(phone: string): string {
-  // Remove formatting and ensure + prefix
-  const cleaned = phone.replace(/[\s\-\(\)]/g, '')
-  return cleaned.startsWith('+') ? cleaned : `+${cleaned}`
-}
 
 interface Business {
   id: string
@@ -220,7 +206,7 @@ export default function SettingsPage() {
     }
 
     // Validate phone number format
-    if (!isValidPhoneNumber(testPhoneNumber)) {
+    if (!isValidE164Phone(testPhoneNumber)) {
       setMessage({ type: 'error', text: 'Please enter a valid phone number (e.g., +1234567890)' })
       return
     }
@@ -306,12 +292,12 @@ export default function SettingsPage() {
 
           <div className="mt-6 space-y-4">
             <div>
-              <label htmlFor="name" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+              <label htmlFor="setup-business-name" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
                 Business name *
               </label>
               <input
                 type="text"
-                id="name"
+                id="setup-business-name"
                 value={businessName}
                 onChange={(e) => setBusinessName(e.target.value)}
                 placeholder="Acme Healthcare"
@@ -319,12 +305,12 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label htmlFor="email" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+              <label htmlFor="setup-business-email" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
                 Business email
               </label>
               <input
                 type="email"
-                id="email"
+                id="setup-business-email"
                 value={businessEmail}
                 onChange={(e) => setBusinessEmail(e.target.value)}
                 placeholder="contact@acme.com"
@@ -332,12 +318,12 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label htmlFor="phone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+              <label htmlFor="setup-business-phone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
                 Business phone
               </label>
               <input
                 type="tel"
-                id="phone"
+                id="setup-business-phone"
                 value={businessPhone}
                 onChange={(e) => setBusinessPhone(e.target.value)}
                 placeholder="+1 (555) 123-4567"
@@ -426,47 +412,47 @@ export default function SettingsPage() {
 
             <div className="mt-6 space-y-4">
               <div>
-                <label htmlFor="name" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+                <label htmlFor="business-name" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
                   Business name
                 </label>
                 <input
                   type="text"
-                  id="name"
+                  id="business-name"
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
                   className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                 />
               </div>
               <div>
-                <label htmlFor="email" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+                <label htmlFor="business-email" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
                   Business email
                 </label>
                 <input
                   type="email"
-                  id="email"
+                  id="business-email"
                   value={businessEmail}
                   onChange={(e) => setBusinessEmail(e.target.value)}
                   className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                 />
               </div>
               <div>
-                <label htmlFor="phone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+                <label htmlFor="business-phone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
                   Business phone
                 </label>
                 <input
                   type="tel"
-                  id="phone"
+                  id="business-phone"
                   value={businessPhone}
                   onChange={(e) => setBusinessPhone(e.target.value)}
                   className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                 />
               </div>
               <div>
-                <label htmlFor="timezone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+                <label htmlFor="business-timezone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
                   Timezone
                 </label>
                 <select
-                  id="timezone"
+                  id="business-timezone"
                   value={selectedTimezone}
                   onChange={(e) => setSelectedTimezone(e.target.value)}
                   className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"

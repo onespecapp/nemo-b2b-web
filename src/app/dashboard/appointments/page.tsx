@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import AccessibleModal from '@/components/AccessibleModal'
+import { useToast } from '@/components/ToastProvider'
 
 const parseUTCDate = (dateStr: string): Date => {
   if (!dateStr.endsWith('Z') && !dateStr.includes('+')) {
@@ -70,6 +72,7 @@ const callOutcomeStyles: Record<string, string> = {
 }
 
 export default function AppointmentsPage() {
+  const { showToast } = useToast()
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
@@ -99,10 +102,15 @@ export default function AppointmentsPage() {
   const [editCalls, setEditCalls] = useState<CallLog[]>([])
   const [editCallsLoading, setEditCallsLoading] = useState(false)
   const [editCallsError, setEditCallsError] = useState<string | null>(null)
+  const [newActiveIndex, setNewActiveIndex] = useState(-1)
+  const [editActiveIndex, setEditActiveIndex] = useState(-1)
+  const newInputRef = useRef<HTMLInputElement>(null)
+  const editInputRef = useRef<HTMLInputElement>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [dateStart, setDateStart] = useState('')
   const [dateEnd, setDateEnd] = useState('')
+  const [businessTimezone, setBusinessTimezone] = useState<string | null>(null)
   const supabase = createClient()
   const searchParams = useSearchParams()
   const customerIdFromQuery = searchParams.get('customerId') || searchParams.get('customer_id') || ''
@@ -116,7 +124,7 @@ export default function AppointmentsPage() {
 
     const { data: business } = await supabase
       .from('b2b_businesses')
-      .select('id')
+      .select('id, timezone')
       .eq('owner_id', user.id)
       .single()
 
@@ -124,6 +132,8 @@ export default function AppointmentsPage() {
       setLoading(false)
       return
     }
+
+    setBusinessTimezone(business.timezone || null)
 
     const [appointmentsRes, customersRes] = await Promise.all([
       supabase
@@ -158,7 +168,7 @@ export default function AppointmentsPage() {
     setSaving(true)
 
     if (!formData.customer_id) {
-      alert('Please select a customer.')
+      showToast('Please select a customer.', 'warning')
       setSaving(false)
       return
     }
@@ -172,7 +182,7 @@ export default function AppointmentsPage() {
       .single()
 
     if (bizError || !business) {
-      alert('Error: No business found for your account. Please contact support.')
+      showToast('No business found for your account. Please contact support.', 'error')
       setSaving(false)
       return
     }
@@ -187,7 +197,7 @@ export default function AppointmentsPage() {
     })
 
     if (error) {
-      alert('Error creating appointment: ' + error.message)
+      showToast('Error creating appointment: ' + error.message, 'error')
     } else {
       setFormData({
         customer_id: '',
@@ -207,7 +217,7 @@ export default function AppointmentsPage() {
 
     const { error } = await supabase.from('b2b_appointments').delete().eq('id', id)
     if (error) {
-      alert('Error deleting appointment: ' + error.message)
+      showToast('Error deleting appointment: ' + error.message, 'error')
     } else {
       fetchData()
     }
@@ -280,6 +290,121 @@ export default function AppointmentsPage() {
   const filteredCustomers = filterCustomers(customerQuery)
   const filteredEditCustomers = filterCustomers(editCustomerQuery)
 
+  // Reset active index when filtered results change or dropdown closes
+  useEffect(() => {
+    setNewActiveIndex(-1)
+  }, [customerQuery, customerMenuOpen])
+
+  useEffect(() => {
+    setEditActiveIndex(-1)
+  }, [editCustomerQuery, editCustomerMenuOpen])
+
+  const newListboxRef = useRef<HTMLUListElement>(null)
+  const editListboxRef = useRef<HTMLUListElement>(null)
+
+  // Scroll the active option into view within the listbox
+  useEffect(() => {
+    if (newActiveIndex >= 0 && newListboxRef.current) {
+      const activeEl = newListboxRef.current.children[newActiveIndex] as HTMLElement | undefined
+      activeEl?.scrollIntoView?.({ block: 'nearest' })
+    }
+  }, [newActiveIndex])
+
+  useEffect(() => {
+    if (editActiveIndex >= 0 && editListboxRef.current) {
+      const activeEl = editListboxRef.current.children[editActiveIndex] as HTMLElement | undefined
+      activeEl?.scrollIntoView?.({ block: 'nearest' })
+    }
+  }, [editActiveIndex])
+
+  const newActiveOptionId = newActiveIndex >= 0 && newActiveIndex < filteredCustomers.length
+    ? `new-customer-option-${filteredCustomers[newActiveIndex].id}`
+    : undefined
+
+  const editActiveOptionId = editActiveIndex >= 0 && editActiveIndex < filteredEditCustomers.length
+    ? `edit-customer-option-${filteredEditCustomers[editActiveIndex].id}`
+    : undefined
+
+  const handleNewCustomerKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!customerMenuOpen) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault()
+        setCustomerMenuOpen(true)
+        setNewActiveIndex(0)
+      }
+      return
+    }
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setNewActiveIndex((prev) =>
+          prev < filteredCustomers.length - 1 ? prev + 1 : 0
+        )
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setNewActiveIndex((prev) =>
+          prev > 0 ? prev - 1 : filteredCustomers.length - 1
+        )
+        break
+      case 'Enter':
+        e.preventDefault()
+        if (newActiveIndex >= 0 && newActiveIndex < filteredCustomers.length) {
+          const customer = filteredCustomers[newActiveIndex]
+          setFormData({ ...formData, customer_id: customer.id })
+          setCustomerQuery(getCustomerLabel(customer))
+          setCustomerMenuOpen(false)
+          setNewActiveIndex(-1)
+        }
+        break
+      case 'Escape':
+        e.preventDefault()
+        setCustomerMenuOpen(false)
+        setNewActiveIndex(-1)
+        break
+    }
+  }
+
+  const handleEditCustomerKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!editCustomerMenuOpen) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault()
+        setEditCustomerMenuOpen(true)
+        setEditActiveIndex(0)
+      }
+      return
+    }
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setEditActiveIndex((prev) =>
+          prev < filteredEditCustomers.length - 1 ? prev + 1 : 0
+        )
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setEditActiveIndex((prev) =>
+          prev > 0 ? prev - 1 : filteredEditCustomers.length - 1
+        )
+        break
+      case 'Enter':
+        e.preventDefault()
+        if (editActiveIndex >= 0 && editActiveIndex < filteredEditCustomers.length) {
+          const customer = filteredEditCustomers[editActiveIndex]
+          setEditFormData({ ...editFormData, customer_id: customer.id })
+          setEditCustomerQuery(getCustomerLabel(customer))
+          setEditCustomerMenuOpen(false)
+          setEditActiveIndex(-1)
+        }
+        break
+      case 'Escape':
+        e.preventDefault()
+        setEditCustomerMenuOpen(false)
+        setEditActiveIndex(-1)
+        break
+    }
+  }
+
   useEffect(() => {
     if (formData.customer_id && selectedCustomer && customerQuery.trim() === '') {
       setCustomerQuery(getCustomerLabel(selectedCustomer))
@@ -326,7 +451,7 @@ export default function AppointmentsPage() {
     setEditSaving(true)
 
     if (!editFormData.customer_id) {
-      alert('Please select a customer.')
+      showToast('Please select a customer.', 'warning')
       setEditSaving(false)
       return
     }
@@ -346,7 +471,7 @@ export default function AppointmentsPage() {
       .eq('id', editingAppointment.id)
 
     if (error) {
-      alert('Error updating appointment: ' + error.message)
+      showToast('Error updating appointment: ' + error.message, 'error')
     } else {
       setEditingAppointment(null)
       fetchData()
@@ -387,6 +512,41 @@ export default function AppointmentsPage() {
   const isUpcoming = (date: string) => parseUTCDate(date) > new Date()
   const isPast = (date: string) => parseUTCDate(date) < new Date()
   const timezoneLabel = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+  const getTimezoneAbbr = (tz: string) => {
+    try {
+      const formatter = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'short' })
+      const parts = formatter.formatToParts(new Date())
+      return parts.find(p => p.type === 'timeZoneName')?.value || ''
+    } catch {
+      return ''
+    }
+  }
+
+  const browserTz = timezoneLabel
+  const bizTz = businessTimezone || browserTz
+  const browserTzAbbr = getTimezoneAbbr(browserTz)
+  const bizTzAbbr = getTimezoneAbbr(bizTz)
+  const tzMismatch = browserTz !== bizTz
+
+  const TimezoneIndicator = () => (
+    <div className="mt-1.5 space-y-1">
+      <p className="flex items-center gap-1.5 text-xs text-[#0f1f1a]/60">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5 shrink-0 text-[#0f1f1a]/40" aria-hidden="true">
+          <path fillRule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14ZM8 3a5 5 0 0 0-4.546 2.914A5.007 5.007 0 0 0 3 8a5 5 0 0 0 10 0 5.007 5.007 0 0 0-.454-2.086A5 5 0 0 0 8 3Zm-.75 2.75a.75.75 0 0 1 1.5 0v1.69l.97.97a.75.75 0 0 1-1.06 1.06l-1.28-1.28a.75.75 0 0 1-.22-.53V5.75Z" clipRule="evenodd" />
+        </svg>
+        Times are in {bizTz} ({bizTzAbbr})
+      </p>
+      {tzMismatch && (
+        <p className="flex items-center gap-1.5 rounded-lg border border-[#f97316]/20 bg-[#f97316]/5 px-2 py-1 text-[11px] text-[#b45309]">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5 shrink-0" aria-hidden="true">
+            <path fillRule="evenodd" d="M6.701 2.25c.577-1 2.02-1 2.598 0l5.196 9a1.5 1.5 0 0 1-1.299 2.25H2.804a1.5 1.5 0 0 1-1.3-2.25l5.197-9ZM8 4a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-1.5 0v-3A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+          </svg>
+          Your browser is in {browserTz} ({browserTzAbbr}). Times entered will be treated as {bizTz}.
+        </p>
+      )}
+    </div>
+  )
 
   if (loading) {
     return (
@@ -531,13 +691,22 @@ export default function AppointmentsPage() {
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Customer *</label>
+                  <label htmlFor="new-appointment-customer" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Customer *</label>
                   <div className="relative mt-2">
                     <input
+                      ref={newInputRef}
+                      id="new-appointment-customer"
                       type="text"
+                      role="combobox"
+                      aria-expanded={customerMenuOpen}
+                      aria-haspopup="listbox"
+                      aria-controls="new-customer-search-results"
+                      aria-autocomplete="list"
+                      aria-activedescendant={newActiveOptionId}
                       value={customerQuery}
                       onFocus={() => setCustomerMenuOpen(true)}
                       onBlur={() => setTimeout(() => setCustomerMenuOpen(false), 120)}
+                      onKeyDown={handleNewCustomerKeyDown}
                       onChange={(e) => {
                         const value = e.target.value
                         setCustomerQuery(value)
@@ -565,34 +734,45 @@ export default function AppointmentsPage() {
                       </button>
                     )}
                     {customerMenuOpen && (
-                      <div className="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-[#0f1f1a]/10 bg-white py-2 text-sm shadow-lg">
+                      <ul
+                        ref={newListboxRef}
+                        id="new-customer-search-results"
+                        role="listbox"
+                        aria-label="Customer search results"
+                        className="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-[#0f1f1a]/10 bg-white py-2 text-sm shadow-lg"
+                      >
                         {filteredCustomers.length === 0 ? (
-                          <div className="px-4 py-2 text-xs text-[#0f1f1a]/50">No matching customers</div>
+                          <li className="px-4 py-2 text-xs text-[#0f1f1a]/50" role="option" aria-selected={false}>No matching customers</li>
                         ) : (
-                          filteredCustomers.map((customer) => (
-                            <button
+                          filteredCustomers.map((customer, index) => (
+                            <li
                               key={customer.id}
-                              type="button"
+                              id={`new-customer-option-${customer.id}`}
+                              role="option"
+                              aria-selected={formData.customer_id === customer.id}
                               onMouseDown={(event) => {
                                 event.preventDefault()
                                 setFormData({ ...formData, customer_id: customer.id })
                                 setCustomerQuery(getCustomerLabel(customer))
                                 setCustomerMenuOpen(false)
                               }}
-                              className="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-[#0f1f1a] hover:bg-[#f8f5ef]"
+                              className={`flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-[#0f1f1a] hover:bg-[#f8f5ef] ${
+                                index === newActiveIndex ? 'bg-[#f8f5ef]' : ''
+                              }`}
                             >
                               <span className="font-semibold">{customer.name}</span>
                               <span className="text-xs text-[#0f1f1a]/60">{customer.phone}</span>
-                            </button>
+                            </li>
                           ))
                         )}
-                      </div>
+                      </ul>
                     )}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Title *</label>
+                  <label htmlFor="new-appointment-title" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Title *</label>
                   <input
+                    id="new-appointment-title"
                     type="text"
                     required
                     value={formData.title}
@@ -602,21 +782,21 @@ export default function AppointmentsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Date & time *</label>
-                  <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-[#0f1f1a]/40">
-                    Local time ({timezoneLabel})
-                  </p>
+                  <label htmlFor="new-appointment-date" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Date & time *</label>
                   <input
+                    id="new-appointment-date"
                     type="datetime-local"
                     required
                     value={formData.scheduled_at}
                     onChange={(e) => setFormData({ ...formData, scheduled_at: e.target.value })}
                     className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                   />
+                  <TimezoneIndicator />
                 </div>
                 <div>
-                  <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Remind before</label>
+                  <label htmlFor="new-appointment-reminder" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Remind before</label>
                   <select
+                    id="new-appointment-reminder"
                     value={formData.reminder_minutes_before}
                     onChange={(e) => setFormData({ ...formData, reminder_minutes_before: parseInt(e.target.value) })}
                     className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
@@ -630,8 +810,9 @@ export default function AppointmentsPage() {
                   </select>
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Description</label>
+                  <label htmlFor="new-appointment-description" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Description</label>
                   <textarea
+                    id="new-appointment-description"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={3}
@@ -782,9 +963,14 @@ export default function AppointmentsPage() {
         </div>
       )}
 
-      {editingAppointment && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-3xl border border-[#0f1f1a]/10 bg-white shadow-xl">
+      <AccessibleModal
+        isOpen={!!editingAppointment}
+        onClose={() => setEditingAppointment(null)}
+        ariaLabel={`Edit appointment: ${editingAppointment?.title || ''}`}
+        panelClassName="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-3xl border border-[#0f1f1a]/10 bg-white shadow-xl"
+      >
+        {editingAppointment && (
+          <>
             <div className="flex items-center justify-between border-b border-[#0f1f1a]/10 px-6 py-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Edit appointment</p>
@@ -792,6 +978,7 @@ export default function AppointmentsPage() {
               </div>
               <button
                 onClick={() => setEditingAppointment(null)}
+                aria-label="Close"
                 className="rounded-full border border-[#0f1f1a]/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60"
               >
                 Close
@@ -824,13 +1011,22 @@ export default function AppointmentsPage() {
                     <form onSubmit={handleEditSave} className="mt-6 space-y-4">
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
-                          <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Customer *</label>
+                          <label htmlFor="edit-appointment-customer" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Customer *</label>
                           <div className="relative mt-2">
                             <input
+                              ref={editInputRef}
+                              id="edit-appointment-customer"
                               type="text"
+                              role="combobox"
+                              aria-expanded={editCustomerMenuOpen}
+                              aria-haspopup="listbox"
+                              aria-controls="edit-customer-search-results"
+                              aria-autocomplete="list"
+                              aria-activedescendant={editActiveOptionId}
                               value={editCustomerQuery}
                               onFocus={() => setEditCustomerMenuOpen(true)}
                               onBlur={() => setTimeout(() => setEditCustomerMenuOpen(false), 120)}
+                              onKeyDown={handleEditCustomerKeyDown}
                               onChange={(e) => {
                                 const value = e.target.value
                                 setEditCustomerQuery(value)
@@ -858,34 +1054,45 @@ export default function AppointmentsPage() {
                               </button>
                             )}
                             {editCustomerMenuOpen && (
-                              <div className="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-[#0f1f1a]/10 bg-white py-2 text-sm shadow-lg">
+                              <ul
+                                ref={editListboxRef}
+                                id="edit-customer-search-results"
+                                role="listbox"
+                                aria-label="Customer search results"
+                                className="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-[#0f1f1a]/10 bg-white py-2 text-sm shadow-lg"
+                              >
                                 {filteredEditCustomers.length === 0 ? (
-                                  <div className="px-4 py-2 text-xs text-[#0f1f1a]/50">No matching customers</div>
+                                  <li className="px-4 py-2 text-xs text-[#0f1f1a]/50" role="option" aria-selected={false}>No matching customers</li>
                                 ) : (
-                                  filteredEditCustomers.map((customer) => (
-                                    <button
+                                  filteredEditCustomers.map((customer, index) => (
+                                    <li
                                       key={customer.id}
-                                      type="button"
+                                      id={`edit-customer-option-${customer.id}`}
+                                      role="option"
+                                      aria-selected={editFormData.customer_id === customer.id}
                                       onMouseDown={(event) => {
                                         event.preventDefault()
                                         setEditFormData({ ...editFormData, customer_id: customer.id })
                                         setEditCustomerQuery(getCustomerLabel(customer))
                                         setEditCustomerMenuOpen(false)
                                       }}
-                                      className="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-[#0f1f1a] hover:bg-[#f8f5ef]"
+                                      className={`flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-sm text-[#0f1f1a] hover:bg-[#f8f5ef] ${
+                                        index === editActiveIndex ? 'bg-[#f8f5ef]' : ''
+                                      }`}
                                     >
                                       <span className="font-semibold">{customer.name}</span>
                                       <span className="text-xs text-[#0f1f1a]/60">{customer.phone}</span>
-                                    </button>
+                                    </li>
                                   ))
                                 )}
-                              </div>
+                              </ul>
                             )}
                           </div>
                         </div>
                         <div>
-                          <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Title *</label>
+                          <label htmlFor="edit-appointment-title" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Title *</label>
                           <input
+                            id="edit-appointment-title"
                             type="text"
                             required
                             value={editFormData.title}
@@ -895,21 +1102,21 @@ export default function AppointmentsPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Date & time *</label>
-                          <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-[#0f1f1a]/40">
-                            Local time ({timezoneLabel})
-                          </p>
+                          <label htmlFor="edit-appointment-date" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Date & time *</label>
                           <input
+                            id="edit-appointment-date"
                             type="datetime-local"
                             required
                             value={editFormData.scheduled_at}
                             onChange={(e) => setEditFormData({ ...editFormData, scheduled_at: e.target.value })}
                             className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                           />
+                          <TimezoneIndicator />
                         </div>
                         <div>
-                          <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Remind before</label>
+                          <label htmlFor="edit-appointment-reminder" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Remind before</label>
                           <select
+                            id="edit-appointment-reminder"
                             value={editFormData.reminder_minutes_before}
                             onChange={(e) => setEditFormData({ ...editFormData, reminder_minutes_before: parseInt(e.target.value) })}
                             className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
@@ -923,8 +1130,9 @@ export default function AppointmentsPage() {
                           </select>
                         </div>
                         <div>
-                          <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Status</label>
+                          <label htmlFor="edit-appointment-status" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Status</label>
                           <select
+                            id="edit-appointment-status"
                             value={editFormData.status}
                             onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
                             className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
@@ -938,8 +1146,9 @@ export default function AppointmentsPage() {
                           </select>
                         </div>
                         <div className="sm:col-span-2">
-                          <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Description</label>
+                          <label htmlFor="edit-appointment-description" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Description</label>
                           <textarea
+                            id="edit-appointment-description"
                             value={editFormData.description}
                             onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
                             rows={3}
@@ -1054,9 +1263,9 @@ export default function AppointmentsPage() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </AccessibleModal>
     </div>
   )
 }

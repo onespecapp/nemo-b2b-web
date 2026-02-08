@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
+import { ToastProvider } from '@/components/ToastProvider'
 
 export default function DashboardLayout({
   children,
@@ -83,6 +84,7 @@ export default function DashboardLayout({
   }
 
   return (
+    <ToastProvider>
     <div className="min-h-screen bg-[#f8f5ef] text-[#0f1f1a]">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute left-1/2 top-0 h-72 w-72 -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(15,118,110,0.18),rgba(248,245,239,0.02)_65%)] blur-3xl" />
@@ -206,5 +208,6 @@ export default function DashboardLayout({
         <div className="h-16 lg:hidden" />
       </div>
     </div>
+    </ToastProvider>
   )
 }

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
+import AccessibleModal from '@/components/AccessibleModal'
 
 interface CallLog {
   id: string
@@ -215,9 +216,14 @@ export default function CallHistoryPage() {
         )}
       </div>
 
-      {selectedCall && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-3xl border border-[#0f1f1a]/10 bg-white shadow-xl">
+      <AccessibleModal
+        isOpen={!!selectedCall}
+        onClose={() => setSelectedCall(null)}
+        ariaLabel={`Call details: ${selectedCall?.customer?.name || 'Unknown'}`}
+        panelClassName="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-3xl border border-[#0f1f1a]/10 bg-white shadow-xl"
+      >
+        {selectedCall && (
+          <>
             <div className="flex items-center justify-between border-b border-[#0f1f1a]/10 px-6 py-4">
               <div>
                 <h3 className="font-display text-2xl">Call details</h3>
@@ -227,6 +233,7 @@ export default function CallHistoryPage() {
               </div>
               <button
                 onClick={() => setSelectedCall(null)}
+                aria-label="Close"
                 className="rounded-full border border-[#0f1f1a]/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60"
               >
                 Close
@@ -306,9 +313,9 @@ export default function CallHistoryPage() {
                 )}
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </AccessibleModal>
     </div>
   )
 }
