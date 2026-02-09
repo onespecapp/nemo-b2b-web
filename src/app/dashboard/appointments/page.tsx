@@ -1,17 +1,18 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import AccessibleModal from '@/components/AccessibleModal'
 import { useToast } from '@/components/ToastProvider'
-import StatusBadge from '@/components/StatusBadge'
-import CallOutcomeBadge from '@/components/CallOutcomeBadge'
-import { callTypeLabels, callOutcomeLabels } from '@/lib/constants'
-import { SkeletonAppointmentList } from '@/components/Skeleton'
-import { parseUTCDate, formatDuration, formatDateTime } from '@/lib/utils'
-import { useForm } from '@/lib/hooks/useForm'
+
+const parseUTCDate = (dateStr: string): Date => {
+  if (!dateStr.endsWith('Z') && !dateStr.includes('+')) {
+    return new Date(dateStr + 'Z')
+  }
+  return new Date(dateStr)
+}
 
 interface Customer {
   id: string
@@ -41,14 +42,43 @@ interface CallLog {
   created_at: string
 }
 
+const callTypeLabels: Record<string, string> = {
+  REMINDER: 'Reminder call',
+  TEST: 'Test call',
+  FOLLOW_UP: 'Follow-up call',
+  CONFIRMATION: 'Confirmation call',
+}
 
-export default function AppointmentsPage() {
+const callOutcomeLabels: Record<string, string> = {
+  CONFIRMED: 'Confirmed',
+  RESCHEDULED: 'Rescheduled',
+  CANCELED: 'Canceled',
+  ANSWERED: 'Answered',
+  NO_ANSWER: 'No Answer',
+  VOICEMAIL: 'Voicemail',
+  BUSY: 'Busy',
+  FAILED: 'Failed',
+}
+
+const callOutcomeStyles: Record<string, string> = {
+  CONFIRMED: 'bg-[#0f766e]/15 text-[#0f766e]',
+  RESCHEDULED: 'bg-[#f97316]/20 text-[#b45309]',
+  CANCELED: 'bg-[#ef4444]/15 text-[#991b1b]',
+  ANSWERED: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70',
+  NO_ANSWER: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70',
+  VOICEMAIL: 'bg-[#6366f1]/15 text-[#4338ca]',
+  BUSY: 'bg-[#fb7185]/15 text-[#be123c]',
+  FAILED: 'bg-[#ef4444]/15 text-[#991b1b]',
+}
+
+function AppointmentsPageInner() {
   const { showToast } = useToast()
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
-  const { values: formData, setValues: setFormData, reset: resetCreateForm } = useForm({
+  const [formData, setFormData] = useState({
     customer_id: '',
     title: '',
     description: '',
@@ -59,7 +89,7 @@ export default function AppointmentsPage() {
   const [customerMenuOpen, setCustomerMenuOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
-  const { values: editFormData, setValues: setEditFormData, reset: resetEditForm } = useForm({
+  const [editFormData, setEditFormData] = useState({
     customer_id: '',
     title: '',
     description: '',
@@ -87,41 +117,54 @@ export default function AppointmentsPage() {
   const customerIdFromQuery = searchParams.get('customerId') || searchParams.get('customer_id') || ''
 
   const fetchData = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+    setError(null)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setLoading(false)
+        return
+      }
+
+      const { data: business, error: bizError } = await supabase
+        .from('b2b_businesses')
+        .select('id, timezone')
+        .eq('owner_id', user.id)
+        .single()
+
+      if (bizError || !business) {
+        setError(bizError?.message || 'No business found. Please set up your business in Settings first.')
+        setLoading(false)
+        return
+      }
+
+      setBusinessTimezone(business.timezone || null)
+
+      const [appointmentsRes, customersRes] = await Promise.all([
+        supabase
+          .from('b2b_appointments')
+          .select(`*, customer:b2b_customers(id, name, phone)`)
+          .eq('business_id', business.id)
+          .order('scheduled_at', { ascending: true }),
+        supabase
+          .from('b2b_customers')
+          .select('id, name, phone')
+          .eq('business_id', business.id)
+          .order('name'),
+      ])
+
+      if (appointmentsRes.error) {
+        setError(appointmentsRes.error.message)
+        setLoading(false)
+        return
+      }
+
+      setAppointments(appointmentsRes.data || [])
+      setCustomers(customersRes.data || [])
       setLoading(false)
-      return
-    }
-
-    const { data: business } = await supabase
-      .from('b2b_businesses')
-      .select('id, timezone')
-      .eq('owner_id', user.id)
-      .single()
-
-    if (!business) {
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred.')
       setLoading(false)
-      return
     }
-
-    setBusinessTimezone(business.timezone || null)
-
-    const [appointmentsRes, customersRes] = await Promise.all([
-      supabase
-        .from('b2b_appointments')
-        .select(`*, customer:b2b_customers(id, name, phone)`)
-        .eq('business_id', business.id)
-        .order('scheduled_at', { ascending: true }),
-      supabase
-        .from('b2b_customers')
-        .select('id, name, phone')
-        .eq('business_id', business.id)
-        .order('name'),
-    ])
-
-    setAppointments(appointmentsRes.data || [])
-    setCustomers(customersRes.data || [])
-    setLoading(false)
   }, [supabase])
 
   useEffect(() => {
@@ -170,7 +213,13 @@ export default function AppointmentsPage() {
     if (error) {
       showToast('Error creating appointment: ' + error.message, 'error')
     } else {
-      resetCreateForm()
+      setFormData({
+        customer_id: '',
+        title: '',
+        description: '',
+        scheduled_at: '',
+        reminder_minutes_before: 30,
+      })
       setShowForm(false)
       fetchData()
     }
@@ -192,6 +241,24 @@ export default function AppointmentsPage() {
     const date = parseUTCDate(dateStr)
     const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
     return local.toISOString().slice(0, 16)
+  }
+
+  const formatCallDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    })
+  }
+
+  const formatDuration = (seconds: number | null) => {
+    if (!seconds) return '-'
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
   const getRelativeLabel = (dateStr: string) => {
@@ -364,7 +431,7 @@ export default function AppointmentsPage() {
       || null
 
     setEditingAppointment(appointment)
-    resetEditForm({
+    setEditFormData({
       customer_id: appointment.customer_id,
       title: appointment.title,
       description: appointment.description || '',
@@ -426,6 +493,36 @@ export default function AppointmentsPage() {
     setEditSaving(false)
   }
 
+  const getStatusBadge = (status: string) => {
+    const normalizedStatus = status?.toUpperCase() || ''
+    const styles: Record<string, string> = {
+      SCHEDULED: 'bg-[#0f1f1a] text-white',
+      REMINDED: 'bg-[#f97316]/15 text-[#b45309]',
+      CONFIRMED: 'bg-[#0f766e]/15 text-[#0f766e]',
+      COMPLETED: 'bg-[#0f766e]/15 text-[#0f766e]',
+      RESCHEDULED: 'bg-[#fb7185]/15 text-[#be123c]',
+      CANCELED: 'bg-[#ef4444]/15 text-[#991b1b]',
+      CANCELLED: 'bg-[#ef4444]/15 text-[#991b1b]',
+      NO_SHOW: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70',
+    }
+    return styles[normalizedStatus] || 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70'
+  }
+
+  const formatStatus = (status: string) => {
+    const labels: Record<string, string> = {
+      SCHEDULED: 'Scheduled',
+      REMINDED: 'Reminded',
+      CONFIRMED: 'Confirmed',
+      COMPLETED: 'Completed',
+      RESCHEDULED: 'Rescheduled',
+      CANCELED: 'Canceled',
+      CANCELLED: 'Canceled',
+      NO_SHOW: 'No Show',
+    }
+    const normalizedStatus = status?.toUpperCase() || ''
+    return labels[normalizedStatus] || status
+  }
+
   const isUpcoming = (date: string) => parseUTCDate(date) > new Date()
   const isPast = (date: string) => parseUTCDate(date) < new Date()
   const timezoneLabel = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -467,15 +564,25 @@ export default function AppointmentsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Appointments</p>
-            <h1 className="font-display text-3xl sm:text-4xl">Your schedule</h1>
-            <p className="mt-1 text-sm text-[#0f1f1a]/60">Loading appointments...</p>
-          </div>
+      <div className="flex items-center justify-center py-12">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#0f1f1a]/20 border-t-[#f97316]" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="rounded-3xl border border-dashed border-[#ef4444]/30 bg-white/80 p-10 text-center">
+          <h3 className="font-display text-2xl">Something went wrong</h3>
+          <p className="mt-2 text-sm text-[#0f1f1a]/60">{error}</p>
+          <button
+            onClick={() => { setLoading(true); fetchData() }}
+            className="mt-5 inline-flex items-center justify-center rounded-full bg-[#0f1f1a] px-5 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white"
+          >
+            Try again
+          </button>
         </div>
-        <SkeletonAppointmentList count={4} />
       </div>
     )
   }
@@ -576,7 +683,7 @@ export default function AppointmentsPage() {
                 setDateStart('')
                 setDateEnd('')
               }}
-              className="rounded-full border border-[#0f1f1a]/15 px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#0f1f1a]/60"
+              className="rounded-full border border-[#0f1f1a]/15 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-[#0f1f1a]/60"
             >
               Clear
             </button>
@@ -805,7 +912,9 @@ export default function AppointmentsPage() {
                         </p>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <StatusBadge status={appointment.status} />
+                        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadge(appointment.status)}`}>
+                          {formatStatus(appointment.status)}
+                        </span>
                         <button
                           onClick={() => openEdit(appointment)}
                           className="rounded-full bg-[#0f1f1a] px-3 py-1 text-xs font-semibold text-white"
@@ -865,7 +974,9 @@ export default function AppointmentsPage() {
                         </p>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <StatusBadge status={appointment.status} />
+                        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadge(appointment.status)}`}>
+                          {formatStatus(appointment.status)}
+                        </span>
                         <button
                           onClick={() => openEdit(appointment)}
                           className="rounded-full border border-[#0f1f1a]/15 px-3 py-1 text-xs font-semibold text-[#0f1f1a]/70 hover:bg-white"
@@ -906,7 +1017,7 @@ export default function AppointmentsPage() {
             </div>
 
             <div className="max-h-[calc(90vh-140px)] overflow-y-auto px-6 py-6">
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
                 <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-5">
                   <h4 className="font-display text-xl">Appointment details</h4>
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-[#0f1f1a]/50">
@@ -916,7 +1027,9 @@ export default function AppointmentsPage() {
                     <span className="rounded-full border border-[#0f1f1a]/10 bg-white px-3 py-1">
                       {formatLocalDateTime(editFormData.scheduled_at) || 'Pick a time'}
                     </span>
-                    <StatusBadge status={editFormData.status} />
+                    <span className={`rounded-full px-3 py-1 ${getStatusBadge(editFormData.status)}`}>
+                      {formatStatus(editFormData.status)}
+                    </span>
                   </div>
                   {customers.length === 0 ? (
                     <div className="mt-6 rounded-2xl border border-dashed border-[#0f1f1a]/20 bg-[#f8f5ef] px-6 py-8 text-center">
@@ -1123,7 +1236,7 @@ export default function AppointmentsPage() {
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <p className="text-sm font-semibold text-[#0f1f1a]">
-                                {callTypeLabels[call.call_type] || call.call_type} • {formatDateTime(call.created_at)}
+                                {callTypeLabels[call.call_type] || call.call_type} • {formatCallDate(call.created_at)}
                               </p>
                               <p className="mt-1 text-xs text-[#0f1f1a]/60">
                                 Outcome: {callOutcomeLabels[call.call_outcome || ''] || call.call_outcome || 'Pending'}
@@ -1135,7 +1248,11 @@ export default function AppointmentsPage() {
                               )}
                             </div>
                             <div className="text-right">
-                              <CallOutcomeBadge outcome={call.call_outcome} />
+                              <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold ${
+                                callOutcomeStyles[call.call_outcome || ''] || 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70'
+                              }`}>
+                                {callOutcomeLabels[call.call_outcome || ''] || call.call_outcome || 'Pending'}
+                              </span>
                             </div>
                           </div>
                           {call.transcript && call.transcript.length > 0 && (
@@ -1181,5 +1298,17 @@ export default function AppointmentsPage() {
         )}
       </AccessibleModal>
     </div>
+  )
+}
+
+export default function AppointmentsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-12">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#0f1f1a]/20 border-t-[#f97316]" />
+      </div>
+    }>
+      <AppointmentsPageInner />
+    </Suspense>
   )
 }
