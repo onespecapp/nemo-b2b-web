@@ -4,6 +4,9 @@ import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState, useCallback, useRef } from 'react'
 import AccessibleModal from '@/components/AccessibleModal'
 import { SkeletonCallList } from '@/components/Skeleton'
+import CallOutcomeBadge from '@/components/CallOutcomeBadge'
+import { callOutcomeLabels, campaignCallTypeLabels, campaignCallTypeStyles } from '@/lib/constants'
+import { formatDuration, parseUTCDate, formatRelativeTime } from '@/lib/utils'
 
 interface CallLog {
   id: string
@@ -23,40 +26,6 @@ interface CallLog {
     scheduled_at: string
     status: string
   } | null
-}
-
-const outcomeColors: Record<string, string> = {
-  CONFIRMED: 'bg-[#0f766e]/15 text-[#0f766e]',
-  RESCHEDULED: 'bg-[#f97316]/20 text-[#b45309]',
-  CANCELED: 'bg-[#ef4444]/15 text-[#991b1b]',
-  ANSWERED: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70',
-  NO_ANSWER: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70',
-  VOICEMAIL: 'bg-[#6366f1]/15 text-[#4338ca]',
-  BUSY: 'bg-[#fb7185]/15 text-[#be123c]',
-  FAILED: 'bg-[#ef4444]/15 text-[#991b1b]',
-  BOOKED: 'bg-[#0f766e]/15 text-[#0f766e]',
-  REVIEW_SENT: 'bg-[#6366f1]/15 text-[#4338ca]',
-  DECLINED: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/50',
-}
-
-const outcomeLabels: Record<string, string> = {
-  CONFIRMED: 'Confirmed',
-  RESCHEDULED: 'Rescheduled',
-  CANCELED: 'Canceled',
-  ANSWERED: 'Answered',
-  NO_ANSWER: 'No Answer',
-  VOICEMAIL: 'Voicemail',
-  BUSY: 'Busy',
-  FAILED: 'Failed',
-  BOOKED: 'Booked',
-  REVIEW_SENT: 'Review Sent',
-  DECLINED: 'Declined',
-}
-
-const campaignCallTypes: Record<string, { label: string; color: string }> = {
-  RE_ENGAGEMENT: { label: 'Re-engagement', color: 'bg-[#0f766e]/10 text-[#0f766e]' },
-  REVIEW_COLLECTION: { label: 'Review', color: 'bg-[#f97316]/10 text-[#b45309]' },
-  NO_SHOW_FOLLOWUP: { label: 'No-Show', color: 'bg-[#6366f1]/10 text-[#4338ca]' },
 }
 
 const PAGE_SIZE = 50
@@ -144,20 +113,6 @@ export default function CallHistoryPage() {
     fetchCalls(false)
   }, [fetchCalls])
 
-  const formatDuration = (seconds: number | null) => {
-    if (!seconds) return '-'
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
-
-  const parseUTCDate = (dateStr: string): Date => {
-    if (!dateStr.endsWith('Z') && !dateStr.includes('+')) {
-      return new Date(dateStr + 'Z')
-    }
-    return new Date(dateStr)
-  }
-
   const formatDate = (dateString: string) => {
     const date = parseUTCDate(dateString)
     return date.toLocaleDateString('en-US', {
@@ -225,7 +180,7 @@ export default function CallHistoryPage() {
           </span>
           {filter !== 'all' && (
             <span className="rounded-full bg-[#f97316]/10 px-2 py-0.5 text-xs font-semibold text-[#b45309]">
-              {outcomeLabels[filter] || filter}
+              {callOutcomeLabels[filter] || filter}
             </span>
           )}
         </div>
@@ -235,9 +190,19 @@ export default function CallHistoryPage() {
         {loading ? (
           <SkeletonCallList count={5} />
         ) : calls.length === 0 ? (
-          <div className="p-12 text-center">
-            <p className="font-display text-2xl">No calls yet</p>
-            <p className="mt-2 text-sm text-[#0f1f1a]/60">Call history will appear here once reminders run.</p>
+          <div className="py-12 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#0f1f1a]/5">
+              <svg className="h-6 w-6 text-[#0f1f1a]/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              </svg>
+            </div>
+            <p className="font-display text-lg font-semibold text-[#0f1f1a]/70">No calls yet</p>
+            <p className="mt-1 text-sm text-[#0f1f1a]/40">
+              Call history will appear here once reminders run.
+            </p>
+            <p className="mt-0.5 text-xs text-[#0f1f1a]/30">
+              Schedule an appointment to trigger your first reminder call.
+            </p>
           </div>
         ) : (
           <ul className="divide-y divide-[#0f1f1a]/10">
@@ -247,40 +212,40 @@ export default function CallHistoryPage() {
                 className="cursor-pointer px-6 py-4 transition hover:bg-[#f8f5ef]"
                 onClick={() => setSelectedCall(call)}
               >
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f1f1a] text-sm font-semibold text-white">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0f1f1a] text-sm font-semibold text-white">
                     {call.customer?.name?.charAt(0) || '?'}
                   </div>
 
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-[#0f1f1a]">
+                      <p className="truncate text-sm font-semibold text-[#0f1f1a]" title={call.customer?.name || 'Unknown Customer'}>
                         {call.customer?.name || 'Unknown Customer'}
                       </p>
-                      {campaignCallTypes[call.call_type] && (
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${campaignCallTypes[call.call_type].color}`}>
-                          {campaignCallTypes[call.call_type].label}
+                      {campaignCallTypeLabels[call.call_type] && (
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${campaignCallTypeStyles[call.call_type]}`}>
+                          {campaignCallTypeLabels[call.call_type]}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-[#0f1f1a]/60">
+                    <p className="truncate text-xs text-[#0f1f1a]/60">
                       {call.appointment?.title || 'No appointment'} • {call.customer?.phone}
                     </p>
                   </div>
 
-                  <div className="text-right text-xs text-[#0f1f1a]/60">
+                  <div className="hidden shrink-0 text-right text-xs text-[#0f1f1a]/60 sm:block">
                     <div>{formatDate(call.created_at)}</div>
                     <div>Duration: {formatDuration(call.duration_sec)}</div>
                   </div>
+                  <div className="shrink-0 text-right text-xs text-[#0f1f1a]/40 sm:hidden">
+                    <div>{formatRelativeTime(call.created_at)}</div>
+                    <div>{formatDuration(call.duration_sec)}</div>
+                  </div>
 
-                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                    outcomeColors[call.call_outcome || ''] || 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70'
-                  }`}>
-                    {outcomeLabels[call.call_outcome || ''] || call.call_outcome || 'Pending'}
-                  </span>
+                  <CallOutcomeBadge outcome={call.call_outcome} />
 
                   {call.transcript && call.transcript.length > 0 && (
-                    <span className="rounded-full border border-[#0f1f1a]/10 px-2 py-1 text-[11px] uppercase tracking-[0.2em] text-[#0f1f1a]/50">
+                    <span className="hidden rounded-full border border-[#0f1f1a]/10 px-2 py-1 text-[11px] uppercase tracking-[0.2em] text-[#0f1f1a]/50 sm:inline-flex">
                       Transcript
                     </span>
                   )}
@@ -319,11 +284,9 @@ export default function CallHistoryPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] p-4">
                   <p className="text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">Outcome</p>
-                  <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                    outcomeColors[selectedCall.call_outcome || ''] || 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70'
-                  }`}>
-                    {outcomeLabels[selectedCall.call_outcome || ''] || selectedCall.call_outcome || 'Pending'}
-                  </span>
+                  <div className="mt-2">
+                    <CallOutcomeBadge outcome={selectedCall.call_outcome} />
+                  </div>
                 </div>
                 <div className="rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] p-4">
                   <p className="text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">Duration</p>

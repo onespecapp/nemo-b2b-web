@@ -3,6 +3,10 @@
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState, useCallback } from 'react'
 import AccessibleModal from '@/components/AccessibleModal'
+import CallOutcomeBadge from '@/components/CallOutcomeBadge'
+import { campaignStatusStyles, campaignStatusLabels } from '@/lib/constants'
+import { formatDuration, formatRelativeTime } from '@/lib/utils'
+import { useForm } from '@/lib/hooks/useForm'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001'
 
@@ -74,81 +78,6 @@ const campaignTypeConfig: Record<string, { label: string; description: string; d
   },
 }
 
-const statusColors: Record<string, string> = {
-  PENDING: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70',
-  QUEUED: 'bg-[#f97316]/20 text-[#b45309]',
-  IN_PROGRESS: 'bg-[#6366f1]/15 text-[#4338ca]',
-  COMPLETED: 'bg-[#0f766e]/15 text-[#0f766e]',
-  SKIPPED: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/50',
-  FAILED: 'bg-[#ef4444]/15 text-[#991b1b]',
-}
-
-const statusLabels: Record<string, string> = {
-  PENDING: 'Scheduled',
-  QUEUED: 'Queued',
-  IN_PROGRESS: 'In Progress',
-  COMPLETED: 'Completed',
-  SKIPPED: 'Skipped',
-  FAILED: 'Failed',
-}
-
-const outcomeColors: Record<string, string> = {
-  CONFIRMED: 'bg-[#0f766e]/15 text-[#0f766e]',
-  RESCHEDULED: 'bg-[#f97316]/20 text-[#b45309]',
-  CANCELED: 'bg-[#ef4444]/15 text-[#991b1b]',
-  ANSWERED: 'bg-[#0f766e]/15 text-[#0f766e]',
-  NO_ANSWER: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70',
-  VOICEMAIL: 'bg-[#6366f1]/15 text-[#4338ca]',
-  BUSY: 'bg-[#fb7185]/15 text-[#be123c]',
-  FAILED: 'bg-[#ef4444]/15 text-[#991b1b]',
-  BOOKED: 'bg-[#0f766e]/15 text-[#0f766e]',
-  REVIEW_SENT: 'bg-[#6366f1]/15 text-[#4338ca]',
-  DECLINED: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/50',
-}
-
-const outcomeLabels: Record<string, string> = {
-  CONFIRMED: 'Confirmed',
-  RESCHEDULED: 'Rescheduled',
-  CANCELED: 'Canceled',
-  ANSWERED: 'Answered',
-  NO_ANSWER: 'No Answer',
-  VOICEMAIL: 'Voicemail',
-  BUSY: 'Busy',
-  FAILED: 'Failed',
-  BOOKED: 'Booked',
-  REVIEW_SENT: 'Review Sent',
-  DECLINED: 'Declined',
-}
-
-function formatRelativeTime(dateStr: string): string {
-  const date = dateStr.endsWith('Z') || dateStr.includes('+') ? new Date(dateStr) : new Date(dateStr + 'Z')
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const absDiffMs = Math.abs(diffMs)
-  const isFuture = diffMs < 0
-
-  const minutes = Math.floor(absDiffMs / 60000)
-  const hours = Math.floor(absDiffMs / 3600000)
-  const days = Math.floor(absDiffMs / 86400000)
-
-  let label: string
-  if (minutes < 1) label = 'just now'
-  else if (minutes < 60) label = `${minutes}m`
-  else if (hours < 24) label = `${hours}h`
-  else if (days < 30) label = `${days}d`
-  else label = `${Math.floor(days / 30)}mo`
-
-  if (label === 'just now') return label
-  return isFuture ? `in ${label}` : `${label} ago`
-}
-
-function formatDuration(seconds: number | null): string {
-  if (!seconds) return '-'
-  const mins = Math.floor(seconds / 60)
-  const secs = seconds % 60
-  return `${mins}:${secs.toString().padStart(2, '0')}`
-}
-
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
 
 export default function CampaignsPage() {
@@ -169,14 +98,15 @@ export default function CampaignsPage() {
   const [loadingCalls, setLoadingCalls] = useState(false)
 
   // Config form state
-  const [formName, setFormName] = useState('')
-  const [formDaysSince, setFormDaysSince] = useState(30)
-  const [formWindowStart, setFormWindowStart] = useState('09:00')
-  const [formWindowEnd, setFormWindowEnd] = useState('17:00')
-  const [formAllowedDays, setFormAllowedDays] = useState<string[]>(['MON', 'TUE', 'WED', 'THU', 'FRI'])
-  const [formMaxConcurrent, setFormMaxConcurrent] = useState(2)
-  const [formMinBetween, setFormMinBetween] = useState(5)
-  const [formCycleFrequency, setFormCycleFrequency] = useState(30)
+  const { values: formValues, setValues: setFormValues, reset: resetForm } = useForm({
+    name: '',
+    daysSince: 30,
+    windowStart: '09:00',
+    windowEnd: '17:00',
+    allowedDays: ['MON', 'TUE', 'WED', 'THU', 'FRI'] as string[],
+    minBetween: 5,
+    cycleFrequency: 30,
+  })
   const [saving, setSaving] = useState(false)
 
   const supabase = createClient()
@@ -249,24 +179,26 @@ export default function CampaignsPage() {
     setEditingCampaign(campaign)
     setEditingType(type)
     if (campaign) {
-      setFormName(campaign.name)
-      setFormDaysSince((campaign.settings as any)?.days_since_last_appointment || 30)
-      setFormWindowStart(campaign.call_window_start)
-      setFormWindowEnd(campaign.call_window_end)
-      setFormAllowedDays(campaign.allowed_days.split(',').map(d => d.trim()))
-      setFormMaxConcurrent(campaign.max_concurrent_calls)
-      setFormMinBetween(campaign.min_minutes_between_calls)
-      setFormCycleFrequency(campaign.cycle_frequency_days)
+      resetForm({
+        name: campaign.name,
+        daysSince: (campaign.settings as any)?.days_since_last_appointment || 30,
+        windowStart: campaign.call_window_start,
+        windowEnd: campaign.call_window_end,
+        allowedDays: campaign.allowed_days.split(',').map(d => d.trim()),
+        minBetween: campaign.min_minutes_between_calls,
+        cycleFrequency: campaign.cycle_frequency_days,
+      })
     } else {
       const config = campaignTypeConfig[type]
-      setFormName(config?.defaultName || 'New Campaign')
-      setFormDaysSince(30)
-      setFormWindowStart('09:00')
-      setFormWindowEnd('17:00')
-      setFormAllowedDays(['MON', 'TUE', 'WED', 'THU', 'FRI'])
-      setFormMaxConcurrent(2)
-      setFormMinBetween(5)
-      setFormCycleFrequency(30)
+      resetForm({
+        name: config?.defaultName || 'New Campaign',
+        daysSince: 30,
+        windowStart: '09:00',
+        windowEnd: '17:00',
+        allowedDays: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
+        minBetween: 5,
+        cycleFrequency: 30,
+      })
     }
     setShowConfig(true)
   }
@@ -278,14 +210,14 @@ export default function CampaignsPage() {
     setSaving(true)
     try {
       const body: any = {
-        name: formName,
-        settings: { days_since_last_appointment: formDaysSince },
-        call_window_start: formWindowStart,
-        call_window_end: formWindowEnd,
-        allowed_days: formAllowedDays.join(','),
-        max_concurrent_calls: 2, // Fixed at 2
-        min_minutes_between_calls: formMinBetween,
-        cycle_frequency_days: formCycleFrequency,
+        name: formValues.name,
+        settings: { days_since_last_appointment: formValues.daysSince },
+        call_window_start: formValues.windowStart,
+        call_window_end: formValues.windowEnd,
+        allowed_days: formValues.allowedDays.join(','),
+        max_concurrent_calls: 2,
+        min_minutes_between_calls: formValues.minBetween,
+        cycle_frequency_days: formValues.cycleFrequency,
       }
 
       if (editingCampaign) {
@@ -431,11 +363,11 @@ export default function CampaignsPage() {
               {campaign && campaignStats && (
                 <div className="mt-4 grid grid-cols-3 gap-3">
                   <div className="rounded-2xl bg-[#f8f5ef] p-3 text-center">
-                    <div className="font-display text-xl font-bold">{campaignStats.total_calls}</div>
+                    <div className="font-display text-lg sm:text-xl font-bold">{campaignStats.total_calls}</div>
                     <div className="text-xs text-[#0f1f1a]/50">Total</div>
                   </div>
                   <div className="rounded-2xl bg-[#f8f5ef] p-3 text-center">
-                    <div className="font-display text-xl font-bold">{campaignStats.completed}</div>
+                    <div className="font-display text-lg sm:text-xl font-bold">{campaignStats.completed}</div>
                     <div className="text-xs text-[#0f1f1a]/50">Completed</div>
                   </div>
                   <div className="rounded-2xl bg-[#f8f5ef] p-3 text-center">
@@ -515,8 +447,8 @@ export default function CampaignsPage() {
                 <input
                   id="campaign-name"
                   type="text"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
+                  value={formValues.name}
+                  onChange={(e) => setFormValues(prev => ({ ...prev, name: e.target.value }))}
                   className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                 />
               </div>
@@ -533,8 +465,8 @@ export default function CampaignsPage() {
                   <input
                     id="campaign-days-since"
                     type="number"
-                    value={formDaysSince}
-                    onChange={(e) => setFormDaysSince(parseInt(e.target.value) || 30)}
+                    value={formValues.daysSince}
+                    onChange={(e) => setFormValues(prev => ({ ...prev, daysSince: parseInt(e.target.value) || 30 }))}
                     min={7}
                     max={365}
                     className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
@@ -549,8 +481,8 @@ export default function CampaignsPage() {
                   <input
                     id="campaign-window-start"
                     type="time"
-                    value={formWindowStart}
-                    onChange={(e) => setFormWindowStart(e.target.value)}
+                    value={formValues.windowStart}
+                    onChange={(e) => setFormValues(prev => ({ ...prev, windowStart: e.target.value }))}
                     className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                   />
                 </div>
@@ -559,8 +491,8 @@ export default function CampaignsPage() {
                   <input
                     id="campaign-window-end"
                     type="time"
-                    value={formWindowEnd}
-                    onChange={(e) => setFormWindowEnd(e.target.value)}
+                    value={formValues.windowEnd}
+                    onChange={(e) => setFormValues(prev => ({ ...prev, windowEnd: e.target.value }))}
                     className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                   />
                 </div>
@@ -574,14 +506,10 @@ export default function CampaignsPage() {
                     <button
                       key={day}
                       onClick={() => {
-                        setFormAllowedDays(prev =>
-                          prev.includes(day)
-                            ? prev.filter(d => d !== day)
-                            : [...prev, day]
-                        )
+                        setFormValues(prev => ({ ...prev, allowedDays: prev.allowedDays.includes(day) ? prev.allowedDays.filter(d => d !== day) : [...prev.allowedDays, day] }))
                       }}
                       className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                        formAllowedDays.includes(day)
+                        formValues.allowedDays.includes(day)
                           ? 'bg-[#0f1f1a] text-white'
                           : 'bg-[#0f1f1a]/5 text-[#0f1f1a]/50'
                       }`}
@@ -610,8 +538,8 @@ export default function CampaignsPage() {
                   <input
                     id="campaign-min-between"
                     type="number"
-                    value={formMinBetween}
-                    onChange={(e) => setFormMinBetween(parseInt(e.target.value) || 5)}
+                    value={formValues.minBetween}
+                    onChange={(e) => setFormValues(prev => ({ ...prev, minBetween: parseInt(e.target.value) || 5 }))}
                     min={1}
                     max={60}
                     className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
@@ -628,8 +556,8 @@ export default function CampaignsPage() {
                 <input
                   id="campaign-cycle-frequency"
                   type="number"
-                  value={formCycleFrequency}
-                  onChange={(e) => setFormCycleFrequency(parseInt(e.target.value) || 30)}
+                  value={formValues.cycleFrequency}
+                  onChange={(e) => setFormValues(prev => ({ ...prev, cycleFrequency: parseInt(e.target.value) || 30 }))}
                   min={7}
                   max={365}
                   className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
@@ -641,7 +569,7 @@ export default function CampaignsPage() {
             <div className="mt-6 flex items-center gap-3">
               <button
                 onClick={handleSave}
-                disabled={saving || !formName.trim()}
+                disabled={saving || !formValues.name.trim()}
                 className="flex-1 rounded-full bg-[#f97316] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition hover:bg-[#ea580c] disabled:opacity-50"
               >
                 {saving ? 'Saving...' : editingCampaign ? 'Save Changes' : 'Create Campaign'}
@@ -730,8 +658,8 @@ export default function CampaignsPage() {
                             {call.customer?.phone}
                           </div>
                         </div>
-                        <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusColors[call.status] || statusColors.PENDING}`}>
-                          {statusLabels[call.status] || call.status}
+                        <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${campaignStatusStyles[call.status] || campaignStatusStyles.PENDING}`}>
+                          {campaignStatusLabels[call.status] || call.status}
                         </span>
                       </div>
 
@@ -787,11 +715,7 @@ export default function CampaignsPage() {
                       {call.call_logs && call.call_logs.length > 0 && (
                         <div className="mt-2 rounded-xl bg-white p-3 text-xs">
                           <div className="flex items-center gap-2">
-                            <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
-                              outcomeColors[callOutcome || ''] || 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70'
-                            }`}>
-                              {outcomeLabels[callOutcome || ''] || callOutcome || 'Pending'}
-                            </span>
+                            <CallOutcomeBadge outcome={callOutcome} className="text-[11px]" />
                             {callDuration != null && (
                               <span className="text-[#0f1f1a]/40">
                                 {formatDuration(callDuration)}

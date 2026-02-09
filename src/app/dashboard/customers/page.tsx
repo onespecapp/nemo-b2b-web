@@ -10,6 +10,7 @@ import { SkeletonCustomerList } from '@/components/Skeleton'
 import StatusBadge from '@/components/StatusBadge'
 import CallOutcomeBadge from '@/components/CallOutcomeBadge'
 import { TIMEZONES, callTypeLabels, callOutcomeLabels } from '@/lib/constants'
+import { formatDuration, formatDateTime } from '@/lib/utils'
 
 interface Customer {
   id: string
@@ -187,54 +188,6 @@ export default function CustomersPage() {
     } else {
       fetchCustomers()
     }
-  }
-
-  const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    })
-  }
-
-  const formatDuration = (seconds: number | null) => {
-    if (!seconds) return '-'
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
-
-  const formatStatus = (status: string) => {
-    const labels: Record<string, string> = {
-      SCHEDULED: 'Scheduled',
-      REMINDED: 'Reminded',
-      CONFIRMED: 'Confirmed',
-      COMPLETED: 'Completed',
-      RESCHEDULED: 'Rescheduled',
-      CANCELED: 'Canceled',
-      CANCELLED: 'Canceled',
-      NO_SHOW: 'No Show',
-    }
-    const normalizedStatus = status?.toUpperCase() || ''
-    return labels[normalizedStatus] || status
-  }
-
-  const getStatusBadge = (status: string) => {
-    const normalizedStatus = status?.toUpperCase() || ''
-    const styles: Record<string, string> = {
-      SCHEDULED: 'bg-[#0f1f1a] text-white',
-      REMINDED: 'bg-[#f97316]/15 text-[#b45309]',
-      CONFIRMED: 'bg-[#0f766e]/15 text-[#0f766e]',
-      COMPLETED: 'bg-[#0f766e]/15 text-[#0f766e]',
-      RESCHEDULED: 'bg-[#fb7185]/15 text-[#be123c]',
-      CANCELED: 'bg-[#ef4444]/15 text-[#991b1b]',
-      CANCELLED: 'bg-[#ef4444]/15 text-[#991b1b]',
-      NO_SHOW: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70',
-    }
-    return styles[normalizedStatus] || 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70'
   }
 
   const openEdit = async (customer: Customer) => {
@@ -558,7 +511,7 @@ export default function CustomersPage() {
                   </div>
                   <button
                     onClick={() => openEdit(customer)}
-                    className="rounded-full border border-[#0f1f1a]/10 px-3 py-1 text-xs text-[#0f1f1a]/60"
+                    className="rounded-full border border-[#0f1f1a]/10 px-3 py-2 text-xs text-[#0f1f1a]/60"
                   >
                     Edit
                   </button>
@@ -576,7 +529,7 @@ export default function CustomersPage() {
             ))}
           </div>
 
-          <div className="hidden sm:block rounded-3xl border border-[#0f1f1a]/10 bg-white/90 shadow-sm">
+          <div className="hidden sm:block overflow-x-auto rounded-3xl border border-[#0f1f1a]/10 bg-white/90 shadow-sm">
             <table className="min-w-full divide-y divide-[#0f1f1a]/10">
               <thead className="bg-[#f8f5ef]">
                 <tr>
@@ -676,7 +629,7 @@ export default function CustomersPage() {
             </div>
 
             <div className="max-h-[calc(90vh-140px)] overflow-y-auto px-6 py-6">
-              <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_0.9fr]">
                 <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-5">
                   <h4 className="font-display text-xl">Customer details</h4>
                   <form onSubmit={handleEditSave} className="mt-6 space-y-4">
@@ -838,9 +791,7 @@ export default function CustomersPage() {
                                   {formatDateTime(appointment.scheduled_at)}
                                 </p>
                               </div>
-                              <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold ${getStatusBadge(appointment.status)}`}>
-                                {formatStatus(appointment.status)}
-                              </span>
+                              <StatusBadge status={appointment.status} className="text-[11px]" />
                             </div>
                           </div>
                         ))}
@@ -887,11 +838,7 @@ export default function CustomersPage() {
                                   <p className="mt-2 text-xs text-[#0f1f1a]/60">{call.summary}</p>
                                 )}
                               </div>
-                              <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold ${
-                                callOutcomeStyles[call.call_outcome || ''] || 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70'
-                              }`}>
-                                {callOutcomeLabels[call.call_outcome || ''] || call.call_outcome || 'Pending'}
-                              </span>
+                              <CallOutcomeBadge outcome={call.call_outcome} className="text-[11px]" />
                             </div>
                           </div>
                         ))}

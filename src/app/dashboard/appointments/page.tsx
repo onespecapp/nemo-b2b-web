@@ -10,13 +10,8 @@ import StatusBadge from '@/components/StatusBadge'
 import CallOutcomeBadge from '@/components/CallOutcomeBadge'
 import { callTypeLabels, callOutcomeLabels } from '@/lib/constants'
 import { SkeletonAppointmentList } from '@/components/Skeleton'
-
-const parseUTCDate = (dateStr: string): Date => {
-  if (!dateStr.endsWith('Z') && !dateStr.includes('+')) {
-    return new Date(dateStr + 'Z')
-  }
-  return new Date(dateStr)
-}
+import { parseUTCDate, formatDuration, formatDateTime } from '@/lib/utils'
+import { useForm } from '@/lib/hooks/useForm'
 
 interface Customer {
   id: string
@@ -197,24 +192,6 @@ export default function AppointmentsPage() {
     const date = parseUTCDate(dateStr)
     const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
     return local.toISOString().slice(0, 16)
-  }
-
-  const formatCallDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    })
-  }
-
-  const formatDuration = (seconds: number | null) => {
-    if (!seconds) return '-'
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
   const getRelativeLabel = (dateStr: string) => {
@@ -599,7 +576,7 @@ export default function AppointmentsPage() {
                 setDateStart('')
                 setDateEnd('')
               }}
-              className="rounded-full border border-[#0f1f1a]/15 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-[#0f1f1a]/60"
+              className="rounded-full border border-[#0f1f1a]/15 px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#0f1f1a]/60"
             >
               Clear
             </button>
@@ -929,7 +906,7 @@ export default function AppointmentsPage() {
             </div>
 
             <div className="max-h-[calc(90vh-140px)] overflow-y-auto px-6 py-6">
-              <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_0.9fr]">
                 <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-5">
                   <h4 className="font-display text-xl">Appointment details</h4>
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-[#0f1f1a]/50">
@@ -1146,7 +1123,7 @@ export default function AppointmentsPage() {
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <p className="text-sm font-semibold text-[#0f1f1a]">
-                                {callTypeLabels[call.call_type] || call.call_type} • {formatCallDate(call.created_at)}
+                                {callTypeLabels[call.call_type] || call.call_type} • {formatDateTime(call.created_at)}
                               </p>
                               <p className="mt-1 text-xs text-[#0f1f1a]/60">
                                 Outcome: {callOutcomeLabels[call.call_outcome || ''] || call.call_outcome || 'Pending'}

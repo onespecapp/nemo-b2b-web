@@ -84,3 +84,35 @@ export const callTypeLabels: Record<string, string> = {
   FOLLOW_UP: 'Follow-up call',
   CONFIRMATION: 'Confirmation call',
 }
+
+// Campaign call type styles and labels
+export const campaignCallTypeStyles: Record<string, string> = {
+  RE_ENGAGEMENT: 'bg-[#0f766e]/10 text-[#0f766e]',
+  REVIEW_COLLECTION: 'bg-[#f97316]/10 text-[#b45309]',
+  NO_SHOW_FOLLOWUP: 'bg-[#6366f1]/10 text-[#4338ca]',
+}
+
+export const campaignCallTypeLabels: Record<string, string> = {
+  RE_ENGAGEMENT: 'Re-engagement',
+  REVIEW_COLLECTION: 'Review',
+  NO_SHOW_FOLLOWUP: 'No-Show',
+}
+
+// Campaign call status styles and labels
+export const campaignStatusStyles: Record<string, string> = {
+  PENDING: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70',
+  QUEUED: 'bg-[#f97316]/20 text-[#b45309]',
+  IN_PROGRESS: 'bg-[#6366f1]/15 text-[#4338ca]',
+  COMPLETED: 'bg-[#0f766e]/15 text-[#0f766e]',
+  SKIPPED: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/50',
+  FAILED: 'bg-[#ef4444]/15 text-[#991b1b]',
+}
+
+export const campaignStatusLabels: Record<string, string> = {
+  PENDING: 'Scheduled',
+  QUEUED: 'Queued',
+  IN_PROGRESS: 'In Progress',
+  COMPLETED: 'Completed',
+  SKIPPED: 'Skipped',
+  FAILED: 'Failed',
+}
