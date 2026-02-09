@@ -3,33 +3,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import AccessibleModal from '@/components/AccessibleModal'
 import { createClient } from '@/lib/supabase/client'
-import { validatePhone } from '@/lib/validation'
+import { validatePhone, validateEmail } from '@/lib/validation'
 import Link from 'next/link'
 import { useToast } from '@/components/ToastProvider'
-
-const TIMEZONES = [
-  { value: 'America/New_York', label: 'Eastern Time (New York)' },
-  { value: 'America/Chicago', label: 'Central Time (Chicago)' },
-  { value: 'America/Denver', label: 'Mountain Time (Denver)' },
-  { value: 'America/Los_Angeles', label: 'Pacific Time (Los Angeles)' },
-  { value: 'America/Anchorage', label: 'Alaska Time (Anchorage)' },
-  { value: 'Pacific/Honolulu', label: 'Hawaii Time (Honolulu)' },
-  { value: 'America/Toronto', label: 'Eastern Time (Toronto)' },
-  { value: 'America/Vancouver', label: 'Pacific Time (Vancouver)' },
-  { value: 'America/Edmonton', label: 'Mountain Time (Edmonton)' },
-  { value: 'America/Winnipeg', label: 'Central Time (Winnipeg)' },
-  { value: 'America/Halifax', label: 'Atlantic Time (Halifax)' },
-  { value: 'Europe/London', label: 'GMT (London)' },
-  { value: 'Europe/Paris', label: 'CET (Paris)' },
-  { value: 'Europe/Berlin', label: 'CET (Berlin)' },
-  { value: 'Asia/Tokyo', label: 'JST (Tokyo)' },
-  { value: 'Asia/Shanghai', label: 'CST (Shanghai)' },
-  { value: 'Asia/Kolkata', label: 'IST (Kolkata)' },
-  { value: 'Asia/Dubai', label: 'GST (Dubai)' },
-  { value: 'Australia/Sydney', label: 'AEST (Sydney)' },
-  { value: 'Australia/Melbourne', label: 'AEST (Melbourne)' },
-  { value: 'Pacific/Auckland', label: 'NZST (Auckland)' },
-]
+import { SkeletonCustomerList } from '@/components/Skeleton'
+import StatusBadge from '@/components/StatusBadge'
+import CallOutcomeBadge from '@/components/CallOutcomeBadge'
+import { TIMEZONES, callTypeLabels, callOutcomeLabels } from '@/lib/constants'
 
 interface Customer {
   id: string
@@ -55,35 +35,6 @@ interface CallLog {
   duration_sec: number | null
   summary: string | null
   created_at: string
-}
-
-const callTypeLabels: Record<string, string> = {
-  REMINDER: 'Reminder call',
-  TEST: 'Test call',
-  FOLLOW_UP: 'Follow-up call',
-  CONFIRMATION: 'Confirmation call',
-}
-
-const callOutcomeLabels: Record<string, string> = {
-  CONFIRMED: 'Confirmed',
-  RESCHEDULED: 'Rescheduled',
-  CANCELED: 'Canceled',
-  ANSWERED: 'Answered',
-  NO_ANSWER: 'No Answer',
-  VOICEMAIL: 'Voicemail',
-  BUSY: 'Busy',
-  FAILED: 'Failed',
-}
-
-const callOutcomeStyles: Record<string, string> = {
-  CONFIRMED: 'bg-[#0f766e]/15 text-[#0f766e]',
-  RESCHEDULED: 'bg-[#f97316]/20 text-[#b45309]',
-  CANCELED: 'bg-[#ef4444]/15 text-[#991b1b]',
-  ANSWERED: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70',
-  NO_ANSWER: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70',
-  VOICEMAIL: 'bg-[#6366f1]/15 text-[#4338ca]',
-  BUSY: 'bg-[#fb7185]/15 text-[#be123c]',
-  FAILED: 'bg-[#ef4444]/15 text-[#991b1b]',
 }
 
 export default function CustomersPage() {
@@ -117,6 +68,8 @@ export default function CustomersPage() {
   const [error, setError] = useState<string | null>(null)
   const [phoneError, setPhoneError] = useState<string | null>(null)
   const [editPhoneError, setEditPhoneError] = useState<string | null>(null)
+  const [emailError, setEmailError] = useState<string | null>(null)
+  const [editEmailError, setEditEmailError] = useState<string | null>(null)
   const supabase = createClient()
 
   const fetchCustomers = useCallback(async () => {
@@ -176,6 +129,13 @@ export default function CustomersPage() {
     }
     setPhoneError(null)
 
+    const emailResult = validateEmail(formData.email)
+    if (!emailResult.valid) {
+      setEmailError(emailResult.error || 'Invalid email address.')
+      return
+    }
+    setEmailError(null)
+
     setSaving(true)
 
     const { data: { user } } = await supabase.auth.getUser()
@@ -211,6 +171,7 @@ export default function CustomersPage() {
     } else {
       setFormData({ name: '', phone: '', email: '', notes: '', timezone: '' })
       setPhoneError(null)
+      setEmailError(null)
       setShowForm(false)
       fetchCustomers()
     }
@@ -287,6 +248,7 @@ export default function CustomersPage() {
     })
 
     setEditPhoneError(null)
+    setEditEmailError(null)
     setCustomerAppointments([])
     setCustomerCalls([])
     setDetailsError(null)
@@ -326,6 +288,13 @@ export default function CustomersPage() {
     }
     setEditPhoneError(null)
 
+    const emailResult = validateEmail(editFormData.email)
+    if (!emailResult.valid) {
+      setEditEmailError(emailResult.error || 'Invalid email address.')
+      return
+    }
+    setEditEmailError(null)
+
     setEditSaving(true)
 
     const { error } = await supabase
@@ -344,6 +313,7 @@ export default function CustomersPage() {
     } else {
       setEditingCustomer(null)
       setEditPhoneError(null)
+      setEditEmailError(null)
       fetchCustomers()
     }
     setEditSaving(false)
@@ -367,8 +337,15 @@ export default function CustomersPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#0f1f1a]/20 border-t-[#f97316]" />
+      <div className="space-y-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Customers</p>
+            <h1 className="font-display text-3xl sm:text-4xl">People you remind</h1>
+            <p className="mt-1 text-sm text-[#0f1f1a]/60">Loading customers...</p>
+          </div>
+        </div>
+        <SkeletonCustomerList count={5} />
       </div>
     )
   }
@@ -475,10 +452,30 @@ export default function CustomersPage() {
                   id="new-customer-email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+                  onChange={(e) => {
+                    setFormData({ ...formData, email: e.target.value })
+                    if (emailError) {
+                      const result = validateEmail(e.target.value)
+                      if (result.valid) setEmailError(null)
+                    }
+                  }}
+                  onBlur={() => {
+                    if (formData.email.trim()) {
+                      const result = validateEmail(formData.email)
+                      if (!result.valid) setEmailError(result.error || 'Invalid email address.')
+                      else setEmailError(null)
+                    }
+                  }}
+                  className={`mt-2 w-full rounded-2xl border bg-white px-4 py-3 text-sm focus:outline-none ${
+                    emailError
+                      ? 'border-red-500 focus:border-red-500'
+                      : 'border-[#0f1f1a]/20 focus:border-[#f97316]'
+                  }`}
                   placeholder="jordan@example.com"
                 />
+                {emailError && (
+                  <p className="mt-1 text-sm text-red-500">{emailError}</p>
+                )}
               </div>
               <div>
                 <label htmlFor="new-customer-notes" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Notes</label>
@@ -732,9 +729,29 @@ export default function CustomersPage() {
                           id="edit-customer-email"
                           type="email"
                           value={editFormData.email}
-                          onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                          className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+                          onChange={(e) => {
+                            setEditFormData({ ...editFormData, email: e.target.value })
+                            if (editEmailError) {
+                              const result = validateEmail(e.target.value)
+                              if (result.valid) setEditEmailError(null)
+                            }
+                          }}
+                          onBlur={() => {
+                            if (editFormData.email.trim()) {
+                              const result = validateEmail(editFormData.email)
+                              if (!result.valid) setEditEmailError(result.error || 'Invalid email address.')
+                              else setEditEmailError(null)
+                            }
+                          }}
+                          className={`mt-2 w-full rounded-2xl border bg-white px-4 py-3 text-sm focus:outline-none ${
+                            editEmailError
+                              ? 'border-red-500 focus:border-red-500'
+                              : 'border-[#0f1f1a]/20 focus:border-[#f97316]'
+                          }`}
                         />
+                        {editEmailError && (
+                          <p className="mt-1 text-sm text-red-500">{editEmailError}</p>
+                        )}
                       </div>
                       <div>
                         <label htmlFor="edit-customer-notes" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Notes</label>

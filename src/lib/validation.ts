@@ -81,3 +81,53 @@ export function formatPhoneForApi(phone: string): string {
   const cleaned = cleanPhone(phone)
   return cleaned.startsWith('+') ? cleaned : `+${cleaned}`
 }
+
+// Email validation utilities
+
+/**
+ * Validates an email string and returns an object with validity and optional error message.
+ *
+ * Empty strings are considered valid (field may be optional).
+ * Use `required` checks separately if the field is mandatory.
+ */
+export function validateEmail(email: string): { valid: boolean; error?: string } {
+  if (!email.trim()) {
+    return { valid: true }
+  }
+
+  const trimmed = email.trim()
+
+  if (!trimmed.includes('@')) {
+    return { valid: false, error: 'Email must include an @ symbol.' }
+  }
+
+  const [local, ...rest] = trimmed.split('@')
+  const domain = rest.join('@')
+
+  if (!local) {
+    return { valid: false, error: 'Email is missing a username before the @.' }
+  }
+
+  if (!domain) {
+    return { valid: false, error: 'Email is missing a domain after the @.' }
+  }
+
+  if (!domain.includes('.')) {
+    return { valid: false, error: 'Email domain must include a dot (e.g. example.com).' }
+  }
+
+  const domainParts = domain.split('.')
+  const tld = domainParts[domainParts.length - 1]
+
+  if (tld.length < 2) {
+    return { valid: false, error: 'Email domain ending is too short.' }
+  }
+
+  // Basic format check: no spaces, reasonable characters
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+  if (!EMAIL_REGEX.test(trimmed)) {
+    return { valid: false, error: 'Enter a valid email address (e.g. name@example.com).' }
+  }
+
+  return { valid: true }
+}

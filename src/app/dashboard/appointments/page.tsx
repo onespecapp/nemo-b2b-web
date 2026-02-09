@@ -6,6 +6,10 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import AccessibleModal from '@/components/AccessibleModal'
 import { useToast } from '@/components/ToastProvider'
+import StatusBadge from '@/components/StatusBadge'
+import CallOutcomeBadge from '@/components/CallOutcomeBadge'
+import { callTypeLabels, callOutcomeLabels } from '@/lib/constants'
+import { SkeletonAppointmentList } from '@/components/Skeleton'
 
 const parseUTCDate = (dateStr: string): Date => {
   if (!dateStr.endsWith('Z') && !dateStr.includes('+')) {
@@ -42,34 +46,6 @@ interface CallLog {
   created_at: string
 }
 
-const callTypeLabels: Record<string, string> = {
-  REMINDER: 'Reminder call',
-  TEST: 'Test call',
-  FOLLOW_UP: 'Follow-up call',
-  CONFIRMATION: 'Confirmation call',
-}
-
-const callOutcomeLabels: Record<string, string> = {
-  CONFIRMED: 'Confirmed',
-  RESCHEDULED: 'Rescheduled',
-  CANCELED: 'Canceled',
-  ANSWERED: 'Answered',
-  NO_ANSWER: 'No Answer',
-  VOICEMAIL: 'Voicemail',
-  BUSY: 'Busy',
-  FAILED: 'Failed',
-}
-
-const callOutcomeStyles: Record<string, string> = {
-  CONFIRMED: 'bg-[#0f766e]/15 text-[#0f766e]',
-  RESCHEDULED: 'bg-[#f97316]/20 text-[#b45309]',
-  CANCELED: 'bg-[#ef4444]/15 text-[#991b1b]',
-  ANSWERED: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70',
-  NO_ANSWER: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70',
-  VOICEMAIL: 'bg-[#6366f1]/15 text-[#4338ca]',
-  BUSY: 'bg-[#fb7185]/15 text-[#be123c]',
-  FAILED: 'bg-[#ef4444]/15 text-[#991b1b]',
-}
 
 export default function AppointmentsPage() {
   const { showToast } = useToast()
@@ -77,7 +53,7 @@ export default function AppointmentsPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [formData, setFormData] = useState({
+  const { values: formData, setValues: setFormData, reset: resetCreateForm } = useForm({
     customer_id: '',
     title: '',
     description: '',
@@ -88,7 +64,7 @@ export default function AppointmentsPage() {
   const [customerMenuOpen, setCustomerMenuOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
-  const [editFormData, setEditFormData] = useState({
+  const { values: editFormData, setValues: setEditFormData, reset: resetEditForm } = useForm({
     customer_id: '',
     title: '',
     description: '',
@@ -199,13 +175,7 @@ export default function AppointmentsPage() {
     if (error) {
       showToast('Error creating appointment: ' + error.message, 'error')
     } else {
-      setFormData({
-        customer_id: '',
-        title: '',
-        description: '',
-        scheduled_at: '',
-        reminder_minutes_before: 30,
-      })
+      resetCreateForm()
       setShowForm(false)
       fetchData()
     }
@@ -417,7 +387,7 @@ export default function AppointmentsPage() {
       || null
 
     setEditingAppointment(appointment)
-    setEditFormData({
+    resetEditForm({
       customer_id: appointment.customer_id,
       title: appointment.title,
       description: appointment.description || '',
@@ -479,36 +449,6 @@ export default function AppointmentsPage() {
     setEditSaving(false)
   }
 
-  const getStatusBadge = (status: string) => {
-    const normalizedStatus = status?.toUpperCase() || ''
-    const styles: Record<string, string> = {
-      SCHEDULED: 'bg-[#0f1f1a] text-white',
-      REMINDED: 'bg-[#f97316]/15 text-[#b45309]',
-      CONFIRMED: 'bg-[#0f766e]/15 text-[#0f766e]',
-      COMPLETED: 'bg-[#0f766e]/15 text-[#0f766e]',
-      RESCHEDULED: 'bg-[#fb7185]/15 text-[#be123c]',
-      CANCELED: 'bg-[#ef4444]/15 text-[#991b1b]',
-      CANCELLED: 'bg-[#ef4444]/15 text-[#991b1b]',
-      NO_SHOW: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70',
-    }
-    return styles[normalizedStatus] || 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70'
-  }
-
-  const formatStatus = (status: string) => {
-    const labels: Record<string, string> = {
-      SCHEDULED: 'Scheduled',
-      REMINDED: 'Reminded',
-      CONFIRMED: 'Confirmed',
-      COMPLETED: 'Completed',
-      RESCHEDULED: 'Rescheduled',
-      CANCELED: 'Canceled',
-      CANCELLED: 'Canceled',
-      NO_SHOW: 'No Show',
-    }
-    const normalizedStatus = status?.toUpperCase() || ''
-    return labels[normalizedStatus] || status
-  }
-
   const isUpcoming = (date: string) => parseUTCDate(date) > new Date()
   const isPast = (date: string) => parseUTCDate(date) < new Date()
   const timezoneLabel = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -550,8 +490,15 @@ export default function AppointmentsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#0f1f1a]/20 border-t-[#f97316]" />
+      <div className="space-y-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Appointments</p>
+            <h1 className="font-display text-3xl sm:text-4xl">Your schedule</h1>
+            <p className="mt-1 text-sm text-[#0f1f1a]/60">Loading appointments...</p>
+          </div>
+        </div>
+        <SkeletonAppointmentList count={4} />
       </div>
     )
   }
@@ -881,9 +828,7 @@ export default function AppointmentsPage() {
                         </p>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadge(appointment.status)}`}>
-                          {formatStatus(appointment.status)}
-                        </span>
+                        <StatusBadge status={appointment.status} />
                         <button
                           onClick={() => openEdit(appointment)}
                           className="rounded-full bg-[#0f1f1a] px-3 py-1 text-xs font-semibold text-white"
@@ -943,9 +888,7 @@ export default function AppointmentsPage() {
                         </p>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadge(appointment.status)}`}>
-                          {formatStatus(appointment.status)}
-                        </span>
+                        <StatusBadge status={appointment.status} />
                         <button
                           onClick={() => openEdit(appointment)}
                           className="rounded-full border border-[#0f1f1a]/15 px-3 py-1 text-xs font-semibold text-[#0f1f1a]/70 hover:bg-white"
@@ -996,9 +939,7 @@ export default function AppointmentsPage() {
                     <span className="rounded-full border border-[#0f1f1a]/10 bg-white px-3 py-1">
                       {formatLocalDateTime(editFormData.scheduled_at) || 'Pick a time'}
                     </span>
-                    <span className={`rounded-full px-3 py-1 ${getStatusBadge(editFormData.status)}`}>
-                      {formatStatus(editFormData.status)}
-                    </span>
+                    <StatusBadge status={editFormData.status} />
                   </div>
                   {customers.length === 0 ? (
                     <div className="mt-6 rounded-2xl border border-dashed border-[#0f1f1a]/20 bg-[#f8f5ef] px-6 py-8 text-center">
@@ -1217,11 +1158,7 @@ export default function AppointmentsPage() {
                               )}
                             </div>
                             <div className="text-right">
-                              <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold ${
-                                callOutcomeStyles[call.call_outcome || ''] || 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70'
-                              }`}>
-                                {callOutcomeLabels[call.call_outcome || ''] || call.call_outcome || 'Pending'}
-                              </span>
+                              <CallOutcomeBadge outcome={call.call_outcome} />
                             </div>
                           </div>
                           {call.transcript && call.transcript.length > 0 && (

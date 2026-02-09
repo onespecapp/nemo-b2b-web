@@ -1,8 +1,9 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import AccessibleModal from '@/components/AccessibleModal'
+import { SkeletonCallList } from '@/components/Skeleton'
 
 interface CallLog {
   id: string
@@ -58,43 +59,90 @@ const campaignCallTypes: Record<string, { label: string; color: string }> = {
   NO_SHOW_FOLLOWUP: { label: 'No-Show', color: 'bg-[#6366f1]/10 text-[#4338ca]' },
 }
 
+const PAGE_SIZE = 50
+
 export default function CallHistoryPage() {
   const [calls, setCalls] = useState<CallLog[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [totalCount, setTotalCount] = useState<number | null>(null)
+  const [hasMore, setHasMore] = useState(false)
   const [selectedCall, setSelectedCall] = useState<CallLog | null>(null)
   const [filter, setFilter] = useState<string>('all')
+  const [sortDirection, setSortDirection] = useState<'desc' | 'asc'>('desc')
   const supabase = createClient()
+  const currentOffsetRef = useRef(0)
 
-  useEffect(() => {
-    async function fetchCalls() {
+  const fetchCalls = useCallback(async (append: boolean = false) => {
+    if (append) {
+      setLoadingMore(true)
+    } else {
       setLoading(true)
-
-      let query = supabase
-        .from('b2b_call_logs')
-        .select(`
-          *,
-          customer:b2b_customers(name, phone),
-          appointment:b2b_appointments(title, scheduled_at, status)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(100)
-
-      if (filter !== 'all') {
-        query = query.eq('call_outcome', filter)
-      }
-
-      const { data, error } = await query
-
-      if (error) {
-        console.error('Error fetching calls:', error)
-      } else {
-        setCalls(data || [])
-      }
-      setLoading(false)
+      currentOffsetRef.current = 0
     }
 
-    fetchCalls()
-  }, [supabase, filter])
+    const offset = append ? currentOffsetRef.current : 0
+
+    // Build count query (only on initial load / filter change)
+    let countQuery = supabase
+      .from('b2b_call_logs')
+      .select('*', { count: 'exact', head: true })
+
+    if (filter !== 'all') {
+      countQuery = countQuery.eq('call_outcome', filter)
+    }
+
+    // Build data query
+    let dataQuery = supabase
+      .from('b2b_call_logs')
+      .select(`
+        *,
+        customer:b2b_customers(name, phone),
+        appointment:b2b_appointments(title, scheduled_at, status)
+      `)
+      .order('created_at', { ascending: sortDirection === 'asc' })
+      .range(offset, offset + PAGE_SIZE - 1)
+
+    if (filter !== 'all') {
+      dataQuery = dataQuery.eq('call_outcome', filter)
+    }
+
+    const [countResult, dataResult] = await Promise.all([
+      append ? Promise.resolve(null) : countQuery,
+      dataQuery,
+    ])
+
+    if (dataResult.error) {
+      console.error('Error fetching calls:', dataResult.error)
+    } else {
+      const newData = dataResult.data || []
+      if (append) {
+        setCalls((prev) => [...prev, ...newData])
+      } else {
+        setCalls(newData)
+      }
+      currentOffsetRef.current = offset + newData.length
+      setHasMore(newData.length === PAGE_SIZE)
+    }
+
+    if (countResult && !countResult.error && countResult.count !== null && countResult.count !== undefined) {
+      setTotalCount(countResult.count)
+    }
+
+    if (append) {
+      setLoadingMore(false)
+    } else {
+      setLoading(false)
+    }
+  }, [supabase, filter, sortDirection])
+
+  // Reset and refetch when filter or sort changes
+  useEffect(() => {
+    setCalls([])
+    setTotalCount(null)
+    setHasMore(false)
+    fetchCalls(false)
+  }, [fetchCalls])
 
   const formatDuration = (seconds: number | null) => {
     if (!seconds) return '-'
@@ -130,35 +178,62 @@ export default function CallHistoryPage() {
           <p className="mt-1 text-sm text-[#0f1f1a]/60">Review call outcomes, transcripts, and summaries.</p>
         </div>
 
-        <div className="flex items-center gap-3 rounded-full border border-[#0f1f1a]/10 bg-white px-4 py-2 text-sm">
-          <label htmlFor="filter" className="text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">Filter</label>
-          <select
-            id="filter"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="bg-transparent text-sm font-semibold text-[#0f1f1a] focus:outline-none"
-          >
-            <option value="all">All Calls</option>
-            <optgroup label="Outcomes">
-              <option value="CONFIRMED">Confirmed</option>
-              <option value="RESCHEDULED">Rescheduled</option>
-              <option value="CANCELED">Canceled</option>
-              <option value="ANSWERED">Answered</option>
-              <option value="NO_ANSWER">No Answer</option>
-              <option value="VOICEMAIL">Voicemail</option>
-              <option value="BOOKED">Booked</option>
-              <option value="DECLINED">Declined</option>
-            </optgroup>
-          </select>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-3 rounded-full border border-[#0f1f1a]/10 bg-white px-4 py-2 text-sm">
+            <label htmlFor="sort" className="text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">Sort</label>
+            <select
+              id="sort"
+              value={sortDirection}
+              onChange={(e) => setSortDirection(e.target.value as 'desc' | 'asc')}
+              className="bg-transparent text-sm font-semibold text-[#0f1f1a] focus:outline-none"
+            >
+              <option value="desc">Newest first</option>
+              <option value="asc">Oldest first</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-3 rounded-full border border-[#0f1f1a]/10 bg-white px-4 py-2 text-sm">
+            <label htmlFor="filter" className="text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">Filter</label>
+            <select
+              id="filter"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="bg-transparent text-sm font-semibold text-[#0f1f1a] focus:outline-none"
+            >
+              <option value="all">All Calls</option>
+              <optgroup label="Outcomes">
+                <option value="CONFIRMED">Confirmed</option>
+                <option value="RESCHEDULED">Rescheduled</option>
+                <option value="CANCELED">Canceled</option>
+                <option value="ANSWERED">Answered</option>
+                <option value="NO_ANSWER">No Answer</option>
+                <option value="VOICEMAIL">Voicemail</option>
+                <option value="BOOKED">Booked</option>
+                <option value="DECLINED">Declined</option>
+              </optgroup>
+            </select>
+          </div>
         </div>
       </div>
 
+      {/* Showing count */}
+      {!loading && calls.length > 0 && totalCount !== null && (
+        <div className="flex items-center gap-2 text-sm text-[#0f1f1a]/60">
+          <span>
+            Showing <span className="font-semibold text-[#0f1f1a]">{calls.length}</span> of{' '}
+            <span className="font-semibold text-[#0f1f1a]">{totalCount}</span> calls
+          </span>
+          {filter !== 'all' && (
+            <span className="rounded-full bg-[#f97316]/10 px-2 py-0.5 text-xs font-semibold text-[#b45309]">
+              {outcomeLabels[filter] || filter}
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 shadow-sm">
         {loading ? (
-          <div className="p-12 text-center">
-            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[#0f1f1a]/20 border-t-[#f97316]" />
-            <p className="mt-4 text-sm text-[#0f1f1a]/60">Loading calls...</p>
-          </div>
+          <SkeletonCallList count={5} />
         ) : calls.length === 0 ? (
           <div className="p-12 text-center">
             <p className="font-display text-2xl">No calls yet</p>

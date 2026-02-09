@@ -83,6 +83,72 @@ const statusColors: Record<string, string> = {
   FAILED: 'bg-[#ef4444]/15 text-[#991b1b]',
 }
 
+const statusLabels: Record<string, string> = {
+  PENDING: 'Scheduled',
+  QUEUED: 'Queued',
+  IN_PROGRESS: 'In Progress',
+  COMPLETED: 'Completed',
+  SKIPPED: 'Skipped',
+  FAILED: 'Failed',
+}
+
+const outcomeColors: Record<string, string> = {
+  CONFIRMED: 'bg-[#0f766e]/15 text-[#0f766e]',
+  RESCHEDULED: 'bg-[#f97316]/20 text-[#b45309]',
+  CANCELED: 'bg-[#ef4444]/15 text-[#991b1b]',
+  ANSWERED: 'bg-[#0f766e]/15 text-[#0f766e]',
+  NO_ANSWER: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70',
+  VOICEMAIL: 'bg-[#6366f1]/15 text-[#4338ca]',
+  BUSY: 'bg-[#fb7185]/15 text-[#be123c]',
+  FAILED: 'bg-[#ef4444]/15 text-[#991b1b]',
+  BOOKED: 'bg-[#0f766e]/15 text-[#0f766e]',
+  REVIEW_SENT: 'bg-[#6366f1]/15 text-[#4338ca]',
+  DECLINED: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/50',
+}
+
+const outcomeLabels: Record<string, string> = {
+  CONFIRMED: 'Confirmed',
+  RESCHEDULED: 'Rescheduled',
+  CANCELED: 'Canceled',
+  ANSWERED: 'Answered',
+  NO_ANSWER: 'No Answer',
+  VOICEMAIL: 'Voicemail',
+  BUSY: 'Busy',
+  FAILED: 'Failed',
+  BOOKED: 'Booked',
+  REVIEW_SENT: 'Review Sent',
+  DECLINED: 'Declined',
+}
+
+function formatRelativeTime(dateStr: string): string {
+  const date = dateStr.endsWith('Z') || dateStr.includes('+') ? new Date(dateStr) : new Date(dateStr + 'Z')
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const absDiffMs = Math.abs(diffMs)
+  const isFuture = diffMs < 0
+
+  const minutes = Math.floor(absDiffMs / 60000)
+  const hours = Math.floor(absDiffMs / 3600000)
+  const days = Math.floor(absDiffMs / 86400000)
+
+  let label: string
+  if (minutes < 1) label = 'just now'
+  else if (minutes < 60) label = `${minutes}m`
+  else if (hours < 24) label = `${hours}h`
+  else if (days < 30) label = `${days}d`
+  else label = `${Math.floor(days / 30)}mo`
+
+  if (label === 'just now') return label
+  return isFuture ? `in ${label}` : `${label} ago`
+}
+
+function formatDuration(seconds: number | null): string {
+  if (!seconds) return '-'
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
 
 export default function CampaignsPage() {
@@ -617,68 +683,138 @@ export default function CampaignsPage() {
                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#0f1f1a]/20 border-t-[#f97316]" />
               </div>
             ) : campaignCalls.length === 0 ? (
-              <div className="py-12 text-center text-sm text-[#0f1f1a]/40">
-                No calls yet. Campaign calls will appear here once the scheduler runs.
+              <div className="py-12 text-center">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#0f1f1a]/5">
+                  <svg className="h-6 w-6 text-[#0f1f1a]/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                </div>
+                <p className="font-display text-lg font-semibold text-[#0f1f1a]/70">No calls yet</p>
+                <p className="mt-1 text-sm text-[#0f1f1a]/40">
+                  Calls will appear here once the campaign scheduler runs.
+                </p>
+                <p className="mt-0.5 text-xs text-[#0f1f1a]/30">
+                  Make sure the campaign is enabled and within the configured call window.
+                </p>
               </div>
             ) : (
               <div className="space-y-3">
-                {campaignCalls.map(call => (
-                  <div
-                    key={call.id}
-                    className="rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef]/50 p-4"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="font-semibold text-sm">
-                          {call.customer?.name || 'Unknown Customer'}
-                        </div>
-                        <div className="text-xs text-[#0f1f1a]/50">
-                          {call.customer?.phone}
-                        </div>
-                      </div>
-                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusColors[call.status] || statusColors.PENDING}`}>
-                        {call.status}
-                      </span>
-                    </div>
+                {campaignCalls.map(call => {
+                  const callOutcome = call.call_logs?.[0]?.call_outcome || null
+                  const callDuration = call.call_logs?.[0]?.duration_sec || null
+                  const callSummary = call.call_logs?.[0]?.summary || null
+                  const customerName = call.customer?.name || 'Unknown Customer'
 
-                    {call.scheduled_for && (
-                      <div className="mt-2 text-xs text-[#0f1f1a]/40">
-                        Scheduled: {new Date(call.scheduled_for).toLocaleString()}
-                      </div>
-                    )}
-
-                    {call.skip_reason && (
-                      <div className="mt-1 text-xs text-[#ef4444]/70">
-                        Skipped: {call.skip_reason}
-                      </div>
-                    )}
-
-                    {call.call_logs && call.call_logs.length > 0 && (
-                      <div className="mt-2 rounded-xl bg-white p-3 text-xs">
-                        <div className="font-semibold text-[#0f1f1a]/70">
-                          Outcome: {call.call_logs[0].call_outcome || 'N/A'}
-                          {call.call_logs[0].duration_sec && (
-                            <span className="ml-2 font-normal text-[#0f1f1a]/40">
-                              ({Math.floor(call.call_logs[0].duration_sec / 60)}m {call.call_logs[0].duration_sec % 60}s)
+                  return (
+                    <div
+                      key={call.id}
+                      className="rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef]/50 p-4"
+                    >
+                      {/* Top row: customer info + status badge */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="truncate text-sm font-semibold"
+                              title={customerName}
+                            >
+                              {customerName}
                             </span>
-                          )}
+                            {callDuration != null && (
+                              <span className="shrink-0 text-xs text-[#0f1f1a]/40">
+                                {formatDuration(callDuration)}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-[#0f1f1a]/50">
+                            {call.customer?.phone}
+                          </div>
                         </div>
-                        {call.call_logs[0].summary && (
-                          <div className="mt-1 text-[#0f1f1a]/50">{call.call_logs[0].summary}</div>
+                        <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusColors[call.status] || statusColors.PENDING}`}>
+                          {statusLabels[call.status] || call.status}
+                        </span>
+                      </div>
+
+                      {/* Timestamps */}
+                      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#0f1f1a]/40">
+                        {call.scheduled_for && (
+                          <span>
+                            Scheduled: {new Date(call.scheduled_for).toLocaleString()}
+                            <span className="ml-1 text-[#0f1f1a]/30">
+                              ({formatRelativeTime(call.scheduled_for)})
+                            </span>
+                          </span>
+                        )}
+                        {call.started_at && (
+                          <span>
+                            Started: {new Date(call.started_at).toLocaleString()}
+                            <span className="ml-1 text-[#0f1f1a]/30">
+                              ({formatRelativeTime(call.started_at)})
+                            </span>
+                          </span>
+                        )}
+                        {call.completed_at && (
+                          <span>
+                            Completed: {new Date(call.completed_at).toLocaleString()}
+                            <span className="ml-1 text-[#0f1f1a]/30">
+                              ({formatRelativeTime(call.completed_at)})
+                            </span>
+                          </span>
+                        )}
+                        {!call.scheduled_for && !call.started_at && !call.completed_at && (
+                          <span>
+                            Created: {new Date(call.created_at).toLocaleString()}
+                            <span className="ml-1 text-[#0f1f1a]/30">
+                              ({formatRelativeTime(call.created_at)})
+                            </span>
+                          </span>
                         )}
                       </div>
-                    )}
 
-                    {call.result_data && (call.result_data as any)?.booked_appointment && (
-                      <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-[#0f766e]">
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        Appointment Booked
-                      </div>
-                    )}
-                  </div>
-                ))}
+                      {/* Skip reason as subtle tag */}
+                      {call.skip_reason && (
+                        <div className="mt-2">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-[#0f1f1a]/5 px-2.5 py-1 text-[11px] text-[#0f1f1a]/50">
+                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                            </svg>
+                            Skipped: {call.skip_reason}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Call outcome and summary */}
+                      {call.call_logs && call.call_logs.length > 0 && (
+                        <div className="mt-2 rounded-xl bg-white p-3 text-xs">
+                          <div className="flex items-center gap-2">
+                            <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                              outcomeColors[callOutcome || ''] || 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70'
+                            }`}>
+                              {outcomeLabels[callOutcome || ''] || callOutcome || 'Pending'}
+                            </span>
+                            {callDuration != null && (
+                              <span className="text-[#0f1f1a]/40">
+                                {formatDuration(callDuration)}
+                              </span>
+                            )}
+                          </div>
+                          {callSummary && (
+                            <div className="mt-1.5 text-[#0f1f1a]/50">{callSummary}</div>
+                          )}
+                        </div>
+                      )}
+
+                      {call.result_data && (call.result_data as any)?.booked_appointment && (
+                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-[#0f766e]">
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Appointment Booked
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             )}
       </AccessibleModal>
