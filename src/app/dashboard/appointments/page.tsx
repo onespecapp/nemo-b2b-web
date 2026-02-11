@@ -103,6 +103,7 @@ function AppointmentsPageInner() {
   const [editCalls, setEditCalls] = useState<CallLog[]>([])
   const [editCallsLoading, setEditCallsLoading] = useState(false)
   const [editCallsError, setEditCallsError] = useState<string | null>(null)
+  const [editCallLogOpen, setEditCallLogOpen] = useState(false)
   const [newActiveIndex, setNewActiveIndex] = useState(-1)
   const [editActiveIndex, setEditActiveIndex] = useState(-1)
   const newInputRef = useRef<HTMLInputElement>(null)
@@ -445,6 +446,7 @@ function AppointmentsPageInner() {
     setEditCalls([])
     setEditCallsError(null)
     setEditCallsLoading(true)
+    setEditCallLogOpen(false)
     const { data, error } = await supabase
       .from('b2b_call_logs')
       .select('id, call_type, call_outcome, duration_sec, summary, transcript, created_at')
@@ -1235,13 +1237,27 @@ function AppointmentsPageInner() {
 
                 <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/85 p-5 shadow-sm lg:sticky lg:top-0">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-display text-xl text-[#0f1f1a]">Call log</h4>
-                    <span className="text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">
-                      {editCalls.length} calls
-                    </span>
+                    <div>
+                      <h4 className="font-display text-xl text-[#0f1f1a]">Call log</h4>
+                      <span className="text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">
+                        {editCalls.length} calls
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditCallLogOpen((prev) => !prev)}
+                      aria-expanded={editCallLogOpen}
+                      className="rounded-full border border-[#0f1f1a]/15 bg-white px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60 hover:border-[#0f1f1a]/30"
+                    >
+                      {editCallLogOpen ? 'Hide' : 'Show'}
+                    </button>
                   </div>
 
-                  {editCallsLoading ? (
+                  {!editCallLogOpen ? (
+                    <div className="mt-6 rounded-2xl border border-dashed border-[#0f1f1a]/20 bg-white/70 px-5 py-6 text-sm text-[#0f1f1a]/60">
+                      Call log is collapsed. Expand to view the history.
+                    </div>
+                  ) : editCallsLoading ? (
                     <div className="mt-6 flex items-center gap-3 text-sm text-[#0f1f1a]/60">
                       <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#0f1f1a]/20 border-t-[#f97316]" />
                       Loading call history...
