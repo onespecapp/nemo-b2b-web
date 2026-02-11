@@ -734,6 +734,7 @@ function AppointmentsPageInner() {
                       aria-controls="new-customer-search-results"
                       aria-autocomplete="list"
                       aria-activedescendant={newActiveOptionId}
+                      autoComplete="off"
                       value={customerQuery}
                       onFocus={() => setCustomerMenuOpen(true)}
                       onBlur={() => setTimeout(() => setCustomerMenuOpen(false), 120)}
@@ -1054,6 +1055,7 @@ function AppointmentsPageInner() {
                               aria-controls="edit-customer-search-results"
                               aria-autocomplete="list"
                               aria-activedescendant={editActiveOptionId}
+                              autoComplete="off"
                               value={editCustomerQuery}
                               onFocus={() => setEditCustomerMenuOpen(true)}
                               onBlur={() => setTimeout(() => setEditCustomerMenuOpen(false), 120)}
