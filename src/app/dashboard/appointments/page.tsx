@@ -105,6 +105,7 @@ function AppointmentsPageInner() {
   const [editCalls, setEditCalls] = useState<CallLog[]>([])
   const [editCallsLoading, setEditCallsLoading] = useState(false)
   const [editCallsError, setEditCallsError] = useState<string | null>(null)
+  const [editCallLogOpen, setEditCallLogOpen] = useState(false)
   const [newActiveIndex, setNewActiveIndex] = useState(-1)
   const [editActiveIndex, setEditActiveIndex] = useState(-1)
   const newInputRef = useRef<HTMLInputElement>(null)
@@ -427,6 +428,7 @@ function AppointmentsPageInner() {
     setEditCalls([])
     setEditCallsError(null)
     setEditCallsLoading(true)
+    setEditCallLogOpen(false)
     const { data, error } = await supabase
       .from('b2b_call_logs')
       .select('id, call_type, call_outcome, duration_sec, summary, transcript, created_at')
@@ -981,39 +983,62 @@ function AppointmentsPageInner() {
         isOpen={!!editingAppointment}
         onClose={() => setEditingAppointment(null)}
         ariaLabel={`Edit appointment: ${editingAppointment?.title || ''}`}
-        panelClassName="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-3xl border border-[#0f1f1a]/10 bg-white shadow-xl"
+        panelClassName="max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-[28px] border border-[#0f1f1a]/10 bg-[#f6f1ea] shadow-2xl shadow-black/10"
       >
         {editingAppointment && (
           <>
-            <div className="flex items-center justify-between border-b border-[#0f1f1a]/10 px-6 py-4">
+            <div className="flex items-center justify-between border-b border-[#0f1f1a]/10 bg-white/80 px-8 py-5 backdrop-blur">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Edit appointment</p>
-                <h3 className="font-display text-2xl">{editingAppointment.title}</h3>
+                <h3 className="font-display text-2xl text-[#0f1f1a]">{editingAppointment.title}</h3>
               </div>
               <button
                 onClick={() => setEditingAppointment(null)}
                 aria-label="Close"
-                className="rounded-full border border-[#0f1f1a]/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60"
+                className="rounded-full border border-[#0f1f1a]/15 bg-white px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60 hover:border-[#0f1f1a]/30"
               >
                 Close
               </button>
             </div>
 
-            <div className="max-h-[calc(90vh-140px)] overflow-y-auto px-6 py-6">
-              <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-                <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-5">
-                  <h4 className="font-display text-xl">Appointment details</h4>
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-[#0f1f1a]/50">
-                    <span className="rounded-full border border-[#0f1f1a]/10 bg-[#f8f5ef] px-3 py-1">
-                      {customers.find((customer) => customer.id === editFormData.customer_id)?.name || 'Unassigned'}
-                    </span>
-                    <span className="rounded-full border border-[#0f1f1a]/10 bg-white px-3 py-1">
-                      {formatLocalDateTime(editFormData.scheduled_at) || 'Pick a time'}
-                    </span>
-                    <span className={`rounded-full px-3 py-1 ${getStatusBadge(editFormData.status)}`}>
-                      {formatStatus(editFormData.status)}
-                    </span>
-                  </div>
+            <div className="border-b border-[#0f1f1a]/10 bg-white/70 px-8 py-4">
+              <div className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.25em] text-[#0f1f1a]/50">
+                <span className="rounded-full border border-[#0f1f1a]/10 bg-white px-3 py-1">
+                  {customers.find((customer) => customer.id === editFormData.customer_id)?.name || 'Unassigned'}
+                </span>
+                <span className="rounded-full border border-[#0f1f1a]/10 bg-white px-3 py-1">
+                  {formatLocalDateTime(editFormData.scheduled_at) || 'Pick a time'}
+                </span>
+                <span className={`rounded-full px-3 py-1 ${getStatusBadge(editFormData.status)}`}>
+                  {formatStatus(editFormData.status)}
+                </span>
+              </div>
+              <div className="mt-4 grid gap-3 text-sm text-[#0f1f1a]/70 sm:grid-cols-3">
+                <div className="rounded-2xl border border-[#0f1f1a]/10 bg-white px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-[#0f1f1a]/50">Customer</p>
+                  <p className="mt-1 font-semibold text-[#0f1f1a]">
+                    {customers.find((customer) => customer.id === editFormData.customer_id)?.name || 'Unassigned'}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-[#0f1f1a]/10 bg-white px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-[#0f1f1a]/50">Scheduled for</p>
+                  <p className="mt-1 font-semibold text-[#0f1f1a]">
+                    {formatLocalDateTime(editFormData.scheduled_at) || 'Pick a time'}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-[#0f1f1a]/10 bg-white px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-[#0f1f1a]/50">Status</p>
+                  <span className={`mt-1 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadge(editFormData.status)}`}>
+                    {formatStatus(editFormData.status)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="max-h-[calc(92vh-210px)] overflow-y-auto px-8 py-6">
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+                <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white p-6 shadow-sm">
+                  <h4 className="font-display text-xl text-[#0f1f1a]">Appointment details</h4>
                   {customers.length === 0 ? (
                     <div className="mt-6 rounded-2xl border border-dashed border-[#0f1f1a]/20 bg-[#f8f5ef] px-6 py-8 text-center">
                       <p className="text-sm text-[#0f1f1a]/60">Add customers first before editing appointments.</p>
@@ -1022,7 +1047,7 @@ function AppointmentsPageInner() {
                       </Link>
                     </div>
                   ) : (
-                    <form onSubmit={handleEditSave} className="mt-6 space-y-4">
+                    <form onSubmit={handleEditSave} className="mt-6 space-y-5">
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
                           <label htmlFor="edit-appointment-customer" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Customer *</label>
@@ -1172,7 +1197,7 @@ function AppointmentsPageInner() {
                           />
                         </div>
                       </div>
-                      <div className="sticky bottom-0 mt-6 flex flex-wrap items-center gap-3 border-t border-[#0f1f1a]/10 bg-white/95 pb-4 pt-4">
+                      <div className="sticky bottom-0 mt-6 flex flex-wrap items-center gap-3 border-t border-[#0f1f1a]/10 bg-white/90 pb-4 pt-4 backdrop-blur">
                         <button
                           type="button"
                           onClick={() => setEditingAppointment(null)}
@@ -1192,15 +1217,29 @@ function AppointmentsPageInner() {
                   )}
                 </div>
 
-                <div className="rounded-3xl border border-[#0f1f1a]/10 bg-[#f8f5ef] p-5">
+                <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/85 p-5 shadow-sm lg:sticky lg:top-0">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-display text-xl">Call log</h4>
-                    <span className="text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">
-                      {editCalls.length} calls
-                    </span>
+                    <div>
+                      <h4 className="font-display text-xl text-[#0f1f1a]">Call log</h4>
+                      <span className="text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">
+                        {editCalls.length} calls
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditCallLogOpen((prev) => !prev)}
+                      aria-expanded={editCallLogOpen}
+                      className="rounded-full border border-[#0f1f1a]/15 bg-white px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60 hover:border-[#0f1f1a]/30"
+                    >
+                      {editCallLogOpen ? 'Hide' : 'Show'}
+                    </button>
                   </div>
 
-                  {editCallsLoading ? (
+                  {!editCallLogOpen ? (
+                    <div className="mt-6 rounded-2xl border border-dashed border-[#0f1f1a]/20 bg-white/70 px-5 py-6 text-sm text-[#0f1f1a]/60">
+                      Call log is collapsed. Expand to view the history.
+                    </div>
+                  ) : editCallsLoading ? (
                     <div className="mt-6 flex items-center gap-3 text-sm text-[#0f1f1a]/60">
                       <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#0f1f1a]/20 border-t-[#f97316]" />
                       Loading call history...
@@ -1214,63 +1253,66 @@ function AppointmentsPageInner() {
                       No calls yet for this appointment.
                     </div>
                   ) : (
-                    <div className="mt-5 space-y-3">
+                    <div className="mt-5 space-y-4">
                       {editCalls.map((call) => (
-                        <div key={call.id} className="rounded-2xl border border-[#0f1f1a]/10 bg-white px-4 py-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <p className="text-sm font-semibold text-[#0f1f1a]">
-                                {callTypeLabels[call.call_type] || call.call_type} • {formatCallDate(call.created_at)}
-                              </p>
-                              <p className="mt-1 text-xs text-[#0f1f1a]/60">
-                                Outcome: {callOutcomeLabels[call.call_outcome || ''] || call.call_outcome || 'Pending'}
-                                {' · '}
-                                Duration: {formatDuration(call.duration_sec)}
-                              </p>
-                              {call.summary && (
-                                <p className="mt-2 text-xs text-[#0f1f1a]/60">{call.summary}</p>
-                              )}
-                            </div>
-                            <div className="text-right">
-                              <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold ${
-                                callOutcomeStyles[call.call_outcome || ''] || 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70'
-                              }`}>
-                                {callOutcomeLabels[call.call_outcome || ''] || call.call_outcome || 'Pending'}
-                              </span>
-                            </div>
-                          </div>
-                          {call.transcript && call.transcript.length > 0 && (
-                            <details className="mt-3 rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-3 py-2 text-xs text-[#0f1f1a]/70">
-                              <summary className="cursor-pointer text-[11px] uppercase tracking-[0.2em] text-[#0f1f1a]/60">
-                                View transcript
-                              </summary>
-                              <div className="mt-3 space-y-2">
-                                {call.transcript.map((msg, i) => (
-                                  <div
-                                    key={i}
-                                    className={`flex ${msg.role === 'agent' ? 'justify-start' : msg.role === 'user' ? 'justify-end' : 'justify-center'}`}
-                                  >
-                                    {msg.role === 'system' ? (
-                                      <div className="rounded-full border border-[#0f1f1a]/10 bg-white px-3 py-1 text-[11px] text-[#0f1f1a]/50">
-                                        {msg.content}
-                                      </div>
-                                    ) : (
-                                      <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-xs ${
-                                        msg.role === 'agent'
-                                          ? 'bg-[#0f1f1a] text-white'
-                                          : 'bg-white text-[#0f1f1a]'
-                                      }`}>
-                                        <p className="text-[10px] uppercase tracking-[0.2em] opacity-70">
-                                          {msg.role === 'agent' ? 'OneSpec' : 'Customer'}
-                                        </p>
-                                        <p>{msg.content}</p>
-                                      </div>
-                                    )}
-                                  </div>
-                                ))}
+                        <div key={call.id} className="relative border-l border-[#0f1f1a]/10 pl-6">
+                          <span className="absolute left-[-7px] top-5 h-3 w-3 rounded-full border border-white bg-[#f97316]" />
+                          <div className="rounded-2xl border border-[#0f1f1a]/10 bg-white px-4 py-3 shadow-sm">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold text-[#0f1f1a]">
+                                  {callTypeLabels[call.call_type] || call.call_type} • {formatCallDate(call.created_at)}
+                                </p>
+                                <p className="mt-1 text-xs text-[#0f1f1a]/60">
+                                  Outcome: {callOutcomeLabels[call.call_outcome || ''] || call.call_outcome || 'Pending'}
+                                  {' · '}
+                                  Duration: {formatDuration(call.duration_sec)}
+                                </p>
+                                {call.summary && (
+                                  <p className="mt-2 text-xs text-[#0f1f1a]/60">{call.summary}</p>
+                                )}
                               </div>
-                            </details>
-                          )}
+                              <div className="text-right">
+                                <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold ${
+                                  callOutcomeStyles[call.call_outcome || ''] || 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70'
+                                }`}>
+                                  {callOutcomeLabels[call.call_outcome || ''] || call.call_outcome || 'Pending'}
+                                </span>
+                              </div>
+                            </div>
+                            {call.transcript && call.transcript.length > 0 && (
+                              <details className="mt-3 rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-3 py-2 text-xs text-[#0f1f1a]/70">
+                                <summary className="cursor-pointer text-[11px] uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+                                  View transcript
+                                </summary>
+                                <div className="mt-3 space-y-2">
+                                  {call.transcript.map((msg, i) => (
+                                    <div
+                                      key={i}
+                                      className={`flex ${msg.role === 'agent' ? 'justify-start' : msg.role === 'user' ? 'justify-end' : 'justify-center'}`}
+                                    >
+                                      {msg.role === 'system' ? (
+                                        <div className="rounded-full border border-[#0f1f1a]/10 bg-white px-3 py-1 text-[11px] text-[#0f1f1a]/50">
+                                          {msg.content}
+                                        </div>
+                                      ) : (
+                                        <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-xs ${
+                                          msg.role === 'agent'
+                                            ? 'bg-[#0f1f1a] text-white'
+                                            : 'bg-white text-[#0f1f1a]'
+                                        }`}>
+                                          <p className="text-[10px] uppercase tracking-[0.2em] opacity-70">
+                                            {msg.role === 'agent' ? 'OneSpec' : 'Customer'}
+                                          </p>
+                                          <p>{msg.content}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </details>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
