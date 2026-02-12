@@ -28,27 +28,27 @@ const steps = [
 const features = [
   {
     title: 'Calls that sound like your front desk',
-    description: 'Natural voice reminders that feel personal, not robotic.',
+    description: 'Cut manual reminder work while keeping every customer conversation personal.',
   },
   {
     title: 'Smart timing controls',
-    description: 'Call 24 hours before, morning-of, or custom windows per service.',
+    description: 'Reach customers at the right time to reduce day-of no-shows.',
   },
   {
-    title: 'Confirm, cancel, or reschedule intent',
+    title: 'Confirm, cancel, or reschedule requests',
     description: 'Capture outcomes instantly so your team can refill open slots faster.',
   },
   {
     title: 'Every call logged automatically',
-    description: 'See outcomes, durations, and transcripts in one dashboard.',
+    description: 'Track outcomes and transcripts in one dashboard to improve fill rate.',
   },
   {
     title: 'Security and compliance built in',
-    description: 'Enterprise-grade encryption, strict access controls, and audit-ready logs.',
+    description: 'Protect customer data with enterprise-grade encryption and audit-ready logs.',
   },
   {
     title: 'Built for busy teams',
-    description: 'Give your whole front desk access with shared templates and role-based permissions.',
+    description: 'Keep your front desk aligned with shared templates and role-based permissions.',
   },
 ]
 
@@ -362,13 +362,31 @@ export default function HomePage() {
           </div>
 
           <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature) => (
-              <div key={feature.title} className="group rounded-3xl border border-[#0f1f1a]/10 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+            {features.map((feature, index) => (
+              <div
+                key={feature.title}
+                className={`group rounded-3xl border p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${index === 0 ? 'border-[#0f766e]/30 bg-[#f7fffd]' : 'border-[#0f1f1a]/10 bg-white'}`}
+              >
                 <div className="mb-4 h-12 w-12 rounded-2xl bg-[#f97316]/15" />
                 <h3 className="text-lg font-semibold text-[#0f1f1a]">{feature.title}</h3>
                 <p className="mt-3 text-sm text-[#0f1f1a]/60">{feature.description}</p>
               </div>
             ))}
+          </div>
+
+          <div className="mt-8 flex flex-col items-start justify-between gap-4 rounded-2xl border border-[#0f1f1a]/10 bg-white/80 px-5 py-4 sm:flex-row sm:items-center">
+            <div className="inline-flex items-center gap-2 text-sm text-[#0f1f1a]/70">
+              <span className="h-2 w-2 rounded-full bg-[#0f766e]" />
+              Up to 50% fewer no-shows in the first month
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/signup" className="inline-flex items-center justify-center rounded-full bg-[#0f1f1a] px-4 py-2 text-sm font-semibold text-white">
+                Start free
+              </Link>
+              <a href="#pricing" className="inline-flex items-center justify-center rounded-full border border-[#0f1f1a]/20 px-4 py-2 text-sm font-semibold text-[#0f1f1a]">
+                See pricing
+              </a>
+            </div>
           </div>
         </div>
       </section>
