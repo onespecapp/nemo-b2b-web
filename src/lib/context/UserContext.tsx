@@ -9,6 +9,11 @@ interface Business {
   email: string | null
   phone: string | null
   voice_preference: string
+  speaking_rate: number
+  voice_style: string
+  custom_greeting: string | null
+  end_of_call_message: string | null
+  language: string
   timezone: string | null
   subscription_tier: string
   subscription_status: string

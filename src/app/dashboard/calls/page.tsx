@@ -16,6 +16,9 @@ interface CallLog {
   transcript: any[] | null
   summary: string | null
   room_name: string | null
+  voice_used: string | null
+  speaking_rate: number | null
+  voice_style: string | null
   created_at: string
   customer: {
     name: string
@@ -26,6 +29,38 @@ interface CallLog {
     scheduled_at: string
     status: string
   } | null
+}
+
+function getCallQuality(call: CallLog): { score: number; label: string; color: string } {
+  let score = 0
+
+  // Outcome-based scoring
+  const positiveOutcomes = ['CONFIRMED', 'RESCHEDULED', 'BOOKED', 'ANSWERED', 'REVIEW_SENT']
+  const negativeOutcomes = ['FAILED', 'BUSY']
+  if (call.call_outcome && positiveOutcomes.includes(call.call_outcome)) score += 40
+  else if (call.call_outcome === 'NO_ANSWER' || call.call_outcome === 'VOICEMAIL') score += 20
+  else if (call.call_outcome && negativeOutcomes.includes(call.call_outcome)) score += 5
+  else score += 30
+
+  // Duration-based scoring (longer conversations = more engagement)
+  if (call.duration_sec && call.duration_sec > 30) score += 25
+  else if (call.duration_sec && call.duration_sec > 10) score += 15
+  else score += 5
+
+  // Transcript quality
+  if (call.transcript && call.transcript.length > 4) score += 25
+  else if (call.transcript && call.transcript.length > 0) score += 15
+  else score += 0
+
+  // Summary available
+  if (call.summary) score += 10
+
+  const capped = Math.min(score, 100)
+
+  if (capped >= 80) return { score: capped, label: 'Excellent', color: '#0f766e' }
+  if (capped >= 60) return { score: capped, label: 'Good', color: '#0f766e' }
+  if (capped >= 40) return { score: capped, label: 'Fair', color: '#b45309' }
+  return { score: capped, label: 'Low', color: '#991b1b' }
 }
 
 const PAGE_SIZE = 50
@@ -244,6 +279,19 @@ export default function CallHistoryPage() {
 
                   <CallOutcomeBadge outcome={call.call_outcome} />
 
+                  {(() => {
+                    const q = getCallQuality(call)
+                    return (
+                      <span
+                        className="hidden shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold sm:inline-flex"
+                        style={{ backgroundColor: `${q.color}15`, color: q.color }}
+                        title={`Call quality: ${q.score}%`}
+                      >
+                        {q.label}
+                      </span>
+                    )
+                  })()}
+
                   {call.transcript && call.transcript.length > 0 && (
                     <span className="hidden rounded-full border border-[#0f1f1a]/10 px-2 py-1 text-[11px] uppercase tracking-[0.2em] text-[#0f1f1a]/50 sm:inline-flex">
                       Transcript
@@ -308,6 +356,64 @@ export default function CallHistoryPage() {
                   </p>
                 </div>
               </div>
+
+              {/* Call quality indicator */}
+              {(() => {
+                const q = getCallQuality(selectedCall)
+                return (
+                  <div className="mt-6 rounded-2xl border border-[#0f1f1a]/10 bg-white p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/50">Call quality</p>
+                    <div className="mt-3 flex items-center gap-4">
+                      <div className="relative h-14 w-14 shrink-0">
+                        <svg className="h-14 w-14 -rotate-90" viewBox="0 0 36 36">
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="#0f1f1a10"
+                            strokeWidth="3"
+                          />
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke={q.color}
+                            strokeWidth="3"
+                            strokeDasharray={`${q.score}, 100`}
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold" style={{ color: q.color }}>
+                          {q.score}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold" style={{ color: q.color }}>{q.label}</p>
+                        <p className="text-xs text-[#0f1f1a]/50">
+                          Based on outcome, duration, and conversation depth
+                        </p>
+                      </div>
+                    </div>
+                    {(selectedCall.voice_used || selectedCall.voice_style) && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {selectedCall.voice_used && (
+                          <span className="rounded-full bg-[#0f1f1a]/5 px-2.5 py-1 text-[11px] font-medium text-[#0f1f1a]/60">
+                            Voice: {selectedCall.voice_used}
+                          </span>
+                        )}
+                        {selectedCall.speaking_rate && (
+                          <span className="rounded-full bg-[#0f1f1a]/5 px-2.5 py-1 text-[11px] font-medium text-[#0f1f1a]/60">
+                            Pace: {selectedCall.speaking_rate}x
+                          </span>
+                        )}
+                        {selectedCall.voice_style && (
+                          <span className="rounded-full bg-[#0f1f1a]/5 px-2.5 py-1 text-[11px] font-medium text-[#0f1f1a]/60 capitalize">
+                            Style: {selectedCall.voice_style}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
 
               {selectedCall.summary && (
                 <div className="mt-6 rounded-2xl border border-[#0f1f1a]/10 bg-white p-4">
