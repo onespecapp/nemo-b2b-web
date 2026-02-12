@@ -525,7 +525,7 @@ function AppointmentsPageInner() {
   const bizTz = businessTimezone || browserTz
   const browserTzAbbr = getTimezoneAbbr(browserTz)
   const bizTzAbbr = getTimezoneAbbr(bizTz)
-  const tzMismatch = browserTz !== bizTz
+  const tzMismatch = browserTzAbbr !== bizTzAbbr
 
   const TimezoneIndicator = () => (
     <div className="mt-1.5 space-y-1">
