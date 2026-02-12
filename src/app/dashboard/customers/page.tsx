@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import AccessibleModal from '@/components/AccessibleModal'
 import { createClient } from '@/lib/supabase/client'
 import { validatePhone, validateEmail } from '@/lib/validation'
@@ -11,6 +11,8 @@ import StatusBadge from '@/components/StatusBadge'
 import CallOutcomeBadge from '@/components/CallOutcomeBadge'
 import { TIMEZONES, callTypeLabels, callOutcomeLabels } from '@/lib/constants'
 import { formatDuration, formatDateTime } from '@/lib/utils'
+import { useUser } from '@/lib/context/UserContext'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 interface Customer {
   id: string
@@ -40,8 +42,38 @@ interface CallLog {
 
 export default function CustomersPage() {
   const { showToast } = useToast()
-  const [customers, setCustomers] = useState<Customer[]>([])
-  const [loading, setLoading] = useState(true)
+  const { business } = useUser()
+  const queryClient = useQueryClient()
+  const supabase = createClient()
+
+  const {
+    data: customers = [],
+    isLoading: loading,
+    error: queryError,
+  } = useQuery({
+    queryKey: ['customers', business?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('b2b_customers')
+        .select('*')
+        .eq('business_id', business!.id)
+        .order('created_at', { ascending: false })
+
+      if (error) throw new Error(error.message)
+      return (data || []) as Customer[]
+    },
+    enabled: !!business,
+  })
+
+  const error = !business
+    ? 'No business found. Please set up your business in Settings first.'
+    : queryError
+      ? queryError.message
+      : null
+
+  const invalidateCustomers = () =>
+    queryClient.invalidateQueries({ queryKey: ['customers', business?.id] })
+
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
@@ -65,60 +97,11 @@ export default function CustomersPage() {
   const [detailsLoading, setDetailsLoading] = useState(false)
   const [detailsError, setDetailsError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [businessTimezone, setBusinessTimezone] = useState('America/Los_Angeles')
-  const [error, setError] = useState<string | null>(null)
+  const businessTimezone = business?.timezone || 'America/Los_Angeles'
   const [phoneError, setPhoneError] = useState<string | null>(null)
   const [editPhoneError, setEditPhoneError] = useState<string | null>(null)
   const [emailError, setEmailError] = useState<string | null>(null)
   const [editEmailError, setEditEmailError] = useState<string | null>(null)
-  const supabase = createClient()
-
-  const fetchCustomers = useCallback(async () => {
-    setError(null)
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        setLoading(false)
-        return
-      }
-
-      const { data: business, error: bizError } = await supabase
-        .from('b2b_businesses')
-        .select('*')
-        .eq('owner_id', user.id)
-        .single()
-
-      if (bizError || !business) {
-        setError(bizError?.message || 'No business found. Please set up your business in Settings first.')
-        setLoading(false)
-        return
-      }
-
-      setBusinessTimezone(business.timezone || 'America/Los_Angeles')
-
-      const { data, error: custError } = await supabase
-        .from('b2b_customers')
-        .select('*')
-        .eq('business_id', business.id)
-        .order('created_at', { ascending: false })
-
-      if (custError) {
-        setError(custError.message)
-        setLoading(false)
-        return
-      }
-
-      setCustomers(data || [])
-      setLoading(false)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred.')
-      setLoading(false)
-    }
-  }, [supabase])
-
-  useEffect(() => {
-    fetchCustomers()
-  }, [fetchCustomers])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -139,20 +122,7 @@ export default function CustomersPage() {
 
     setSaving(true)
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      showToast('Not authenticated', 'error')
-      setSaving(false)
-      return
-    }
-
-    const { data: business, error: bizError } = await supabase
-      .from('b2b_businesses')
-      .select('id')
-      .eq('owner_id', user.id)
-      .single()
-
-    if (bizError || !business) {
+    if (!business) {
       showToast('No business found. Please set up your business in Settings first.', 'error')
       setSaving(false)
       return
@@ -174,7 +144,7 @@ export default function CustomersPage() {
       setPhoneError(null)
       setEmailError(null)
       setShowForm(false)
-      fetchCustomers()
+      invalidateCustomers()
     }
     setSaving(false)
   }
@@ -186,7 +156,7 @@ export default function CustomersPage() {
     if (error) {
       showToast('Error deleting customer: ' + error.message, 'error')
     } else {
-      fetchCustomers()
+      invalidateCustomers()
     }
   }
 
@@ -267,7 +237,7 @@ export default function CustomersPage() {
       setEditingCustomer(null)
       setEditPhoneError(null)
       setEditEmailError(null)
-      fetchCustomers()
+      invalidateCustomers()
     }
     setEditSaving(false)
   }
@@ -310,7 +280,7 @@ export default function CustomersPage() {
           <h3 className="font-display text-2xl">Something went wrong</h3>
           <p className="mt-2 text-sm text-[#0f1f1a]/60">{error}</p>
           <button
-            onClick={() => { setLoading(true); fetchCustomers() }}
+            onClick={() => invalidateCustomers()}
             className="mt-5 inline-flex items-center justify-center rounded-full bg-[#0f1f1a] px-5 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white"
           >
             Try again

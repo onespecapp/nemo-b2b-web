@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { isValidE164Phone, formatPhoneForApi } from '@/lib/validation'
+import { useUser } from '@/lib/context/UserContext'
 
 const TIMEZONES = [
   { value: 'America/New_York', label: 'Eastern Time (New York)' },
@@ -48,6 +49,7 @@ interface Business {
 }
 
 export default function SettingsPage() {
+  const { user: contextUser, refreshBusiness } = useUser()
   const [business, setBusiness] = useState<Business | null>(null)
   const [businessName, setBusinessName] = useState('')
   const [businessEmail, setBusinessEmail] = useState('')
@@ -154,6 +156,7 @@ export default function SettingsPage() {
         voice: data.voice_preference,
         timezone: data.timezone || 'America/Los_Angeles'
       })
+      await refreshBusiness()
       setMessage({ type: 'success', text: 'Business created successfully!' })
     } catch (error: any) {
       console.error('Failed to create business:', error)
@@ -190,6 +193,7 @@ export default function SettingsPage() {
         voice: selectedVoice,
         timezone: selectedTimezone
       })
+      await refreshBusiness()
       setMessage({ type: 'success', text: 'Settings saved successfully!' })
     } catch (error: any) {
       console.error('Failed to save settings:', error)

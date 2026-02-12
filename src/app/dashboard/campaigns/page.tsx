@@ -7,6 +7,7 @@ import CallOutcomeBadge from '@/components/CallOutcomeBadge'
 import { campaignStatusStyles, campaignStatusLabels } from '@/lib/constants'
 import { formatDuration, formatRelativeTime } from '@/lib/utils'
 import { useForm } from '@/lib/hooks/useForm'
+import { useUser } from '@/lib/context/UserContext'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001'
 
@@ -81,10 +82,11 @@ const campaignTypeConfig: Record<string, { label: string; description: string; d
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
 
 export default function CampaignsPage() {
+  const { business } = useUser()
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [stats, setStats] = useState<Record<string, CampaignStats>>({})
   const [loading, setLoading] = useState(true)
-  const [businessId, setBusinessId] = useState<string | null>(null)
+  const businessId = business?.id ?? null
 
   // Modal state
   const [showConfig, setShowConfig] = useState(false)
@@ -142,21 +144,11 @@ export default function CampaignsPage() {
   useEffect(() => {
     async function init() {
       setLoading(true)
-      // Get business ID
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: business } = await supabase
-          .from('b2b_businesses')
-          .select('id')
-          .eq('owner_id', user.id)
-          .single()
-        if (business) setBusinessId(business.id)
-      }
       await fetchCampaigns()
       setLoading(false)
     }
     init()
-  }, [fetchCampaigns, supabase.auth, supabase])
+  }, [fetchCampaigns])
 
   const handleToggle = async (campaign: Campaign) => {
     const { data: { session } } = await supabase.auth.getSession()
