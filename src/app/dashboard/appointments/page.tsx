@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import AccessibleModal from '@/components/AccessibleModal'
 import { useToast } from '@/components/ToastProvider'
+import { useUser } from '@/lib/context/UserContext'
 
 const parseUTCDate = (dateStr: string): Date => {
   if (!dateStr.endsWith('Z') && !dateStr.includes('+')) {
@@ -73,6 +74,7 @@ const callOutcomeStyles: Record<string, string> = {
 
 function AppointmentsPageInner() {
   const { showToast } = useToast()
+  const { business } = useUser()
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
@@ -119,25 +121,13 @@ function AppointmentsPageInner() {
 
   const fetchData = useCallback(async () => {
     setError(null)
+    if (!business) {
+      setError('No business found. Please set up your business in Settings first.')
+      setLoading(false)
+      return
+    }
+
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        setLoading(false)
-        return
-      }
-
-      const { data: business, error: bizError } = await supabase
-        .from('b2b_businesses')
-        .select('id, timezone')
-        .eq('owner_id', user.id)
-        .single()
-
-      if (bizError || !business) {
-        setError(bizError?.message || 'No business found. Please set up your business in Settings first.')
-        setLoading(false)
-        return
-      }
-
       setBusinessTimezone(business.timezone || null)
 
       const [appointmentsRes, customersRes] = await Promise.all([
@@ -166,7 +156,7 @@ function AppointmentsPageInner() {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred.')
       setLoading(false)
     }
-  }, [supabase])
+  }, [supabase, business])
 
   useEffect(() => {
     fetchData()
@@ -188,15 +178,7 @@ function AppointmentsPageInner() {
       return
     }
 
-    const { data: { user } } = await supabase.auth.getUser()
-
-    const { data: business, error: bizError } = await supabase
-      .from('b2b_businesses')
-      .select('id')
-      .eq('owner_id', user?.id)
-      .single()
-
-    if (bizError || !business) {
+    if (!business) {
       showToast('No business found for your account. Please contact support.', 'error')
       setSaving(false)
       return
