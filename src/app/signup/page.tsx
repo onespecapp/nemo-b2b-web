@@ -78,17 +78,17 @@ export default function SignupPage() {
 
         <div className="relative z-10">
           <h1 className="text-4xl font-display font-bold text-white mb-4">
-            Start your free trial
+            Create your free account
           </h1>
           <p className="text-white/70 text-lg mb-8">
-            No credit card required. Get started in minutes and reduce no-shows with AI-powered reminders.
+            No credit card required. Launch in minutes and start recovering appointments this week.
           </p>
 
           <div className="space-y-4">
             {[
-              '50 free calls per month',
-              'AI-powered voice calls',
-              'Real-time analytics',
+              '50 free calls every month',
+              'Human-sounding AI reminder calls',
+              'Upgrade to Growth for $99/month when ready',
               'Cancel anytime',
             ].map((feature, i) => (
               <div key={i} className="flex items-center gap-3 text-white">
@@ -129,10 +129,10 @@ export default function SignupPage() {
 
           <div className="mb-8">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-[#0f1f1a] mb-2">
-              Create your account
+              Start free in under 3 minutes
             </h2>
             <p className="text-[#0f1f1a]/60">
-              Already have an account?{' '}
+              No credit card required. Already have an account?{' '}
               <Link href="/login" className="text-[#0f766e] hover:text-[#0f766e]/80 font-medium">
                 Sign in
               </Link>
@@ -237,15 +237,15 @@ export default function SignupPage() {
                   Creating account...
                 </>
               ) : (
-                'Create account'
+                'Create free account'
               )}
             </button>
 
             <p className="text-center text-xs text-[#0f1f1a]/50">
               By signing up, you agree to our{' '}
-              <a href="#" className="text-[#0f766e] hover:underline">Terms of Service</a>
+              <a href="/terms" className="text-[#0f766e] hover:underline">Terms of Service</a>
               {' '}and{' '}
-              <a href="#" className="text-[#0f766e] hover:underline">Privacy Policy</a>
+              <a href="/privacy" className="text-[#0f766e] hover:underline">Privacy Policy</a>
             </p>
           </form>
 

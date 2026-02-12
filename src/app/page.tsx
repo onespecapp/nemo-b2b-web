@@ -5,50 +5,90 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 const stats = [
-  { value: '50%', label: 'Lower no-show rates' },
-  { value: '3 min', label: 'Average setup time' },
+  { value: '50%', label: 'Fewer no-shows in the first month' },
+  { value: '3 min', label: 'To launch your first campaign' },
   { value: '98%', label: 'Call completion rate' },
 ]
 
 const steps = [
   {
-    title: 'Connect your business',
-    description: 'Create your account, set your voice, and choose when reminders go out.',
+    title: 'Connect your calendar + brand',
+    description: 'Create your account, pick your voice, and choose exactly when reminders go out.',
   },
   {
-    title: 'Add customers + appointments',
-    description: 'Import a list or add appointments manually in minutes.',
+    title: 'Import this week&apos;s schedule',
+    description: 'Upload a CSV or add appointments manually in minutes.',
   },
   {
-    title: 'OneSpec calls and confirms',
-    description: 'Our AI handles reminders, confirmations, and reschedules automatically.',
+    title: 'OneSpec confirms automatically',
+    description: 'Our AI handles reminders, captures outcomes, and flags reschedule requests for fast follow-up.',
   },
 ]
 
 const features = [
   {
-    title: 'Human-sounding AI calls',
-    description: 'Warm, natural conversations that feel like a real front desk call.',
+    title: 'Calls that sound like your front desk',
+    description: 'Cut manual reminder work while keeping every customer conversation personal.',
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 14.5v2.2a2 2 0 0 1-2.2 2 13.8 13.8 0 0 1-6-2.2 13.4 13.4 0 0 1-4.1-4.1A13.8 13.8 0 0 1 2 6.4a2 2 0 0 1 2-2.2h2.2a2 2 0 0 1 2 1.7l.4 2.1a2 2 0 0 1-.6 1.9l-1 1a10.9 10.9 0 0 0 4.1 4.1l1-1a2 2 0 0 1 1.9-.6l2.1.4a2 2 0 0 1 1.7 2Z" />
+        <path strokeLinecap="round" d="M14.5 6.2a3.5 3.5 0 0 1 3.3 3.3" />
+        <path strokeLinecap="round" d="M14.5 3.7a6 6 0 0 1 5.8 5.8" />
+      </svg>
+    ),
   },
   {
     title: 'Smart timing controls',
-    description: 'Call 24 hours before, morning-of, or custom windows per service.',
+    description: 'Reach customers at the right time to reduce day-of no-shows.',
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+        <circle cx="12" cy="12" r="8" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5v4.8l3.2 1.9" />
+      </svg>
+    ),
   },
   {
-    title: 'Confirm or reschedule',
-    description: 'Captures outcomes instantly and updates appointment status.',
+    title: 'Confirm, cancel, or reschedule requests',
+    description: 'Capture outcomes instantly so your team can refill open slots faster.',
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+        <rect x="3" y="5.5" width="18" height="15" rx="2.5" />
+        <path strokeLinecap="round" d="M8 3.5v4M16 3.5v4M3 10h18" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m9 15 2 2 4-4" />
+      </svg>
+    ),
   },
   {
-    title: 'Call logs + transcripts',
-    description: 'Review outcomes, durations, and call summaries in your dashboard.',
+    title: 'Every call logged automatically',
+    description: 'Track outcomes and transcripts in one dashboard to improve fill rate.',
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5h6l3 3v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2Z" />
+        <path strokeLinecap="round" d="M12.5 4.5v4h4" />
+        <path strokeLinecap="round" d="M9.5 12h5M9.5 15.5h5" />
+      </svg>
+    ),
   },
   {
-    title: 'Secure by design',
-    description: 'Enterprise-grade encryption, strict access controls, and audit-ready logs.',
+    title: 'Security and compliance built in',
+    description: 'Protect customer data with enterprise-grade encryption and audit-ready logs.',
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3.5 5 6.8v5.4c0 4.4 2.9 7.5 7 8.3 4.1-.8 7-3.9 7-8.3V6.8L12 3.5Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m9.3 12.4 1.8 1.8 3.6-3.6" />
+      </svg>
+    ),
   },
   {
-    title: 'Team-ready workflows',
-    description: 'Give your whole front desk access with role-based permissions and shared templates.',
+    title: 'Built for busy teams',
+    description: 'Keep your front desk aligned with shared templates and role-based permissions.',
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+        <circle cx="8" cy="9" r="3" />
+        <circle cx="16.5" cy="8" r="2.5" />
+        <path strokeLinecap="round" d="M3.8 18.5a4.8 4.8 0 0 1 8.4 0M13 18.5a4 4 0 0 1 7 0" />
+      </svg>
+    ),
   },
 ]
 
@@ -123,7 +163,7 @@ const faqs = [
   },
   {
     question: 'What does it cost to get started?',
-    answer: 'Our Starter plan is completely free — 50 calls per month, no credit card required. Upgrade anytime as your call volume grows.',
+    answer: 'Starter is free with 50 calls per month and no credit card required. Growth is $99 per month for up to 500 calls, multi-user access, and advanced analytics.',
   },
 ]
 
@@ -213,36 +253,36 @@ export default function HomePage() {
             <div className="space-y-8 animate-fade-up">
               <div className="inline-flex items-center gap-2 rounded-full border border-[#0f1f1a]/10 bg-white/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#0f1f1a]/70 shadow-sm">
                 <span className="h-2 w-2 rounded-full bg-[#f97316]" />
-                AI voice reminders for Vancouver businesses
+                AI reminder calls for appointment-based teams
               </div>
 
               <div className="space-y-6">
                 <h1 className="font-display text-4xl leading-tight sm:text-5xl lg:text-6xl">
-                  Make every appointment
-                  <span className="block text-[#0f766e]">feel personally confirmed.</span>
+                  Stop losing revenue
+                  <span className="block text-[#0f766e]">to no-shows.</span>
                 </h1>
                 <p className="text-lg text-[#0f1f1a]/70 sm:text-xl">
-                  OneSpec calls your customers before their visit, confirms attendance, and captures reschedule requests — so your Vancouver team can stop playing phone tag.
+                  OneSpec calls every customer before their visit, captures confirmations instantly, and flags reschedules for follow-up so your team keeps calendars full.
                 </p>
               </div>
 
               <div className="flex flex-col gap-4 sm:flex-row">
                 <Link href="/signup" className="inline-flex items-center justify-center rounded-full bg-[#f97316] px-6 py-3 text-base font-semibold text-white shadow-lg shadow-orange-200 transition hover:-translate-y-0.5">
-                  Start free trial
+                  Start free - no card required
                 </Link>
                 <a href="#demo" className="inline-flex items-center justify-center rounded-full border border-[#0f1f1a]/20 px-6 py-3 text-base font-semibold text-[#0f1f1a] transition hover:border-[#0f1f1a]/40">
-                  Hear a sample call
+                  Hear how calls sound
                 </a>
               </div>
 
               <div className="flex flex-wrap items-center gap-6 text-sm text-[#0f1f1a]/60">
                 <div className="flex items-center gap-2 rounded-full bg-white/70 px-4 py-2">
                   <span className="h-2 w-2 rounded-full bg-[#0f766e]" />
-                  Avg. 50% fewer no-shows
+                  Up to 50% fewer no-shows
                 </div>
                 <div className="flex items-center gap-2 rounded-full bg-white/70 px-4 py-2">
                   <span className="h-2 w-2 rounded-full bg-[#f97316]" />
-                  Built for Greater Vancouver
+                  Starts free, scales to $99/month
                 </div>
               </div>
             </div>
@@ -327,9 +367,9 @@ export default function HomePage() {
           <div className="grid gap-10 lg:grid-cols-[0.45fr_0.55fr]">
             <div className="space-y-4">
               <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">How it works</p>
-              <h2 className="font-display text-3xl sm:text-4xl">Set it once. OneSpec handles the rest.</h2>
+              <h2 className="font-display text-3xl sm:text-4xl">Set it once. Recover revenue every week.</h2>
               <p className="text-base text-[#0f1f1a]/70">
-                Your team stops chasing confirmations. Customers get a call that sounds personal, not robotic.
+                Your team stops chasing confirmations. Customers get a call that sounds personal, and you get a fuller schedule.
               </p>
             </div>
 
@@ -354,21 +394,41 @@ export default function HomePage() {
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Features</p>
-              <h2 className="font-display text-3xl sm:text-4xl">A full reminder system, not just calls.</h2>
+              <h2 className="font-display text-3xl sm:text-4xl">Everything you need to protect your schedule.</h2>
             </div>
             <div className="rounded-full border border-[#0f1f1a]/10 bg-white px-5 py-2 text-sm text-[#0f1f1a]/70">
-              Carrier-grade voice quality on every call
+              Calls, outcomes, and follow-ups in one place
             </div>
           </div>
 
           <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature) => (
-              <div key={feature.title} className="group rounded-3xl border border-[#0f1f1a]/10 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-                <div className="mb-4 h-12 w-12 rounded-2xl bg-[#f97316]/15" />
+            {features.map((feature, index) => (
+              <div
+                key={feature.title}
+                className={`group rounded-3xl border p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${index === 0 ? 'border-[#0f766e]/30 bg-[#f7fffd]' : 'border-[#0f1f1a]/10 bg-white'}`}
+              >
+                <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-2xl transition-transform group-hover:scale-105 ${index === 0 ? 'bg-[#0f766e]/15 text-[#0f766e]' : 'bg-[#f97316]/15 text-[#0f1f1a]'}`}>
+                  {feature.icon}
+                </div>
                 <h3 className="text-lg font-semibold text-[#0f1f1a]">{feature.title}</h3>
                 <p className="mt-3 text-sm text-[#0f1f1a]/60">{feature.description}</p>
               </div>
             ))}
+          </div>
+
+          <div className="mt-8 flex flex-col items-start justify-between gap-4 rounded-2xl border border-[#0f1f1a]/10 bg-white/80 px-5 py-4 sm:flex-row sm:items-center">
+            <div className="inline-flex items-center gap-2 text-sm text-[#0f1f1a]/70">
+              <span className="h-2 w-2 rounded-full bg-[#0f766e]" />
+              Up to 50% fewer no-shows in the first month
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/signup" className="inline-flex items-center justify-center rounded-full bg-[#0f1f1a] px-4 py-2 text-sm font-semibold text-white">
+                Start free
+              </Link>
+              <a href="#pricing" className="inline-flex items-center justify-center rounded-full border border-[#0f1f1a]/20 px-4 py-2 text-sm font-semibold text-[#0f1f1a]">
+                See pricing
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -425,8 +485,8 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl">
           <div className="text-center">
             <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Pricing</p>
-            <h2 className="mt-4 font-display text-3xl sm:text-4xl">Clear tiers for every team size.</h2>
-            <p className="mt-3 text-[#0f1f1a]/60">Start free, scale when your call volume grows.</p>
+            <h2 className="mt-4 font-display text-3xl sm:text-4xl">Simple pricing that grows with your volume.</h2>
+            <p className="mt-3 text-[#0f1f1a]/60">Start free with no credit card, then upgrade to Growth for $99 per month.</p>
           </div>
 
           <div className="mt-10 grid gap-6 lg:grid-cols-3">
@@ -434,23 +494,23 @@ export default function HomePage() {
               {
                 name: 'Starter',
                 price: 'Free',
-                detail: 'Best for trying OneSpec',
+                detail: 'Best for testing call quality',
                 features: ['50 calls / month', 'Single location', 'Core analytics', 'Email support'],
-                cta: 'Get started',
+                cta: 'Start free',
                 highlight: false,
               },
               {
                 name: 'Growth',
-                price: '$49 CAD',
-                detail: 'For growing Vancouver practices',
+                price: '$99 per month',
+                detail: 'Most popular for busy appointment teams',
                 features: ['500 calls / month', 'Multi-user access', 'Advanced analytics', 'Custom templates'],
-                cta: 'Start free trial',
+                cta: 'Choose Growth',
                 highlight: true,
               },
               {
                 name: 'Enterprise',
                 price: 'Custom',
-                detail: 'For multi-location orgs',
+                detail: 'For multi-location organizations',
                 features: ['Unlimited calls', 'Dedicated success', 'PIPEDA + HIPAA compliance', 'Custom integrations'],
                 cta: 'Talk to sales',
                 highlight: false,
@@ -488,7 +548,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-4xl">
           <div className="text-center">
             <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">FAQ</p>
-            <h2 className="mt-4 font-display text-3xl sm:text-4xl">Questions we hear a lot.</h2>
+            <h2 className="mt-4 font-display text-3xl sm:text-4xl">Questions before you launch.</h2>
           </div>
           <div className="mt-10 space-y-4">
             {faqs.map((faq) => (
@@ -504,13 +564,13 @@ export default function HomePage() {
       {/* Final CTA */}
       <section className="px-4 pb-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-5xl rounded-[36px] border border-[#0f1f1a]/10 bg-gradient-to-br from-[#f97316]/20 via-white to-[#0f766e]/15 p-12 text-center shadow-lg">
-          <h2 className="font-display text-3xl sm:text-4xl">Give your team their time back.</h2>
+          <h2 className="font-display text-3xl sm:text-4xl">Turn next week&apos;s schedule into confirmed revenue.</h2>
           <p className="mt-4 text-[#0f1f1a]/70">
-            Join Vancouver businesses already saving hours every week. Start for free and see your next week of appointments confirm themselves.
+            Launch in minutes, start free with no card, and upgrade to $99/month when your call volume grows.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link href="/signup" className="rounded-full bg-[#0f1f1a] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-black/15">
-              Start free trial
+              Create free account
             </Link>
             <Link href="/login" className="rounded-full border border-[#0f1f1a]/20 px-6 py-3 text-sm font-semibold text-[#0f1f1a]">
               Sign in
@@ -527,7 +587,7 @@ export default function HomePage() {
             <div className="space-y-4">
               <Image src="/logo.png" alt="OneSpec" width={160} height={40} className="w-full max-w-[140px]" />
               <p className="text-sm text-[#0f1f1a]/60">
-                AI-powered appointment reminders that sound human and save hours.
+                AI reminder calls that keep calendars full and teams focused.
               </p>
             </div>
 
