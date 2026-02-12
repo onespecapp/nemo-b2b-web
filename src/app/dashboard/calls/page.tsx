@@ -7,13 +7,14 @@ import { SkeletonCallList } from '@/components/Skeleton'
 import CallOutcomeBadge from '@/components/CallOutcomeBadge'
 import { callOutcomeLabels, campaignCallTypeLabels, campaignCallTypeStyles } from '@/lib/constants'
 import { formatDuration, parseUTCDate, formatRelativeTime } from '@/lib/utils'
+import { useUser } from '@/lib/context/UserContext'
 
 interface CallLog {
   id: string
   call_type: string
   call_outcome: string | null
   duration_sec: number | null
-  transcript: any[] | null
+  transcript: TranscriptMessage[] | null
   summary: string | null
   room_name: string | null
   created_at: string
@@ -28,14 +29,18 @@ interface CallLog {
   } | null
 }
 
+interface TranscriptMessage {
+  role: string
+  content: string
+}
+
 const PAGE_SIZE = 50
 
 export default function CallHistoryPage() {
+  const { business, loading: userLoading } = useUser()
   const [calls, setCalls] = useState<CallLog[]>([])
   const [loading, setLoading] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
   const [totalCount, setTotalCount] = useState<number | null>(null)
-  const [hasMore, setHasMore] = useState(false)
   const [selectedCall, setSelectedCall] = useState<CallLog | null>(null)
   const [filter, setFilter] = useState<string>('all')
   const [sortDirection, setSortDirection] = useState<'desc' | 'asc'>('desc')
@@ -43,10 +48,16 @@ export default function CallHistoryPage() {
   const currentOffsetRef = useRef(0)
 
   const fetchCalls = useCallback(async (append: boolean = false) => {
-    if (append) {
-      setLoadingMore(true)
-    } else {
+    if (!business) {
+      setCalls([])
+      setTotalCount(0)
+      setLoading(false)
+      return
+    }
+
+    if (!append) {
       setLoading(true)
+      setTotalCount(null)
       currentOffsetRef.current = 0
     }
 
@@ -56,6 +67,7 @@ export default function CallHistoryPage() {
     let countQuery = supabase
       .from('b2b_call_logs')
       .select('*', { count: 'exact', head: true })
+      .eq('business_id', business.id)
 
     if (filter !== 'all') {
       countQuery = countQuery.eq('call_outcome', filter)
@@ -69,6 +81,7 @@ export default function CallHistoryPage() {
         customer:b2b_customers(name, phone),
         appointment:b2b_appointments(title, scheduled_at, status)
       `)
+      .eq('business_id', business.id)
       .order('created_at', { ascending: sortDirection === 'asc' })
       .range(offset, offset + PAGE_SIZE - 1)
 
@@ -91,27 +104,32 @@ export default function CallHistoryPage() {
         setCalls(newData)
       }
       currentOffsetRef.current = offset + newData.length
-      setHasMore(newData.length === PAGE_SIZE)
     }
 
     if (countResult && !countResult.error && countResult.count !== null && countResult.count !== undefined) {
       setTotalCount(countResult.count)
     }
 
-    if (append) {
-      setLoadingMore(false)
-    } else {
+    if (!append) {
       setLoading(false)
     }
-  }, [supabase, filter, sortDirection])
+  }, [supabase, filter, sortDirection, business])
 
   // Reset and refetch when filter or sort changes
   useEffect(() => {
-    setCalls([])
-    setTotalCount(null)
-    setHasMore(false)
-    fetchCalls(false)
-  }, [fetchCalls])
+    if (userLoading) return
+
+    let cancelled = false
+    queueMicrotask(() => {
+      if (!cancelled) {
+        void fetchCalls(false)
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [fetchCalls, userLoading])
 
   const formatDate = (dateString: string) => {
     const date = parseUTCDate(dateString)
