@@ -29,26 +29,66 @@ const features = [
   {
     title: 'Calls that sound like your front desk',
     description: 'Cut manual reminder work while keeping every customer conversation personal.',
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 14.5v2.2a2 2 0 0 1-2.2 2 13.8 13.8 0 0 1-6-2.2 13.4 13.4 0 0 1-4.1-4.1A13.8 13.8 0 0 1 2 6.4a2 2 0 0 1 2-2.2h2.2a2 2 0 0 1 2 1.7l.4 2.1a2 2 0 0 1-.6 1.9l-1 1a10.9 10.9 0 0 0 4.1 4.1l1-1a2 2 0 0 1 1.9-.6l2.1.4a2 2 0 0 1 1.7 2Z" />
+        <path strokeLinecap="round" d="M14.5 6.2a3.5 3.5 0 0 1 3.3 3.3" />
+        <path strokeLinecap="round" d="M14.5 3.7a6 6 0 0 1 5.8 5.8" />
+      </svg>
+    ),
   },
   {
     title: 'Smart timing controls',
     description: 'Reach customers at the right time to reduce day-of no-shows.',
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+        <circle cx="12" cy="12" r="8" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5v4.8l3.2 1.9" />
+      </svg>
+    ),
   },
   {
     title: 'Confirm, cancel, or reschedule requests',
     description: 'Capture outcomes instantly so your team can refill open slots faster.',
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+        <rect x="3" y="5.5" width="18" height="15" rx="2.5" />
+        <path strokeLinecap="round" d="M8 3.5v4M16 3.5v4M3 10h18" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m9 15 2 2 4-4" />
+      </svg>
+    ),
   },
   {
     title: 'Every call logged automatically',
     description: 'Track outcomes and transcripts in one dashboard to improve fill rate.',
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5h6l3 3v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2Z" />
+        <path strokeLinecap="round" d="M12.5 4.5v4h4" />
+        <path strokeLinecap="round" d="M9.5 12h5M9.5 15.5h5" />
+      </svg>
+    ),
   },
   {
     title: 'Security and compliance built in',
     description: 'Protect customer data with enterprise-grade encryption and audit-ready logs.',
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3.5 5 6.8v5.4c0 4.4 2.9 7.5 7 8.3 4.1-.8 7-3.9 7-8.3V6.8L12 3.5Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m9.3 12.4 1.8 1.8 3.6-3.6" />
+      </svg>
+    ),
   },
   {
     title: 'Built for busy teams',
     description: 'Keep your front desk aligned with shared templates and role-based permissions.',
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+        <circle cx="8" cy="9" r="3" />
+        <circle cx="16.5" cy="8" r="2.5" />
+        <path strokeLinecap="round" d="M3.8 18.5a4.8 4.8 0 0 1 8.4 0M13 18.5a4 4 0 0 1 7 0" />
+      </svg>
+    ),
   },
 ]
 
@@ -367,7 +407,9 @@ export default function HomePage() {
                 key={feature.title}
                 className={`group rounded-3xl border p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${index === 0 ? 'border-[#0f766e]/30 bg-[#f7fffd]' : 'border-[#0f1f1a]/10 bg-white'}`}
               >
-                <div className="mb-4 h-12 w-12 rounded-2xl bg-[#f97316]/15" />
+                <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-2xl transition-transform group-hover:scale-105 ${index === 0 ? 'bg-[#0f766e]/15 text-[#0f766e]' : 'bg-[#f97316]/15 text-[#0f1f1a]'}`}>
+                  {feature.icon}
+                </div>
                 <h3 className="text-lg font-semibold text-[#0f1f1a]">{feature.title}</h3>
                 <p className="mt-3 text-sm text-[#0f1f1a]/60">{feature.description}</p>
               </div>
