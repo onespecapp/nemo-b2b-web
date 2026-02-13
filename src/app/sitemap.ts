@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next'
 const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://onespec.io').replace(/\/$/, '')
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const routes = ['/', '/login', '/signup']
+  const routes = ['/', '/signup']
 
   const entries: MetadataRoute.Sitemap = routes.map((route) => ({
     url: `${baseUrl}${route}`,

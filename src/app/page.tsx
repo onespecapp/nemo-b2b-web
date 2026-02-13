@@ -190,7 +190,7 @@ export default function HomePage() {
 
         <header className="relative z-20">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-5 sm:px-6 lg:px-8">
-            <Image src="/logo.png" alt="OneSpec" width={200} height={48} className="w-full max-w-[180px]" />
+            <Image src="/logo.png" alt="OneSpec" width={200} height={48} className="w-full max-w-[180px]" priority />
 
             <nav className="hidden items-center gap-8 text-sm font-medium text-[#0f1f1a]/70 md:flex">
               {navLinks.map((link) => (
