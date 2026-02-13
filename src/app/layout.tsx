@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Manrope } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -13,6 +14,8 @@ const manrope = Manrope({
   variable: "--font-body",
   weight: ["400", "500", "600", "700", "800"],
 });
+
+const isProduction = process.env.VERCEL_ENV === "production";
 
 export const metadata: Metadata = {
   title: "OneSpec - AI Appointment Reminders for Vancouver Businesses",
@@ -37,6 +40,9 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_CA",
   },
+  robots: isProduction
+    ? { index: true, follow: true }
+    : { index: false, follow: false },
 };
 
 export default function RootLayout({
@@ -46,6 +52,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en-CA" className="scroll-smooth">
+      <head>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-L8MJVFVFZY"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-L8MJVFVFZY');
+          `}
+        </Script>
+      </head>
       <body className={`${fraunces.variable} ${manrope.variable} font-sans antialiased`}>
         {children}
       </body>
