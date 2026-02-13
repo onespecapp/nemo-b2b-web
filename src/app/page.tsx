@@ -582,7 +582,7 @@ export default function HomePage() {
       {/* Footer — rebuilt */}
       <footer className="border-t border-[#0f1f1a]/10 bg-white/70 px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
             {/* Brand */}
             <div className="space-y-4">
               <Image src="/logo.png" alt="OneSpec" width={160} height={40} className="w-full max-w-[140px]" />
@@ -599,6 +599,14 @@ export default function HomePage() {
                 <a href="#how" className="block hover:text-[#0f1f1a]">How it works</a>
                 <a href="#pricing" className="block hover:text-[#0f1f1a]">Pricing</a>
                 <a href="#faq" className="block hover:text-[#0f1f1a]">FAQ</a>
+              </div>
+            </div>
+
+            {/* Free Tools */}
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/50">Free Tools</div>
+              <div className="mt-4 space-y-3 text-sm text-[#0f1f1a]/70">
+                <Link href="/tools/appointment-reminder-template" className="block hover:text-[#0f1f1a]">Reminder Template Generator</Link>
               </div>
             </div>
 
