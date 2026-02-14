@@ -12,11 +12,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: route === '/' ? 1 : 0.7,
   }))
 
-  entries.push({
-    url: `${baseUrl}/tools/appointment-reminder-template`,
-    lastModified: new Date(),
-    changeFrequency: 'monthly',
-    priority: 0.8,
+  const toolRoutes = [
+    '/tools/appointment-reminder-template',
+    '/tools/appointment-reminder-cards',
+    '/tools/appointment-reminder-text',
+    '/tools/no-show-cancellation-policy',
+  ]
+
+  toolRoutes.forEach((route) => {
+    entries.push({
+      url: `${baseUrl}${route}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    })
   })
 
   return entries

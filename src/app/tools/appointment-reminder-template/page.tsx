@@ -283,6 +283,9 @@ export default function AppointmentReminderTemplatePage() {
               <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/50">Free Tools</div>
               <div className="mt-4 space-y-3 text-sm text-[#0f1f1a]/70">
                 <Link href="/tools/appointment-reminder-template" className="block hover:text-[#0f1f1a]">Reminder Template Generator</Link>
+                <Link href="/tools/appointment-reminder-cards" className="block hover:text-[#0f1f1a]">Reminder Card Generator</Link>
+                <Link href="/tools/appointment-reminder-text" className="block hover:text-[#0f1f1a]">SMS Reminder Generator</Link>
+                <Link href="/tools/no-show-cancellation-policy" className="block hover:text-[#0f1f1a]">Cancellation Policy Generator</Link>
               </div>
             </div>
 
