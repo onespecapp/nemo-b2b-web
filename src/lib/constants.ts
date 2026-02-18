@@ -83,6 +83,28 @@ export const callTypeLabels: Record<string, string> = {
   TEST: 'Test call',
   FOLLOW_UP: 'Follow-up call',
   CONFIRMATION: 'Confirmation call',
+  INBOUND: 'Inbound call',
+}
+
+// Call type styles
+export const callTypeStyles: Record<string, string> = {
+  REMINDER: 'bg-[#0f766e]/10 text-[#0f766e]',
+  TEST: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70',
+  FOLLOW_UP: 'bg-[#f97316]/10 text-[#b45309]',
+  CONFIRMATION: 'bg-[#6366f1]/10 text-[#4338ca]',
+  INBOUND: 'bg-[#8b5cf6]/15 text-[#6d28d9]',
+}
+
+// Message urgency styles
+export const messageUrgencyStyles: Record<string, string> = {
+  normal: 'bg-[#0f1f1a]/10 text-[#0f1f1a]/70',
+  urgent: 'bg-[#ef4444]/15 text-[#991b1b]',
+}
+
+// Message urgency labels
+export const messageUrgencyLabels: Record<string, string> = {
+  normal: 'Normal',
+  urgent: 'Urgent',
 }
 
 // Campaign call type styles and labels

@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import AccessibleModal from '@/components/AccessibleModal'
 import { SkeletonCallList } from '@/components/Skeleton'
 import CallOutcomeBadge from '@/components/CallOutcomeBadge'
-import { callOutcomeLabels, campaignCallTypeLabels, campaignCallTypeStyles } from '@/lib/constants'
+import { callOutcomeLabels, callTypeLabels, callTypeStyles, campaignCallTypeLabels, campaignCallTypeStyles } from '@/lib/constants'
 import { formatDuration, parseUTCDate, formatRelativeTime } from '@/lib/utils'
 import { useUser } from '@/lib/context/UserContext'
 
@@ -70,7 +70,11 @@ export default function CallHistoryPage() {
       .eq('business_id', business.id)
 
     if (filter !== 'all') {
-      countQuery = countQuery.eq('call_outcome', filter)
+      if (filter === 'INBOUND') {
+        countQuery = countQuery.eq('call_type', 'INBOUND')
+      } else {
+        countQuery = countQuery.eq('call_outcome', filter)
+      }
     }
 
     // Build data query
@@ -86,7 +90,11 @@ export default function CallHistoryPage() {
       .range(offset, offset + PAGE_SIZE - 1)
 
     if (filter !== 'all') {
-      dataQuery = dataQuery.eq('call_outcome', filter)
+      if (filter === 'INBOUND') {
+        dataQuery = dataQuery.eq('call_type', 'INBOUND')
+      } else {
+        dataQuery = dataQuery.eq('call_outcome', filter)
+      }
     }
 
     const [countResult, dataResult] = await Promise.all([
@@ -174,6 +182,9 @@ export default function CallHistoryPage() {
               className="bg-transparent text-sm font-semibold text-[#0f1f1a] focus:outline-none"
             >
               <option value="all">All Calls</option>
+              <optgroup label="Call Type">
+                <option value="INBOUND">Inbound</option>
+              </optgroup>
               <optgroup label="Outcomes">
                 <option value="CONFIRMED">Confirmed</option>
                 <option value="RESCHEDULED">Rescheduled</option>
@@ -240,6 +251,11 @@ export default function CallHistoryPage() {
                       <p className="truncate text-sm font-semibold text-[#0f1f1a]" title={call.customer?.name || 'Unknown Customer'}>
                         {call.customer?.name || 'Unknown Customer'}
                       </p>
+                      {callTypeLabels[call.call_type] && callTypeStyles[call.call_type] && (
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${callTypeStyles[call.call_type]}`}>
+                          {callTypeLabels[call.call_type]}
+                        </span>
+                      )}
                       {campaignCallTypeLabels[call.call_type] && (
                         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${campaignCallTypeStyles[call.call_type]}`}>
                           {campaignCallTypeLabels[call.call_type]}

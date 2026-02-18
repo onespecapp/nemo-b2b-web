@@ -4,52 +4,20 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
-const stats = [
-  { value: '50%', label: 'Fewer no-shows in the first month' },
-  { value: '3 min', label: 'To launch your first campaign' },
-  { value: '98%', label: 'Call completion rate' },
-]
-
-const steps = [
-  {
-    title: 'Connect your calendar + brand',
-    description: 'Create your account, pick your voice, and choose exactly when reminders go out.',
-  },
-  {
-    title: 'Import this week&apos;s schedule',
-    description: 'Upload a CSV or add appointments manually in minutes.',
-  },
-  {
-    title: 'OneSpec confirms automatically',
-    description: 'Our AI handles reminders, captures outcomes, and flags reschedule requests for fast follow-up.',
-  },
-]
-
 const features = [
   {
-    title: 'Calls that sound like your front desk',
-    description: 'Cut manual reminder work while keeping every customer conversation personal.',
+    title: 'Answer Every Call',
+    description: 'Your AI receptionist picks up 24/7. Greets callers, answers questions, and takes messages when you can\'t.',
     icon: (
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 14.5v2.2a2 2 0 0 1-2.2 2 13.8 13.8 0 0 1-6-2.2 13.4 13.4 0 0 1-4.1-4.1A13.8 13.8 0 0 1 2 6.4a2 2 0 0 1 2-2.2h2.2a2 2 0 0 1 2 1.7l.4 2.1a2 2 0 0 1-.6 1.9l-1 1a10.9 10.9 0 0 0 4.1 4.1l1-1a2 2 0 0 1 1.9-.6l2.1.4a2 2 0 0 1 1.7 2Z" />
-        <path strokeLinecap="round" d="M14.5 6.2a3.5 3.5 0 0 1 3.3 3.3" />
-        <path strokeLinecap="round" d="M14.5 3.7a6 6 0 0 1 5.8 5.8" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+        <path strokeLinecap="round" d="M14.5 6.2a3.5 3.5 0 013.3 3.3M14.5 3.7a6 6 0 015.8 5.8" />
       </svg>
     ),
   },
   {
-    title: 'Smart timing controls',
-    description: 'Reach customers at the right time to reduce day-of no-shows.',
-    icon: (
-      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-        <circle cx="12" cy="12" r="8" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5v4.8l3.2 1.9" />
-      </svg>
-    ),
-  },
-  {
-    title: 'Confirm, cancel, or reschedule requests',
-    description: 'Capture outcomes instantly so your team can refill open slots faster.',
+    title: 'Book Appointments',
+    description: 'Customers book directly through your AI. No phone tag, no double-booking.',
     icon: (
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
         <rect x="3" y="5.5" width="18" height="15" rx="2.5" />
@@ -59,50 +27,42 @@ const features = [
     ),
   },
   {
-    title: 'Every call logged automatically',
-    description: 'Track outcomes and transcripts in one dashboard to improve fill rate.',
+    title: 'Smart Reminders',
+    description: 'Automated phone call reminders reduce no-shows by up to 50%.',
     icon: (
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5h6l3 3v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2Z" />
-        <path strokeLinecap="round" d="M12.5 4.5v4h4" />
-        <path strokeLinecap="round" d="M9.5 12h5M9.5 15.5h5" />
+        <circle cx="12" cy="12" r="8" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5v4.8l3.2 1.9" />
       </svg>
     ),
   },
   {
-    title: 'Security and compliance built in',
-    description: 'Protect customer data with enterprise-grade encryption and audit-ready logs.',
+    title: 'Win Back Customers',
+    description: 'Re-engagement campaigns bring lapsed customers back with a friendly AI call.',
     icon: (
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3.5 5 6.8v5.4c0 4.4 2.9 7.5 7 8.3 4.1-.8 7-3.9 7-8.3V6.8L12 3.5Z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="m9.3 12.4 1.8 1.8 3.6-3.6" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
       </svg>
     ),
   },
   {
-    title: 'Built for busy teams',
-    description: 'Keep your front desk aligned with shared templates and role-based permissions.',
+    title: 'Message Inbox',
+    description: 'Every message, transcribed and organized. Never lose a lead.',
     icon: (
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-        <circle cx="8" cy="9" r="3" />
-        <circle cx="16.5" cy="8" r="2.5" />
-        <path strokeLinecap="round" d="M3.8 18.5a4.8 4.8 0 0 1 8.4 0M13 18.5a4 4 0 0 1 7 0" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
       </svg>
     ),
   },
-]
-
-const industries = [
-  { name: 'Barbershops', detail: 'Fill every chair with timely, friendly reminders.' },
-  { name: 'Hair Salons', detail: 'Keep your stylists booked and clients confirmed.' },
-  { name: 'Dental Offices', detail: 'Reduce missed cleanings and protect your schedule.' },
-  { name: 'Medical Clinics', detail: 'Cut no-shows and keep patient flow on track.' },
-  { name: 'Auto Repair Shops', detail: 'Confirm drop-offs and reduce last-minute gaps.' },
-  { name: 'Pet Groomers', detail: 'Remind pet parents so every slot stays full.' },
-  { name: 'Spas + Wellness', detail: 'Gentle, brand-aligned reminders for every booking.' },
-  { name: 'Fitness + Training', detail: 'Keep sessions on track and memberships engaged.' },
-  { name: 'Tutoring + Education', detail: 'Make sure students and parents never miss a session.' },
-  { name: 'Other Services', detail: 'Any appointment-based business can get started in minutes.' },
+  {
+    title: 'Your Voice, Your Brand',
+    description: 'Choose from 5 AI voices. Custom greetings. Sounds like your front desk.',
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+      </svg>
+    ),
+  },
 ]
 
 const testimonials = [
@@ -248,37 +208,38 @@ export default function HomePage() {
           )}
         </header>
 
+        {/* Hero */}
         <section className="relative z-10 px-4 pb-20 pt-12 sm:px-6 lg:px-8">
           <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="space-y-8 animate-fade-up">
               <div className="inline-flex items-center gap-2 rounded-full border border-[#0f1f1a]/10 bg-white/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#0f1f1a]/70 shadow-sm">
-                <span className="h-2 w-2 rounded-full bg-[#f97316]" />
-                AI reminder calls for appointment-based teams
+                <span className="h-2 w-2 rounded-full bg-[#0f766e]" />
+                AI receptionist for appointment-based businesses
               </div>
 
               <div className="space-y-6">
                 <h1 className="font-display text-4xl leading-tight sm:text-5xl lg:text-6xl">
-                  Stop losing revenue
-                  <span className="block text-[#0f766e]">to no-shows.</span>
+                  Your AI Receptionist.
+                  <span className="block text-[#0f766e]">Always On.</span>
                 </h1>
                 <p className="text-lg text-[#0f1f1a]/70 sm:text-xl">
-                  OneSpec calls every customer before their visit, captures confirmations instantly, and flags reschedules for follow-up so your team keeps calendars full.
+                  Answer every call. Book appointments. Send reminders. Never miss a customer.
                 </p>
               </div>
 
               <div className="flex flex-col gap-4 sm:flex-row">
                 <Link href="/signup" className="inline-flex items-center justify-center rounded-full bg-[#f97316] px-6 py-3 text-base font-semibold text-white shadow-lg shadow-orange-200 transition hover:-translate-y-0.5">
-                  Start free - no card required
+                  Start Free
                 </Link>
-                <a href="#demo" className="inline-flex items-center justify-center rounded-full border border-[#0f1f1a]/20 px-6 py-3 text-base font-semibold text-[#0f1f1a] transition hover:border-[#0f1f1a]/40">
-                  Hear how calls sound
+                <a href="#features" className="inline-flex items-center justify-center rounded-full border border-[#0f1f1a]/20 px-6 py-3 text-base font-semibold text-[#0f1f1a] transition hover:border-[#0f1f1a]/40">
+                  See how it works
                 </a>
               </div>
 
               <div className="flex flex-wrap items-center gap-6 text-sm text-[#0f1f1a]/60">
                 <div className="flex items-center gap-2 rounded-full bg-white/70 px-4 py-2">
                   <span className="h-2 w-2 rounded-full bg-[#0f766e]" />
-                  Up to 50% fewer no-shows
+                  24/7 call answering
                 </div>
                 <div className="flex items-center gap-2 rounded-full bg-white/70 px-4 py-2">
                   <span className="h-2 w-2 rounded-full bg-[#f97316]" />
@@ -293,51 +254,41 @@ export default function HomePage() {
 
               <div className="rounded-[28px] border border-white/40 bg-[#0f1f1a] p-6 text-white shadow-2xl shadow-black/25">
                 <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-white/60">
-                  <span>Live call snapshot</span>
-                  <span className="rounded-full bg-white/10 px-2 py-1">02:18</span>
+                  <span>Inbound call — live</span>
+                  <span className="rounded-full bg-emerald-400/20 px-2 py-1 text-emerald-200">Active</span>
                 </div>
 
                 <div className="mt-6 space-y-4">
                   <div className="rounded-2xl bg-white/10 p-4">
-                    <div className="text-sm font-semibold">Outbound reminder</div>
-                    <div className="mt-2 text-xs text-white/60">Bloom Dental • Today 3:30 PM</div>
+                    <div className="text-sm font-semibold">Incoming Call</div>
+                    <div className="mt-2 text-xs text-white/60">+1 (604) 555-0192 • New caller</div>
                     <div className="mt-3 flex items-center justify-between text-sm">
                       <span className="text-white/80">Status</span>
-                      <span className="rounded-full bg-emerald-400/20 px-3 py-1 text-xs text-emerald-200">Confirmed</span>
+                      <span className="rounded-full bg-emerald-400/20 px-3 py-1 text-xs text-emerald-200">Answering</span>
                     </div>
                   </div>
 
                   <div className="rounded-2xl border border-white/10 bg-[#111f1c] p-4">
-                    <p className="text-sm text-white/80">&quot;Hi Jamie, just confirming your cleaning today at 3:30 PM. Press 1 to confirm or 2 to reschedule.&quot;</p>
+                    <p className="text-sm text-white/80">&quot;Hi, thanks for calling Bloom Dental! I can help you book an appointment, answer questions, or take a message. How can I help?&quot;</p>
                     <div className="mt-4 flex items-center justify-between text-xs text-white/50">
                       <span>Voice: Aoede</span>
-                      <span>Outcome saved</span>
+                      <span>AI Receptionist</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-6 grid grid-cols-2 gap-3">
+                <div className="mt-6 grid grid-cols-3 gap-3">
                   <div className="rounded-2xl bg-white/10 p-4 text-center">
                     <div className="text-xs uppercase text-white/50">Calls today</div>
                     <div className="mt-2 text-2xl font-semibold">46</div>
                   </div>
                   <div className="rounded-2xl bg-white/10 p-4 text-center">
-                    <div className="text-xs uppercase text-white/50">Recovered slots</div>
-                    <div className="mt-2 text-2xl font-semibold">8</div>
+                    <div className="text-xs uppercase text-white/50">Booked</div>
+                    <div className="mt-2 text-2xl font-semibold">12</div>
                   </div>
-                </div>
-              </div>
-
-              <div className="mt-6 rounded-2xl border border-[#0f1f1a]/10 bg-white/80 p-4 shadow-sm" id="demo">
-                <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
-                  <span>Demo call preview</span>
-                  <span className="rounded-full bg-[#0f1f1a]/10 px-2 py-1">00:36</span>
-                </div>
-                <div className="mt-3 flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-[#f97316]/20" />
-                  <div>
-                    <div className="text-sm font-semibold">&quot;Hey Alex, it&apos;s OneSpec calling from Solara Spa…&quot;</div>
-                    <div className="text-xs text-[#0f1f1a]/60">Tap Play in-app to hear the full call.</div>
+                  <div className="rounded-2xl bg-white/10 p-4 text-center">
+                    <div className="text-xs uppercase text-white/50">Messages</div>
+                    <div className="mt-2 text-2xl font-semibold">8</div>
                   </div>
                 </div>
               </div>
@@ -349,12 +300,18 @@ export default function HomePage() {
       {/* Stats bar */}
       <section className="border-y border-[#0f1f1a]/10 bg-white/70 px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-6">
-          {stats.map((stat) => (
-            <div key={stat.label} className="min-w-[180px]">
-              <div className="text-3xl font-semibold text-[#0f1f1a]">{stat.value}</div>
-              <div className="text-sm text-[#0f1f1a]/60">{stat.label}</div>
-            </div>
-          ))}
+          <div className="min-w-[180px]">
+            <div className="text-3xl font-semibold text-[#0f1f1a]">24/7</div>
+            <div className="text-sm text-[#0f1f1a]/60">Always answering, never a missed call</div>
+          </div>
+          <div className="min-w-[180px]">
+            <div className="text-3xl font-semibold text-[#0f1f1a]">50%</div>
+            <div className="text-sm text-[#0f1f1a]/60">Fewer no-shows in the first month</div>
+          </div>
+          <div className="min-w-[180px]">
+            <div className="text-3xl font-semibold text-[#0f1f1a]">3 min</div>
+            <div className="text-sm text-[#0f1f1a]/60">To set up and go live</div>
+          </div>
           <div className="rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-5 py-4 text-sm text-[#0f1f1a]/70">
             Trusted by clinics, salons, and service teams across Greater Vancouver.
           </div>
@@ -367,14 +324,18 @@ export default function HomePage() {
           <div className="grid gap-10 lg:grid-cols-[0.45fr_0.55fr]">
             <div className="space-y-4">
               <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">How it works</p>
-              <h2 className="font-display text-3xl sm:text-4xl">Set it once. Recover revenue every week.</h2>
+              <h2 className="font-display text-3xl sm:text-4xl">Set it once. Never miss a call again.</h2>
               <p className="text-base text-[#0f1f1a]/70">
-                Your team stops chasing confirmations. Customers get a call that sounds personal, and you get a fuller schedule.
+                Your AI receptionist answers calls, books appointments, sends reminders, and takes messages — so your team can focus on what they do best.
               </p>
             </div>
 
             <div className="grid gap-6 sm:grid-cols-3">
-              {steps.map((step, index) => (
+              {[
+                { title: 'Connect your number', description: 'Forward your business line to OneSpec. Pick your AI voice and set your hours.' },
+                { title: 'AI answers every call', description: 'Your receptionist greets callers, answers FAQs, books appointments, and takes messages.' },
+                { title: 'Stay in the loop', description: 'Get transcripts, messages, and booking confirmations in your dashboard instantly.' },
+              ].map((step, index) => (
                 <div key={step.title} className="rounded-3xl border border-[#0f1f1a]/10 bg-white p-6 shadow-sm">
                   <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#0f1f1a] text-sm font-semibold text-white">
                     {index + 1}
@@ -394,10 +355,10 @@ export default function HomePage() {
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Features</p>
-              <h2 className="font-display text-3xl sm:text-4xl">Everything you need to protect your schedule.</h2>
+              <h2 className="font-display text-3xl sm:text-4xl">Everything your front desk does. Automated.</h2>
             </div>
             <div className="rounded-full border border-[#0f1f1a]/10 bg-white px-5 py-2 text-sm text-[#0f1f1a]/70">
-              Calls, outcomes, and follow-ups in one place
+              Calls, bookings, reminders, and messages in one place
             </div>
           </div>
 
@@ -419,7 +380,7 @@ export default function HomePage() {
           <div className="mt-8 flex flex-col items-start justify-between gap-4 rounded-2xl border border-[#0f1f1a]/10 bg-white/80 px-5 py-4 sm:flex-row sm:items-center">
             <div className="inline-flex items-center gap-2 text-sm text-[#0f1f1a]/70">
               <span className="h-2 w-2 rounded-full bg-[#0f766e]" />
-              Up to 50% fewer no-shows in the first month
+              Never miss a call or a customer again
             </div>
             <div className="flex flex-wrap gap-3">
               <Link href="/signup" className="inline-flex items-center justify-center rounded-full bg-[#0f1f1a] px-4 py-2 text-sm font-semibold text-white">
@@ -433,28 +394,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Industries — expanded */}
-      <section id="industries" className="px-4 pb-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl rounded-[32px] border border-[#0f1f1a]/10 bg-[#0f1f1a] px-6 py-12 text-white sm:px-10">
-          <div className="text-center">
-            <p className="text-xs uppercase tracking-[0.3em] text-white/60">Industries</p>
-            <h2 className="mt-4 font-display text-3xl sm:text-4xl">Built for the businesses that live on schedule.</h2>
-            <p className="mt-4 text-white/70">
-              From Commercial Drive barbershops to Kerrisdale dental offices — OneSpec is tuned for high-volume appointment teams that can&apos;t afford empty slots.
-            </p>
-          </div>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {industries.map((industry) => (
-              <div key={industry.name} className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <div className="text-sm font-semibold">{industry.name}</div>
-                <div className="mt-2 text-sm text-white/60">{industry.detail}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials — NEW */}
+      {/* Testimonials */}
       <section id="testimonials" className="px-4 pb-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="text-center">
@@ -495,7 +435,7 @@ export default function HomePage() {
                 name: 'Starter',
                 price: 'Free',
                 detail: 'Best for testing call quality',
-                features: ['50 calls / month', 'Single location', 'Core analytics', 'Email support'],
+                features: ['50 calls / month', 'AI receptionist', 'Message inbox', 'Email support'],
                 cta: 'Start free',
                 highlight: false,
               },
@@ -503,7 +443,7 @@ export default function HomePage() {
                 name: 'Growth',
                 price: '$99 per month',
                 detail: 'Most popular for busy appointment teams',
-                features: ['500 calls / month', 'Multi-user access', 'Advanced analytics', 'Custom templates'],
+                features: ['500 calls / month', 'Multi-user access', 'Advanced analytics', 'Custom greetings & FAQs'],
                 cta: 'Choose Growth',
                 highlight: true,
               },
@@ -543,7 +483,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* FAQ — expanded */}
+      {/* FAQ */}
       <section id="faq" className="px-4 pb-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl">
           <div className="text-center">
@@ -564,13 +504,13 @@ export default function HomePage() {
       {/* Final CTA */}
       <section className="px-4 pb-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-5xl rounded-[36px] border border-[#0f1f1a]/10 bg-gradient-to-br from-[#f97316]/20 via-white to-[#0f766e]/15 p-12 text-center shadow-lg">
-          <h2 className="font-display text-3xl sm:text-4xl">Turn next week&apos;s schedule into confirmed revenue.</h2>
+          <h2 className="font-display text-3xl sm:text-4xl">Your AI receptionist is ready to answer.</h2>
           <p className="mt-4 text-[#0f1f1a]/70">
-            Launch in minutes, start free with no card, and upgrade to $99/month when your call volume grows.
+            Launch in minutes, start free with no card, and never miss a customer again.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link href="/signup" className="rounded-full bg-[#0f1f1a] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-black/15">
-              Create free account
+              Start Free
             </Link>
             <Link href="/login" className="rounded-full border border-[#0f1f1a]/20 px-6 py-3 text-sm font-semibold text-[#0f1f1a]">
               Sign in
@@ -579,19 +519,17 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer — rebuilt */}
+      {/* Footer */}
       <footer className="border-t border-[#0f1f1a]/10 bg-white/70 px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
-            {/* Brand */}
             <div className="space-y-4">
               <Image src="/logo.png" alt="OneSpec" width={160} height={40} className="w-full max-w-[140px]" />
               <p className="text-sm text-[#0f1f1a]/60">
-                AI reminder calls that keep calendars full and teams focused.
+                AI receptionist that answers calls, books appointments, and sends reminders.
               </p>
             </div>
 
-            {/* Product */}
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/50">Product</div>
               <div className="mt-4 space-y-3 text-sm text-[#0f1f1a]/70">
@@ -602,7 +540,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Free Tools */}
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/50">Free Tools</div>
               <div className="mt-4 space-y-3 text-sm text-[#0f1f1a]/70">
@@ -610,7 +547,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Legal */}
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/50">Legal</div>
               <div className="mt-4 space-y-3 text-sm text-[#0f1f1a]/70">
@@ -623,7 +559,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Contact */}
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/50">Contact</div>
               <div className="mt-4 space-y-3 text-sm text-[#0f1f1a]/70">

@@ -5,15 +5,18 @@
 CREATE OR REPLACE FUNCTION public.create_business_on_signup()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.b2b_businesses (name, owner_id, email)
+  INSERT INTO public.b2b_businesses (id, name, owner_id, email, category)
   VALUES (
+    gen_random_uuid()::text,
     COALESCE(NEW.raw_user_meta_data->>'business_name', NEW.email),
-    NEW.id,
-    NEW.email
+    NEW.id::text,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'business_category', 'OTHER')::"BusinessCategory"
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public;
 
 -- Drop the trigger if it exists (for idempotency)
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
