@@ -37,11 +37,34 @@ const VOICES = [
   { id: 'Aoede', name: 'Aoede', description: 'Soft and soothing - best for relaxed conversations' },
 ]
 
+const BUSINESS_CATEGORIES = [
+  { value: '', label: 'Select a category...' },
+  { value: 'DENTAL', label: 'Dental' },
+  { value: 'MEDICAL', label: 'Medical' },
+  { value: 'VETERINARY', label: 'Veterinary' },
+  { value: 'LEGAL', label: 'Legal' },
+  { value: 'FINANCIAL', label: 'Financial' },
+  { value: 'REAL_ESTATE', label: 'Real Estate' },
+  { value: 'SALON', label: 'Salon / Beauty' },
+  { value: 'SPA', label: 'Spa / Wellness' },
+  { value: 'FITNESS', label: 'Fitness / Gym' },
+  { value: 'PLUMBING', label: 'Plumbing' },
+  { value: 'HVAC', label: 'HVAC / Heating & Cooling' },
+  { value: 'ELECTRICAL', label: 'Electrical' },
+  { value: 'GENERAL_CONTRACTOR', label: 'General Contractor' },
+  { value: 'LANDSCAPING', label: 'Landscaping' },
+  { value: 'ROOFING', label: 'Roofing' },
+  { value: 'PAINTING', label: 'Painting' },
+  { value: 'OTHER', label: 'Other' },
+]
+
 interface Business {
   id: string
   name: string
   email: string | null
   phone: string | null
+  telnyx_phone_number: string | null
+  category: string | null
   voice_preference: string
   timezone: string | null
   subscription_tier: string
@@ -54,9 +77,10 @@ export default function SettingsPage() {
   const [businessName, setBusinessName] = useState('')
   const [businessEmail, setBusinessEmail] = useState('')
   const [businessPhone, setBusinessPhone] = useState('')
+  const [businessCategory, setBusinessCategory] = useState('')
   const [selectedVoice, setSelectedVoice] = useState('Aoede')
   const [selectedTimezone, setSelectedTimezone] = useState('America/Los_Angeles')
-  const [originalValues, setOriginalValues] = useState({ name: '', email: '', phone: '', voice: 'Aoede', timezone: 'America/Los_Angeles' })
+  const [originalValues, setOriginalValues] = useState({ name: '', email: '', phone: '', category: '', voice: 'Aoede', timezone: 'America/Los_Angeles' })
   const [testPhoneNumber, setTestPhoneNumber] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -94,12 +118,14 @@ export default function SettingsPage() {
         setBusinessName(businessData.name || '')
         setBusinessEmail(businessData.email || user.email || '')
         setBusinessPhone(businessData.phone || '')
+        setBusinessCategory(businessData.category || '')
         setSelectedVoice(businessData.voice_preference || 'Aoede')
         setSelectedTimezone(businessData.timezone || 'America/Los_Angeles')
         setOriginalValues({
           name: businessData.name || '',
           email: businessData.email || '',
           phone: businessData.phone || '',
+          category: businessData.category || '',
           voice: businessData.voice_preference || 'Aoede',
           timezone: businessData.timezone || 'America/Los_Angeles'
         })
@@ -153,6 +179,7 @@ export default function SettingsPage() {
         name: data.name,
         email: data.email || '',
         phone: data.phone || '',
+        category: data.category || 'OTHER',
         voice: data.voice_preference,
         timezone: data.timezone || 'America/Los_Angeles'
       })
@@ -178,7 +205,7 @@ export default function SettingsPage() {
         .update({
           name: businessName.trim(),
           email: businessEmail.trim() || null,
-          phone: businessPhone.trim() || null,
+          category: businessCategory || null,
           voice_preference: selectedVoice,
           timezone: selectedTimezone
         })
@@ -190,6 +217,7 @@ export default function SettingsPage() {
         name: businessName,
         email: businessEmail,
         phone: businessPhone,
+        category: businessCategory,
         voice: selectedVoice,
         timezone: selectedTimezone
       })
@@ -261,7 +289,7 @@ export default function SettingsPage() {
   const hasChanges = business && (
     businessName !== originalValues.name ||
     businessEmail !== originalValues.email ||
-    businessPhone !== originalValues.phone ||
+    businessCategory !== originalValues.category ||
     selectedVoice !== originalValues.voice ||
     selectedTimezone !== originalValues.timezone
   )
@@ -440,16 +468,51 @@ export default function SettingsPage() {
                 />
               </div>
               <div>
-                <label htmlFor="business-phone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+                <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
                   Business phone
                 </label>
-                <input
-                  type="tel"
-                  id="business-phone"
-                  value={businessPhone}
-                  onChange={(e) => setBusinessPhone(e.target.value)}
+                <div className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-4 py-3 text-sm text-[#0f1f1a]/60">
+                  {businessPhone || 'Not set'}
+                </div>
+                <p className="mt-1 text-xs text-[#0f1f1a]/40">Assigned by admin</p>
+              </div>
+              {business.telnyx_phone_number && (
+                <div>
+                  <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+                    Receptionist number
+                  </label>
+                  <div className="mt-2 flex items-center gap-2">
+                    <div className="flex-1 rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-4 py-3 text-sm font-semibold text-[#0f1f1a]">
+                      {business.telnyx_phone_number}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => navigator.clipboard.writeText(business.telnyx_phone_number!)}
+                      className="rounded-2xl border border-[#0f1f1a]/10 bg-white px-3 py-3 text-xs text-[#0f1f1a]/60 transition hover:border-[#0f1f1a]/30"
+                      title="Copy number"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </button>
+                  </div>
+                  <p className="mt-1 text-xs text-[#0f1f1a]/40">Inbound calls to this number go to your AI receptionist</p>
+                </div>
+              )}
+              <div>
+                <label htmlFor="business-category" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+                  Business category
+                </label>
+                <select
+                  id="business-category"
+                  value={businessCategory}
+                  onChange={(e) => setBusinessCategory(e.target.value)}
                   className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
-                />
+                >
+                  {BUSINESS_CATEGORIES.map((cat) => (
+                    <option key={cat.value} value={cat.value}>{cat.label}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label htmlFor="business-timezone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">

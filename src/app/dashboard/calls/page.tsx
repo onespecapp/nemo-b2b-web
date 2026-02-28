@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import AccessibleModal from '@/components/AccessibleModal'
 import { SkeletonCallList } from '@/components/Skeleton'
 import CallOutcomeBadge from '@/components/CallOutcomeBadge'
-import { callOutcomeLabels, callTypeLabels, callTypeStyles, campaignCallTypeLabels, campaignCallTypeStyles } from '@/lib/constants'
+import { callOutcomeLabels, callTypeLabels, callTypeStyles } from '@/lib/constants'
 import { formatDuration, parseUTCDate, formatRelativeTime } from '@/lib/utils'
 import { useUser } from '@/lib/context/UserContext'
 
@@ -155,7 +155,7 @@ export default function CallHistoryPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Call history</p>
-          <h1 className="font-display text-3xl sm:text-4xl">Every reminder, captured</h1>
+          <h1 className="font-display text-3xl sm:text-4xl">Call History</h1>
           <p className="mt-1 text-sm text-[#0f1f1a]/60">Review call outcomes, transcripts, and summaries.</p>
         </div>
 
@@ -186,13 +186,15 @@ export default function CallHistoryPage() {
                 <option value="INBOUND">Inbound</option>
               </optgroup>
               <optgroup label="Outcomes">
+                <option value="BOOKED">Booked</option>
+                <option value="MESSAGE_TAKEN">Message Taken</option>
+                <option value="TRANSFERRED">Transferred</option>
                 <option value="CONFIRMED">Confirmed</option>
                 <option value="RESCHEDULED">Rescheduled</option>
                 <option value="CANCELED">Canceled</option>
                 <option value="ANSWERED">Answered</option>
                 <option value="NO_ANSWER">No Answer</option>
                 <option value="VOICEMAIL">Voicemail</option>
-                <option value="BOOKED">Booked</option>
                 <option value="DECLINED">Declined</option>
               </optgroup>
             </select>
@@ -227,10 +229,7 @@ export default function CallHistoryPage() {
             </div>
             <p className="font-display text-lg font-semibold text-[#0f1f1a]/70">No calls yet</p>
             <p className="mt-1 text-sm text-[#0f1f1a]/40">
-              Call history will appear here once reminders run.
-            </p>
-            <p className="mt-0.5 text-xs text-[#0f1f1a]/30">
-              Schedule an appointment to trigger your first reminder call.
+              Calls will appear here when your AI receptionist answers the phone
             </p>
           </div>
         ) : (
@@ -254,11 +253,6 @@ export default function CallHistoryPage() {
                       {callTypeLabels[call.call_type] && callTypeStyles[call.call_type] && (
                         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${callTypeStyles[call.call_type]}`}>
                           {callTypeLabels[call.call_type]}
-                        </span>
-                      )}
-                      {campaignCallTypeLabels[call.call_type] && (
-                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${campaignCallTypeStyles[call.call_type]}`}>
-                          {campaignCallTypeLabels[call.call_type]}
                         </span>
                       )}
                     </div>
