@@ -119,6 +119,7 @@ export function SkeletonCallRow() {
         <div className="flex-1 min-w-0 space-y-1.5">
           <Skeleton className="h-4 w-36 rounded-lg" />
           <Skeleton className="h-3 w-48 rounded-lg" />
+          <Skeleton className="h-3 w-64 rounded-lg" />
         </div>
         <div className="space-y-1.5 text-right">
           <Skeleton className="ml-auto h-3 w-32 rounded-lg" />

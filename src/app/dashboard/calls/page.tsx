@@ -9,6 +9,7 @@ import { callOutcomeLabels, callTypeLabels, callTypeStyles } from '@/lib/constan
 import { formatDuration, parseUTCDate, formatRelativeTime } from '@/lib/utils'
 import { useUser } from '@/lib/context/UserContext'
 import { useRealtimeSubscription } from '@/lib/hooks/useRealtimeSubscription'
+import { useDebouncedValue } from '@/lib/hooks/useDebouncedValue'
 
 interface CallLog {
   id: string
@@ -46,6 +47,15 @@ export default function CallHistoryPage() {
   const [filter, setFilter] = useState<string>('all')
   const [sortDirection, setSortDirection] = useState<'desc' | 'asc'>('desc')
   const [callingBack, setCallingBack] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const debouncedSearch = useDebouncedValue(searchTerm.trim(), 300)
+  const [viewedIds, setViewedIds] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set()
+    try {
+      const stored = localStorage.getItem('viewed_call_ids')
+      return stored ? new Set(JSON.parse(stored)) : new Set()
+    } catch { return new Set() }
+  })
   const supabase = createClient()
   const currentOffsetRef = useRef(0)
 
@@ -65,6 +75,26 @@ export default function CallHistoryPage() {
 
     const offset = append ? currentOffsetRef.current : 0
 
+    // If searching, first find matching customer IDs
+    let matchedCustomerIds: string[] | null = null
+    if (debouncedSearch) {
+      const { data: customers } = await supabase
+        .from('b2b_customers')
+        .select('id')
+        .eq('business_id', business.id)
+        .or(`name.ilike.%${debouncedSearch}%,phone.ilike.%${debouncedSearch}%`)
+      matchedCustomerIds = customers?.map((c) => c.id) ?? []
+    }
+
+    // Build search filter string for .or()
+    let searchFilter = ''
+    if (debouncedSearch) {
+      const idList = matchedCustomerIds!.length > 0
+        ? `(${matchedCustomerIds!.join(',')})`
+        : '()'
+      searchFilter = `summary.ilike.%${debouncedSearch}%,customer_id.in.${idList}`
+    }
+
     // Build count query (only on initial load / filter change)
     let countQuery = supabase
       .from('b2b_call_logs')
@@ -72,11 +102,12 @@ export default function CallHistoryPage() {
       .eq('business_id', business.id)
 
     if (filter !== 'all') {
-      if (filter === 'INBOUND') {
-        countQuery = countQuery.eq('call_type', 'INBOUND')
-      } else {
-        countQuery = countQuery.eq('call_outcome', filter)
-      }
+      countQuery = filter === 'INBOUND'
+        ? countQuery.eq('call_type', 'INBOUND')
+        : countQuery.eq('call_outcome', filter)
+    }
+    if (searchFilter) {
+      countQuery = countQuery.or(searchFilter)
     }
 
     // Build data query
@@ -92,11 +123,12 @@ export default function CallHistoryPage() {
       .range(offset, offset + PAGE_SIZE - 1)
 
     if (filter !== 'all') {
-      if (filter === 'INBOUND') {
-        dataQuery = dataQuery.eq('call_type', 'INBOUND')
-      } else {
-        dataQuery = dataQuery.eq('call_outcome', filter)
-      }
+      dataQuery = filter === 'INBOUND'
+        ? dataQuery.eq('call_type', 'INBOUND')
+        : dataQuery.eq('call_outcome', filter)
+    }
+    if (searchFilter) {
+      dataQuery = dataQuery.or(searchFilter)
     }
 
     const [countResult, dataResult] = await Promise.all([
@@ -123,7 +155,7 @@ export default function CallHistoryPage() {
     if (!append) {
       setLoading(false)
     }
-  }, [supabase, filter, sortDirection, business])
+  }, [supabase, filter, sortDirection, business, debouncedSearch])
 
   // Reset and refetch when filter or sort changes
   useEffect(() => {
@@ -179,6 +211,17 @@ export default function CallHistoryPage() {
     } finally {
       setCallingBack(false)
     }
+  }
+
+  function markViewed(id: string) {
+    setViewedIds((prev) => {
+      const next = new Set(prev)
+      next.add(id)
+      // Keep only latest 500 IDs to avoid unbounded localStorage growth
+      const arr = [...next].slice(-500)
+      try { localStorage.setItem('viewed_call_ids', JSON.stringify(arr)) } catch {}
+      return new Set(arr)
+    })
   }
 
   const formatDate = (dateString: string) => {
@@ -244,9 +287,34 @@ export default function CallHistoryPage() {
         </div>
       </div>
 
+      {/* Search bar */}
+      <div className="flex items-center gap-2 rounded-full border border-[#0f1f1a]/10 bg-white px-4 py-2 focus-within:border-[#f97316] focus-within:ring-1 focus-within:ring-[#f97316]">
+        <svg className="h-4 w-4 shrink-0 text-[#0f1f1a]/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          type="search"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search by summary, customer name, or phone..."
+          className="min-w-0 flex-1 bg-transparent text-sm text-[#0f1f1a] placeholder:text-[#0f1f1a]/40 focus:outline-none"
+        />
+        {searchTerm && (
+          <button
+            onClick={() => setSearchTerm('')}
+            className="shrink-0 rounded-full p-0.5 text-[#0f1f1a]/40 hover:text-[#0f1f1a]/70"
+            aria-label="Clear search"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+      </div>
+
       {/* Showing count */}
-      {!loading && calls.length > 0 && totalCount !== null && (
-        <div className="flex items-center gap-2 text-sm text-[#0f1f1a]/60">
+      {!loading && totalCount !== null && (
+        <div className="flex flex-wrap items-center gap-2 text-sm text-[#0f1f1a]/60">
           <span>
             Showing <span className="font-semibold text-[#0f1f1a]">{calls.length}</span> of{' '}
             <span className="font-semibold text-[#0f1f1a]">{totalCount}</span> calls
@@ -254,6 +322,11 @@ export default function CallHistoryPage() {
           {filter !== 'all' && (
             <span className="rounded-full bg-[#f97316]/10 px-2 py-0.5 text-xs font-semibold text-[#b45309]">
               {callOutcomeLabels[filter] || filter}
+            </span>
+          )}
+          {debouncedSearch && (
+            <span className="rounded-full bg-[#0f1f1a]/10 px-2 py-0.5 text-xs font-semibold text-[#0f1f1a]/70">
+              Search: &ldquo;{debouncedSearch}&rdquo;
             </span>
           )}
         </div>
@@ -269,22 +342,42 @@ export default function CallHistoryPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
               </svg>
             </div>
-            <p className="font-display text-lg font-semibold text-[#0f1f1a]/70">No calls yet</p>
-            <p className="mt-1 text-sm text-[#0f1f1a]/40">
-              Calls will appear here when your AI assistant answers your dealership line
-            </p>
+            {debouncedSearch ? (
+              <>
+                <p className="font-display text-lg font-semibold text-[#0f1f1a]/70">No matching calls</p>
+                <p className="mt-1 text-sm text-[#0f1f1a]/40">
+                  No calls match &ldquo;{debouncedSearch}&rdquo;
+                </p>
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="mt-3 rounded-full border border-[#0f1f1a]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/60 hover:bg-[#f8f5ef]"
+                >
+                  Clear search
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="font-display text-lg font-semibold text-[#0f1f1a]/70">No calls yet</p>
+                <p className="mt-1 text-sm text-[#0f1f1a]/40">
+                  Calls will appear here when your AI assistant answers your dealership line
+                </p>
+              </>
+            )}
           </div>
         ) : (
           <ul className="divide-y divide-[#0f1f1a]/10">
             {calls.map((call) => (
               <li
                 key={call.id}
-                className="cursor-pointer px-6 py-4 transition hover:bg-[#f8f5ef]"
-                onClick={() => setSelectedCall(call)}
+                className={`cursor-pointer px-6 py-4 transition hover:bg-[#f8f5ef] ${!viewedIds.has(call.id) ? 'bg-[#f97316]/[0.03]' : ''}`}
+                onClick={() => { markViewed(call.id); setSelectedCall(call) }}
               >
                 <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0f1f1a] text-sm font-semibold text-white">
+                  <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0f1f1a] text-sm font-semibold text-white">
                     {call.customer?.name?.charAt(0) || '?'}
+                    {!viewedIds.has(call.id) && (
+                      <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-[#f97316]" />
+                    )}
                   </div>
 
                   <div className="min-w-0 flex-1">
@@ -301,6 +394,11 @@ export default function CallHistoryPage() {
                     <p className="truncate text-xs text-[#0f1f1a]/60">
                       {call.appointment?.title || 'No appointment'} • {call.customer?.phone}
                     </p>
+                    {call.summary && (
+                      <p className="mt-0.5 truncate text-xs text-[#0f1f1a]/40" title={call.summary}>
+                        {call.summary}
+                      </p>
+                    )}
                   </div>
 
                   <div className="hidden shrink-0 text-right text-xs text-[#0f1f1a]/60 sm:block">
