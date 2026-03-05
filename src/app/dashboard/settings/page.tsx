@@ -98,6 +98,7 @@ interface AgentConfig {
   greeting?: string
   customInstructions?: string
   businessHours?: string
+  servicesOffered?: string
 }
 
 interface Business {
@@ -705,6 +706,21 @@ export default function SettingsPage() {
                   className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                 />
                 <p className="mt-1 text-xs text-[#0f1f1a]/40">Leave blank for a default greeting using your business name.</p>
+              </div>
+
+              <div>
+                <label htmlFor="services-offered" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+                  Services offered
+                </label>
+                <input
+                  type="text"
+                  id="services-offered"
+                  value={agentConfig.servicesOffered || ''}
+                  onChange={(e) => setAgentConfig({ ...agentConfig, servicesOffered: e.target.value })}
+                  placeholder="e.g. Oil Change, Car Sales, Test Drives, Brake Service"
+                  className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+                />
+                <p className="mt-1 text-xs text-[#0f1f1a]/40">Comma-separated. Your receptionist will only book appointments for these services. Leave blank to allow all.</p>
               </div>
 
               <div>
