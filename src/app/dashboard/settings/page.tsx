@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { isValidE164Phone, formatPhoneForApi } from '@/lib/validation'
 import { useUser } from '@/lib/context/UserContext'
@@ -126,13 +126,16 @@ export default function SettingsPage() {
   const [selectedVoice, setSelectedVoice] = useState(DEFAULT_VOICE_ID)
   const [selectedTimezone, setSelectedTimezone] = useState('America/Los_Angeles')
   const [agentConfig, setAgentConfig] = useState<AgentConfig>({})
-  const [originalValues, setOriginalValues] = useState({ name: '', email: '', phone: '', category: '', voice: DEFAULT_VOICE_ID, timezone: 'America/Los_Angeles', agentConfig: {} as AgentConfig })
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [testPhoneNumber, setTestPhoneNumber] = useState('')
   const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
   const [isCalling, setIsCalling] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const hasMountedRef = useRef(false)
+  const savedTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6001'
   const supabase = createClient()
@@ -140,6 +143,24 @@ export default function SettingsPage() {
   useEffect(() => {
     loadBusiness()
   }, [])
+
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true
+      return
+    }
+    if (!business) return
+
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+
+    saveTimeoutRef.current = setTimeout(() => {
+      performSave()
+    }, 800)
+
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+    }
+  }, [businessName, businessEmail, businessCategory, selectedVoice, selectedTimezone, agentConfig])
 
   async function loadBusiness() {
     try {
@@ -171,15 +192,6 @@ export default function SettingsPage() {
         const normalizedVoice = normalizeVoicePreference(businessData.voice_preference, arch)
         setSelectedVoice(normalizedVoice)
         setSelectedTimezone(businessData.timezone || 'America/Los_Angeles')
-        setOriginalValues({
-          name: businessData.name || '',
-          email: businessData.email || '',
-          phone: businessData.phone || '',
-          category: businessData.category || '',
-          voice: normalizedVoice,
-          timezone: businessData.timezone || 'America/Los_Angeles',
-          agentConfig: loadedAgentConfig,
-        })
       } else {
         setBusinessEmail(user.email || '')
         const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -226,15 +238,6 @@ export default function SettingsPage() {
       if (error) throw error
 
       setBusiness(data)
-      setOriginalValues({
-        name: data.name,
-        email: data.email || '',
-        phone: data.phone || '',
-        category: data.category || 'OTHER',
-        voice: data.voice_preference,
-        timezone: data.timezone || 'America/Los_Angeles',
-        agentConfig: {},
-      })
       await refreshBusiness()
       setMessage({ type: 'success', text: 'Business created successfully!' })
     } catch (error: any) {
@@ -245,11 +248,10 @@ export default function SettingsPage() {
     }
   }
 
-  const handleSave = async () => {
+  const performSave = async () => {
     if (!business) return
 
-    setIsSaving(true)
-    setMessage(null)
+    setSaveStatus('saving')
 
     try {
       // Strip undefined values from agentConfig before saving
@@ -272,22 +274,15 @@ export default function SettingsPage() {
 
       if (error) throw error
 
-      setOriginalValues({
-        name: businessName,
-        email: businessEmail,
-        phone: businessPhone,
-        category: businessCategory,
-        voice: selectedVoice,
-        timezone: selectedTimezone,
-        agentConfig: { ...agentConfig },
-      })
       await refreshBusiness()
-      setMessage({ type: 'success', text: 'Settings saved successfully!' })
+      setSaveStatus('saved')
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+      savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000)
     } catch (error: any) {
       console.error('Failed to save settings:', error)
-      setMessage({ type: 'error', text: error.message || 'Failed to save settings' })
-    } finally {
-      setIsSaving(false)
+      setSaveStatus('error')
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+      savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), 3000)
     }
   }
 
@@ -346,15 +341,6 @@ export default function SettingsPage() {
       setIsCalling(false)
     }
   }
-
-  const hasChanges = business && (
-    businessName !== originalValues.name ||
-    businessEmail !== originalValues.email ||
-    businessCategory !== originalValues.category ||
-    selectedVoice !== originalValues.voice ||
-    selectedTimezone !== originalValues.timezone ||
-    JSON.stringify(agentConfig) !== JSON.stringify(originalValues.agentConfig)
-  )
 
   if (isLoading) {
     return (
@@ -494,7 +480,16 @@ export default function SettingsPage() {
       <div>
         <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Settings</p>
         <h1 className="font-display text-3xl sm:text-4xl">Business controls</h1>
-        <p className="mt-2 text-sm text-[#0f1f1a]/60">Update your profile, voice, and call settings.</p>
+        <p className={`mt-2 text-sm transition-colors ${
+          saveStatus === 'saved' ? 'text-[#0f766e]' :
+          saveStatus === 'error' ? 'text-[#ef4444]' :
+          'text-[#0f1f1a]/60'
+        }`}>
+          {saveStatus === 'saving' ? 'Saving...' :
+           saveStatus === 'saved' ? 'All changes saved' :
+           saveStatus === 'error' ? 'Failed to save' :
+           'Update your profile, voice, and call settings.'}
+        </p>
       </div>
 
       {message && (
@@ -677,15 +672,6 @@ export default function SettingsPage() {
               ))}
             </div>
 
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={handleSave}
-                disabled={isSaving || !hasChanges}
-                className="rounded-full bg-[#0f1f1a] px-6 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition disabled:opacity-60"
-              >
-                {isSaving ? 'Saving...' : 'Save changes'}
-              </button>
-            </div>
           </div>
 
           {/* Greeting & Persona card */}
@@ -808,7 +794,6 @@ export default function SettingsPage() {
 
             <p className="text-xs text-[#0f1f1a]/60">
               The test call will use the currently selected voice ({VOICES.find(v => v.id === selectedVoice)?.name || 'Unknown'}).
-              {hasChanges && ' Save your changes first to test the new voice.'}
             </p>
           </div>
         </div>
