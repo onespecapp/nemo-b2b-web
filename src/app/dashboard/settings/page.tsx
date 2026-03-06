@@ -99,6 +99,7 @@ interface AgentConfig {
   customInstructions?: string
   businessHours?: string
   servicesOffered?: string
+  smsNotificationsEnabled?: boolean
 }
 
 interface Business {
@@ -751,6 +752,28 @@ export default function SettingsPage() {
                   className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                 />
                 <p className="mt-1 text-xs text-[#0f1f1a]/40">Your receptionist will reference these hours when callers ask.</p>
+              </div>
+
+              <div className="flex items-center justify-between rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-4 py-3">
+                <div>
+                  <span className="block text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/60">SMS notifications</span>
+                  <span className="block text-xs text-[#0f1f1a]/40 mt-0.5">Get a text summary after every call to your transfer number</span>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={!!agentConfig.smsNotificationsEnabled}
+                  onClick={() => setAgentConfig({ ...agentConfig, smsNotificationsEnabled: !agentConfig.smsNotificationsEnabled })}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                    agentConfig.smsNotificationsEnabled ? 'bg-[#f97316]' : 'bg-[#0f1f1a]/20'
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                      agentConfig.smsNotificationsEnabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
               </div>
             </div>
           </div>
