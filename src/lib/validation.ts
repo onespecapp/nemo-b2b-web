@@ -79,7 +79,12 @@ export function validatePhone(phone: string): { valid: boolean; error?: string }
  */
 export function formatPhoneForApi(phone: string): string {
   const cleaned = cleanPhone(phone)
-  return cleaned.startsWith('+') ? cleaned : `+${cleaned}`
+  const digits = cleaned.startsWith('+') ? cleaned.slice(1) : cleaned
+  // 10-digit North American number: prepend +1
+  if (digits.length === 10 && !digits.startsWith('1')) {
+    return `+1${digits}`
+  }
+  return digits.startsWith('+') ? digits : `+${digits}`
 }
 
 // Email validation utilities

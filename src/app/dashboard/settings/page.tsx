@@ -802,7 +802,11 @@ export default function SettingsPage() {
                   placeholder="+1 (555) 123-4567"
                   className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                 />
-                <p className="mt-1 text-xs text-[#0f1f1a]/40">When a caller asks for a human, the AI will transfer to this number. Leave blank to disable transfers.</p>
+                {transferPhone.trim() && !isValidE164Phone(transferPhone) ? (
+                  <p className="mt-1 text-xs text-[#ef4444]">Enter a valid phone number (e.g. +1 250 682 8899)</p>
+                ) : (
+                  <p className="mt-1 text-xs text-[#0f1f1a]/40">When a caller asks for a human, the AI will transfer to this number. Leave blank to disable transfers.</p>
+                )}
               </div>
 
               <div className="flex items-center justify-between rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-4 py-3">
