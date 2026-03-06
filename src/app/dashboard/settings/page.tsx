@@ -118,6 +118,7 @@ interface Business {
   subscription_tier: string
   subscription_status: string
   agent_config: AgentConfig | null
+  transfer_phone: string | null
 }
 
 export default function SettingsPage() {
@@ -130,6 +131,7 @@ export default function SettingsPage() {
   const [selectedVoice, setSelectedVoice] = useState(DEFAULT_VOICE_ID)
   const [selectedTimezone, setSelectedTimezone] = useState('America/Los_Angeles')
   const [agentConfig, setAgentConfig] = useState<AgentConfig>({})
+  const [transferPhone, setTransferPhone] = useState('')
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [testPhoneNumber, setTestPhoneNumber] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -167,7 +169,7 @@ export default function SettingsPage() {
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
     }
-  }, [businessName, businessEmail, businessCategory, selectedVoice, selectedTimezone, agentConfig])
+  }, [businessName, businessEmail, businessCategory, selectedVoice, selectedTimezone, agentConfig, transferPhone])
 
   useEffect(() => {
     const billing = searchParams.get('billing')
@@ -276,6 +278,7 @@ export default function SettingsPage() {
         const normalizedVoice = normalizeVoicePreference(businessData.voice_preference, arch)
         setSelectedVoice(normalizedVoice)
         setSelectedTimezone(businessData.timezone || 'America/Los_Angeles')
+        setTransferPhone(businessData.transfer_phone || '')
       } else {
         setBusinessEmail(user.email || '')
         const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -353,6 +356,7 @@ export default function SettingsPage() {
           voice_preference: selectedVoice,
           timezone: selectedTimezone,
           agent_config: cleanAgentConfig,
+          transfer_phone: transferPhone.trim() || null,
         })
         .eq('id', business.id)
 
@@ -852,6 +856,21 @@ export default function SettingsPage() {
                   className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                 />
                 <p className="mt-1 text-xs text-[#0f1f1a]/40">Your receptionist will reference these hours when callers ask.</p>
+              </div>
+
+              <div>
+                <label htmlFor="transfer-phone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+                  Transfer phone number
+                </label>
+                <input
+                  type="tel"
+                  id="transfer-phone"
+                  value={transferPhone}
+                  onChange={(e) => setTransferPhone(e.target.value)}
+                  placeholder="+1 (555) 123-4567"
+                  className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+                />
+                <p className="mt-1 text-xs text-[#0f1f1a]/40">When a caller asks for a human, the AI will transfer to this number. Leave blank to disable transfers.</p>
               </div>
 
               <div className="flex items-center justify-between rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-4 py-3">
