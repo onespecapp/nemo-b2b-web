@@ -321,7 +321,7 @@ export default function SettingsPage() {
           voice_preference: selectedVoice,
           timezone: selectedTimezone,
           agent_config: cleanAgentConfig,
-          transfer_phone: transferPhone.trim() || null,
+          transfer_phone: transferPhone.trim() ? formatPhoneForApi(transferPhone) : null,
         })
         .eq('id', business.id)
 
