@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { isValidE164Phone, formatPhoneForApi } from '@/lib/validation'
 import { useUser } from '@/lib/context/UserContext'
 
 const TIMEZONES = [
@@ -61,6 +60,59 @@ const BUSINESS_CATEGORIES = [
   { value: 'ROOFING', label: 'Roofing' },
   { value: 'OTHER', label: 'Other' },
 ]
+
+const CATEGORY_PLACEHOLDERS: Record<string, { greeting: string; servicesOffered: string; customInstructions: string }> = {
+  '': {
+    greeting: 'Hi, thanks for calling! How can I help you today?',
+    servicesOffered: 'e.g. List your main services here',
+    customInstructions: 'e.g. Add any special instructions for your receptionist here.',
+  },
+  AUTO_DEALERSHIP: {
+    greeting: 'Hi, thanks for calling Sunset Motors! How can I help you today?',
+    servicesOffered: 'e.g. Oil Change, Car Sales, Test Drives, Brake Service',
+    customInstructions: 'e.g. Always mention our current promotion: 20% off oil changes this month. If asked about financing, mention we work with all credit types.',
+  },
+  AUTO_REPAIR: {
+    greeting: 'Hi, thanks for calling! How can I help with your vehicle today?',
+    servicesOffered: 'e.g. Oil Change, Brake Repair, Engine Diagnostics, Tire Rotation',
+    customInstructions: 'e.g. Always ask what vehicle make, model, and year they have. Mention our free diagnostic check for new customers.',
+  },
+  AUTO_BODY: {
+    greeting: 'Hi, thanks for calling! How can we help with your vehicle today?',
+    servicesOffered: 'e.g. Collision Repair, Dent Removal, Paint Jobs, Frame Straightening',
+    customInstructions: 'e.g. Ask if they have an insurance claim number. Mention we work with all major insurance providers.',
+  },
+  PLUMBING: {
+    greeting: 'Hi, thanks for calling! How can we help you today?',
+    servicesOffered: 'e.g. Drain Cleaning, Water Heater Repair, Pipe Repair, Leak Detection',
+    customInstructions: 'e.g. Always ask if the issue is urgent or an emergency. Mention we offer same-day service for emergencies.',
+  },
+  HVAC: {
+    greeting: 'Hi, thanks for calling! How can we help with your heating or cooling today?',
+    servicesOffered: 'e.g. AC Repair, Furnace Installation, Duct Cleaning, Thermostat Setup',
+    customInstructions: 'e.g. Ask what type of system they have (central air, mini-split, etc.). Mention our seasonal tune-up specials.',
+  },
+  ELECTRICAL: {
+    greeting: 'Hi, thanks for calling! How can we help you today?',
+    servicesOffered: 'e.g. Panel Upgrades, Outlet Installation, Lighting, Wiring Repair',
+    customInstructions: 'e.g. Always ask if they are experiencing any safety concerns like sparking or burning smells. Mention we are licensed and insured.',
+  },
+  GENERAL_CONTRACTOR: {
+    greeting: 'Hi, thanks for calling! How can we help with your project?',
+    servicesOffered: 'e.g. Kitchen Remodel, Bathroom Renovation, Room Addition, Deck Building',
+    customInstructions: 'e.g. Ask about their project timeline and budget range. Mention we offer free estimates.',
+  },
+  ROOFING: {
+    greeting: 'Hi, thanks for calling! How can we help with your roof today?',
+    servicesOffered: 'e.g. Roof Repair, New Roof Installation, Gutter Cleaning, Leak Repair',
+    customInstructions: 'e.g. Ask if the issue is storm-related (may be covered by insurance). Mention we offer free roof inspections.',
+  },
+  OTHER: {
+    greeting: 'Hi, thanks for calling! How can I help you today?',
+    servicesOffered: 'e.g. List your main services here',
+    customInstructions: 'e.g. Add any special instructions for your receptionist here.',
+  },
+}
 
 interface AgentConfig {
   voiceArchitecture?: string
@@ -243,7 +295,7 @@ export default function SettingsPage() {
         const normalizedVoice = normalizeVoicePreference(businessData.voice_preference)
         setSelectedVoice(normalizedVoice)
         setSelectedTimezone(businessData.timezone || 'America/Los_Angeles')
-        setTransferPhone(businessData.transfer_phone || '')
+        setTransferPhone((businessData.transfer_phone || '').replace(/^\+?1/, ''))
       } else {
         setBusinessEmail(user.email || '')
         const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -321,7 +373,7 @@ export default function SettingsPage() {
           voice_preference: selectedVoice,
           timezone: selectedTimezone,
           agent_config: cleanAgentConfig,
-          transfer_phone: transferPhone.trim() ? formatPhoneForApi(transferPhone) : null,
+          transfer_phone: transferPhone.trim() ? `+1${transferPhone.replace(/\D/g, '')}` : null,
         })
         .eq('id', business.id)
 
@@ -340,14 +392,14 @@ export default function SettingsPage() {
   }
 
   const handleTestCall = async () => {
-    if (!business || !testPhoneNumber.trim()) {
+    const rawDigits = testPhoneNumber.replace(/\D/g, '')
+    if (!business || !rawDigits) {
       setMessage({ type: 'error', text: 'Please enter a phone number' })
       return
     }
 
-    // Validate phone number format
-    if (!isValidE164Phone(testPhoneNumber)) {
-      setMessage({ type: 'error', text: 'Please enter a valid phone number (e.g., +1234567890)' })
+    if (rawDigits.length !== 10) {
+      setMessage({ type: 'error', text: 'Please enter a valid 10-digit phone number' })
       return
     }
 
@@ -370,7 +422,7 @@ export default function SettingsPage() {
           'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          phone: formatPhoneForApi(testPhoneNumber),
+          phone: `+1${rawDigits}`,
           voice_preference: selectedVoice,
           business_id: business.id,
         }),
@@ -739,7 +791,7 @@ export default function SettingsPage() {
                   id="greeting"
                   value={agentConfig.greeting || ''}
                   onChange={(e) => setAgentConfig({ ...agentConfig, greeting: e.target.value })}
-                  placeholder="Hi, thanks for calling Sunset Motors! How can I help you today?"
+                  placeholder={(CATEGORY_PLACEHOLDERS[businessCategory] || CATEGORY_PLACEHOLDERS['']).greeting}
                   className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                 />
                 <p className="mt-1 text-xs text-[#0f1f1a]/40">Leave blank for a default greeting using your business name.</p>
@@ -754,7 +806,7 @@ export default function SettingsPage() {
                   id="services-offered"
                   value={agentConfig.servicesOffered || ''}
                   onChange={(e) => setAgentConfig({ ...agentConfig, servicesOffered: e.target.value })}
-                  placeholder="e.g. Oil Change, Car Sales, Test Drives, Brake Service"
+                  placeholder={(CATEGORY_PLACEHOLDERS[businessCategory] || CATEGORY_PLACEHOLDERS['']).servicesOffered}
                   className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                 />
                 <p className="mt-1 text-xs text-[#0f1f1a]/40">Comma-separated. Your receptionist will only book appointments for these services. Leave blank to allow all.</p>
@@ -769,7 +821,7 @@ export default function SettingsPage() {
                   rows={4}
                   value={agentConfig.customInstructions || ''}
                   onChange={(e) => setAgentConfig({ ...agentConfig, customInstructions: e.target.value })}
-                  placeholder="e.g. Always mention our current promotion: 20% off oil changes this month. If asked about financing, mention we work with all credit types."
+                  placeholder={(CATEGORY_PLACEHOLDERS[businessCategory] || CATEGORY_PLACEHOLDERS['']).customInstructions}
                   className="mt-2 w-full resize-none rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                 />
                 <p className="mt-1 text-xs text-[#0f1f1a]/40">Extra instructions your receptionist will follow on every call.</p>
@@ -794,16 +846,25 @@ export default function SettingsPage() {
                 <label htmlFor="transfer-phone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
                   Transfer phone number
                 </label>
-                <input
-                  type="tel"
-                  id="transfer-phone"
-                  value={transferPhone}
-                  onChange={(e) => setTransferPhone(e.target.value)}
-                  placeholder="+1 (555) 123-4567"
-                  className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
-                />
-                {transferPhone.trim() && !isValidE164Phone(transferPhone) ? (
-                  <p className="mt-1 text-xs text-[#ef4444]">Enter a valid phone number (e.g. +1 250 682 8899)</p>
+                <div className={`mt-2 flex items-center rounded-2xl border bg-white overflow-hidden ${
+                  transferPhone && transferPhone.replace(/\D/g, '').length === 10
+                    ? 'border-[#0f766e]'
+                    : transferPhone && transferPhone.replace(/\D/g, '').length > 0
+                      ? 'border-[#ef4444]'
+                      : 'border-[#0f1f1a]/20'
+                }`}>
+                  <span className="select-none bg-[#f8f5ef] px-3 py-3 text-sm text-[#0f1f1a]/50 border-r border-[#0f1f1a]/10">+1</span>
+                  <input
+                    type="tel"
+                    id="transfer-phone"
+                    value={transferPhone}
+                    onChange={(e) => setTransferPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="2506828899"
+                    className="w-full px-3 py-3 text-sm focus:outline-none bg-transparent"
+                  />
+                </div>
+                {transferPhone && transferPhone.replace(/\D/g, '').length > 0 && transferPhone.replace(/\D/g, '').length !== 10 ? (
+                  <p className="mt-1 text-xs text-[#ef4444]">Enter a 10-digit phone number</p>
                 ) : (
                   <p className="mt-1 text-xs text-[#0f1f1a]/40">When a caller asks for a human, the AI will transfer to this number. Leave blank to disable transfers.</p>
                 )}
@@ -865,14 +926,26 @@ export default function SettingsPage() {
               <label htmlFor="testPhone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
                 Phone number
               </label>
-              <input
-                type="tel"
-                id="testPhone"
-                value={testPhoneNumber}
-                onChange={(e) => setTestPhoneNumber(e.target.value)}
-                placeholder="+1 (555) 123-4567"
-                className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
-              />
+              <div className={`mt-2 flex items-center rounded-2xl border bg-white overflow-hidden ${
+                testPhoneNumber && testPhoneNumber.replace(/\D/g, '').length === 10
+                  ? 'border-[#0f766e]'
+                  : testPhoneNumber && testPhoneNumber.replace(/\D/g, '').length > 0
+                    ? 'border-[#ef4444]'
+                    : 'border-[#0f1f1a]/20'
+              }`}>
+                <span className="select-none bg-[#f8f5ef] px-3 py-3 text-sm text-[#0f1f1a]/50 border-r border-[#0f1f1a]/10">+1</span>
+                <input
+                  type="tel"
+                  id="testPhone"
+                  value={testPhoneNumber}
+                  onChange={(e) => setTestPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  placeholder="2506828899"
+                  className="w-full px-3 py-3 text-sm focus:outline-none bg-transparent"
+                />
+              </div>
+              {testPhoneNumber && testPhoneNumber.replace(/\D/g, '').length > 0 && testPhoneNumber.replace(/\D/g, '').length !== 10 && (
+                <p className="mt-1 text-xs text-[#ef4444]">Enter a 10-digit phone number</p>
+              )}
             </div>
 
             <button

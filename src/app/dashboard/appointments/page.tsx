@@ -73,12 +73,17 @@ const callOutcomeStyles: Record<string, string> = {
   FAILED: 'bg-[#ef4444]/15 text-[#991b1b]',
 }
 
+const APPT_PAGE_SIZE = 50
+
 function AppointmentsPageInner() {
   const { showToast } = useToast()
   const { business } = useUser()
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
+  const [totalApptCount, setTotalApptCount] = useState<number | null>(null)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const apptOffsetRef = useRef(0)
   const [error, setError] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
@@ -120,7 +125,7 @@ function AppointmentsPageInner() {
   const searchParams = useSearchParams()
   const customerIdFromQuery = searchParams.get('customerId') || searchParams.get('customer_id') || ''
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (append: boolean = false) => {
     setError(null)
     if (!business) {
       setError('No business found. Please set up your business in Settings first.')
@@ -128,21 +133,38 @@ function AppointmentsPageInner() {
       return
     }
 
+    if (!append) {
+      setLoading(true)
+      apptOffsetRef.current = 0
+    }
+
+    const offset = append ? apptOffsetRef.current : 0
+
     try {
       setBusinessTimezone(business.timezone || null)
 
-      const [appointmentsRes, customersRes] = await Promise.all([
-        supabase
+      const appointmentsQuery = supabase
+        .from('b2b_appointments')
+        .select(`*, customer:b2b_customers(id, name, phone)`)
+        .eq('business_id', business.id)
+        .order('scheduled_at', { ascending: true })
+        .range(offset, offset + APPT_PAGE_SIZE - 1)
+
+      const customersQuery = supabase
+        .from('b2b_customers')
+        .select('id, name, phone')
+        .eq('business_id', business.id)
+        .order('name')
+
+      const [appointmentsRes, customersRes] = await Promise.all([appointmentsQuery, customersQuery])
+
+      let countRes = null
+      if (!append) {
+        countRes = await supabase
           .from('b2b_appointments')
-          .select(`*, customer:b2b_customers(id, name, phone)`)
+          .select('*', { count: 'exact', head: true })
           .eq('business_id', business.id)
-          .order('scheduled_at', { ascending: true }),
-        supabase
-          .from('b2b_customers')
-          .select('id, name, phone')
-          .eq('business_id', business.id)
-          .order('name'),
-      ])
+      }
 
       if (appointmentsRes.error) {
         setError(appointmentsRes.error.message)
@@ -150,8 +172,20 @@ function AppointmentsPageInner() {
         return
       }
 
-      setAppointments(appointmentsRes.data || [])
-      setCustomers(customersRes.data || [])
+      const newData = appointmentsRes.data || []
+      if (append) {
+        setAppointments(prev => [...prev, ...newData])
+      } else {
+        setAppointments(newData)
+      }
+      apptOffsetRef.current = offset + newData.length
+
+      setCustomers(customersRes?.data || [])
+
+      if (countRes && !countRes.error && countRes.count !== null) {
+        setTotalApptCount(countRes.count)
+      }
+
       setLoading(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred.')
@@ -984,6 +1018,22 @@ function AppointmentsPageInner() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {totalApptCount !== null && appointments.length < totalApptCount && (
+        <div className="flex justify-center">
+          <button
+            onClick={async () => {
+              setLoadingMore(true)
+              await fetchData(true)
+              setLoadingMore(false)
+            }}
+            disabled={loadingMore}
+            className="rounded-full border border-[#0f1f1a]/15 bg-white px-6 py-2.5 text-sm font-semibold text-[#0f1f1a]/70 shadow-sm transition hover:border-[#0f1f1a]/30 disabled:opacity-60"
+          >
+            {loadingMore ? 'Loading...' : `Load more (${totalApptCount - appointments.length} remaining)`}
+          </button>
         </div>
       )}
 

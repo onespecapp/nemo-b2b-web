@@ -48,6 +48,7 @@ export default function CallHistoryPage() {
   const [sortDirection, setSortDirection] = useState<'desc' | 'asc'>('desc')
   const [callingBack, setCallingBack] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [loadingMore, setLoadingMore] = useState(false)
   const debouncedSearch = useDebouncedValue(searchTerm.trim(), 300)
   const [viewedIds, setViewedIds] = useState<Set<string>>(() => {
     if (typeof window === 'undefined') return new Set()
@@ -423,6 +424,22 @@ export default function CallHistoryPage() {
           </ul>
         )}
       </div>
+
+      {totalCount !== null && calls.length < totalCount && (
+        <div className="flex justify-center">
+          <button
+            onClick={async () => {
+              setLoadingMore(true)
+              await fetchCalls(true)
+              setLoadingMore(false)
+            }}
+            disabled={loadingMore}
+            className="rounded-full border border-[#0f1f1a]/15 bg-white px-6 py-2.5 text-sm font-semibold text-[#0f1f1a]/70 shadow-sm transition hover:border-[#0f1f1a]/30 disabled:opacity-60"
+          >
+            {loadingMore ? 'Loading...' : `Load more (${totalCount - calls.length} remaining)`}
+          </button>
+        </div>
+      )}
 
       <AccessibleModal
         isOpen={!!selectedCall}
