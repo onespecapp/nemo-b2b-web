@@ -8,15 +8,14 @@ import Image from 'next/image'
 
 // Business category options
 const BUSINESS_CATEGORIES = [
-  { value: 'AUTO_REPAIR', label: 'Car Dealership / Auto Sales' },
-  { value: 'BARBERSHOP', label: 'Barbershop' },
-  { value: 'SALON', label: 'Hair Salon' },
-  { value: 'DENTAL', label: 'Dental Office' },
-  { value: 'MEDICAL', label: 'Medical Clinic' },
-  { value: 'PET_GROOMING', label: 'Pet Grooming' },
-  { value: 'SPA', label: 'Spa & Wellness' },
-  { value: 'FITNESS', label: 'Fitness & Training' },
-  { value: 'TUTORING', label: 'Tutoring & Education' },
+  { value: 'AUTO_DEALERSHIP', label: 'New & Used Car Dealership' },
+  { value: 'AUTO_REPAIR', label: 'Auto Repair / Service Center' },
+  { value: 'AUTO_BODY', label: 'Auto Body / Collision' },
+  { value: 'PLUMBING', label: 'Plumbing' },
+  { value: 'HVAC', label: 'HVAC / Heating & Cooling' },
+  { value: 'ELECTRICAL', label: 'Electrical' },
+  { value: 'GENERAL_CONTRACTOR', label: 'General Contractor' },
+  { value: 'ROOFING', label: 'Roofing' },
   { value: 'OTHER', label: 'Other' },
 ]
 

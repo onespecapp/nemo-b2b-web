@@ -77,23 +77,14 @@ function normalizeVoicePreference(rawVoice: string | null | undefined, architect
 
 const BUSINESS_CATEGORIES = [
   { value: '', label: 'Select a category...' },
-  { value: 'DENTAL', label: 'Dental' },
-  { value: 'MEDICAL', label: 'Medical' },
-  { value: 'VETERINARY', label: 'Veterinary' },
-  { value: 'LEGAL', label: 'Legal' },
-  { value: 'FINANCIAL', label: 'Financial' },
-  { value: 'REAL_ESTATE', label: 'Real Estate' },
-  { value: 'SALON', label: 'Salon / Beauty' },
-  { value: 'SPA', label: 'Spa / Wellness' },
-  { value: 'FITNESS', label: 'Fitness / Gym' },
-  { value: 'AUTO_REPAIR', label: 'Car Dealership / Auto Sales' },
+  { value: 'AUTO_DEALERSHIP', label: 'New & Used Car Dealership' },
+  { value: 'AUTO_REPAIR', label: 'Auto Repair / Service Center' },
+  { value: 'AUTO_BODY', label: 'Auto Body / Collision' },
   { value: 'PLUMBING', label: 'Plumbing' },
   { value: 'HVAC', label: 'HVAC / Heating & Cooling' },
   { value: 'ELECTRICAL', label: 'Electrical' },
   { value: 'GENERAL_CONTRACTOR', label: 'General Contractor' },
-  { value: 'LANDSCAPING', label: 'Landscaping' },
   { value: 'ROOFING', label: 'Roofing' },
-  { value: 'PAINTING', label: 'Painting' },
   { value: 'OTHER', label: 'Other' },
 ]
 
