@@ -48,7 +48,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self'",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co " + apiUrl,
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://checkout.stripe.com https://billing.stripe.com " + apiUrl,
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

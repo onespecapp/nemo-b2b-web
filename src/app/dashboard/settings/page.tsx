@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { isValidE164Phone, formatPhoneForApi } from '@/lib/validation'
 import { useUser } from '@/lib/context/UserContext'
@@ -58,6 +59,9 @@ const OPENAI_VOICES: { id: string; name: string; description: string; tag?: stri
 
 const DEFAULT_VOICE_ID = 'f786b574-daa5-4673-aa0c-cbe3e8534c02' // Katie
 const DEFAULT_OPENAI_VOICE = 'marin'
+
+const STRIPE_STARTER_PRICE_ID = process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID || ''
+const STRIPE_PRO_PRICE_ID = process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID || ''
 
 function normalizeVoicePreference(rawVoice: string | null | undefined, architecture: string): string {
   const normalized = (rawVoice || '').trim()
@@ -131,7 +135,10 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isCalling, setIsCalling] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
+  const [isUpgrading, setIsUpgrading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+
+  const searchParams = useSearchParams()
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const hasMountedRef = useRef(false)
@@ -161,6 +168,83 @@ export default function SettingsPage() {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
     }
   }, [businessName, businessEmail, businessCategory, selectedVoice, selectedTimezone, agentConfig])
+
+  useEffect(() => {
+    const billing = searchParams.get('billing')
+    if (billing === 'success') {
+      setMessage({ type: 'success', text: 'Subscription activated! Your plan has been updated.' })
+      // Reload business data to reflect new tier
+      loadBusiness()
+      // Clean up URL
+      window.history.replaceState({}, '', '/dashboard/settings')
+    } else if (billing === 'canceled') {
+      setMessage({ type: 'error', text: 'Checkout was canceled. No changes were made.' })
+      window.history.replaceState({}, '', '/dashboard/settings')
+    }
+  }, [searchParams])
+
+  async function handleUpgrade(priceId: string) {
+    setIsUpgrading(true)
+    setMessage(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setMessage({ type: 'error', text: 'Please sign in to upgrade' })
+        return
+      }
+
+      const res = await fetch(`${API_URL}/api/billing/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ price_id: priceId }),
+      })
+
+      const data = await res.json()
+      if (res.ok && data.url) {
+        window.location.href = data.url
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed to start checkout' })
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'Failed to start checkout. Is the backend running?' })
+    } finally {
+      setIsUpgrading(false)
+    }
+  }
+
+  async function handleManageBilling() {
+    setIsUpgrading(true)
+    setMessage(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setMessage({ type: 'error', text: 'Please sign in to manage billing' })
+        return
+      }
+
+      const res = await fetch(`${API_URL}/api/billing/create-portal-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      })
+
+      const data = await res.json()
+      if (res.ok && data.url) {
+        window.location.href = data.url
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed to open billing portal' })
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'Failed to open billing portal. Is the backend running?' })
+    } finally {
+      setIsUpgrading(false)
+    }
+  }
 
   async function loadBusiness() {
     try {
@@ -597,6 +681,36 @@ export default function SettingsPage() {
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold">
                   <span className="rounded-full bg-white px-3 py-1 text-[#0f1f1a]">{business.subscription_tier}</span>
                   <span className="rounded-full bg-[#0f1f1a]/10 px-3 py-1 text-[#0f1f1a]/70">{business.subscription_status}</span>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {business.subscription_tier === 'FREE' && STRIPE_STARTER_PRICE_ID && (
+                    <button
+                      onClick={() => handleUpgrade(STRIPE_STARTER_PRICE_ID)}
+                      disabled={isUpgrading}
+                      className="rounded-full bg-[#f97316] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#ea580c] disabled:opacity-60"
+                    >
+                      {isUpgrading ? 'Redirecting...' : 'Upgrade to Starter — $200/mo'}
+                    </button>
+                  )}
+                  {(business.subscription_tier === 'FREE' || business.subscription_tier === 'STARTER') && STRIPE_PRO_PRICE_ID && (
+                    <button
+                      onClick={() => handleUpgrade(STRIPE_PRO_PRICE_ID)}
+                      disabled={isUpgrading}
+                      className="rounded-full bg-[#0f1f1a] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#0f1f1a]/80 disabled:opacity-60"
+                    >
+                      {isUpgrading ? 'Redirecting...' : 'Upgrade to Pro — $300/mo'}
+                    </button>
+                  )}
+                  {business.subscription_tier !== 'FREE' && (
+                    <button
+                      onClick={handleManageBilling}
+                      disabled={isUpgrading}
+                      className="rounded-full border border-[#0f1f1a]/20 bg-white px-4 py-2 text-xs font-semibold text-[#0f1f1a]/70 transition hover:border-[#0f1f1a]/40 disabled:opacity-60"
+                    >
+                      {isUpgrading ? 'Redirecting...' : 'Manage billing & invoices'}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
