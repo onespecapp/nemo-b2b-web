@@ -29,6 +29,81 @@ interface Service {
   is_emergency: boolean
 }
 
+const CATEGORY_PLACEHOLDERS: Record<string, { greeting: string; instructions: string }> = {
+  '': {
+    greeting: 'Hi, thanks for calling! How can I help you today?',
+    instructions: 'e.g. Add any special instructions for your receptionist here.',
+  },
+  DENTAL: {
+    greeting: 'Hi, thanks for calling! How can we help with your dental care today?',
+    instructions: 'e.g. Always ask if the patient is a new or existing patient. Mention we accept most insurance plans.',
+  },
+  MEDICAL: {
+    greeting: 'Hi, thanks for calling! How can we help you today?',
+    instructions: 'e.g. Always ask if the caller is a current patient. Mention we accept most major insurance plans.',
+  },
+  VETERINARY: {
+    greeting: 'Hi, thanks for calling! How can we help with your pet today?',
+    instructions: 'e.g. Always ask what type and breed of pet they have. Mention we offer new-patient wellness exams.',
+  },
+  LEGAL: {
+    greeting: 'Hi, thanks for calling! How can we assist you today?',
+    instructions: 'e.g. Ask what area of law they need help with. Mention we offer free initial consultations.',
+  },
+  FINANCIAL: {
+    greeting: 'Hi, thanks for calling! How can we help with your financial needs today?',
+    instructions: 'e.g. Ask if they are a current client. Mention we offer a complimentary financial review.',
+  },
+  REAL_ESTATE: {
+    greeting: 'Hi, thanks for calling! How can we help with your real estate needs today?',
+    instructions: 'e.g. Ask if they are looking to buy, sell, or rent. Mention we offer free market analysis.',
+  },
+  SALON: {
+    greeting: 'Hi, thanks for calling! How can we help you today?',
+    instructions: 'e.g. Ask if they have a preferred stylist. Mention our first-time client discount.',
+  },
+  SPA: {
+    greeting: 'Hi, thanks for calling! How can we help you relax today?',
+    instructions: 'e.g. Ask if they have any allergies or sensitivities. Mention our spa packages for couples.',
+  },
+  FITNESS: {
+    greeting: 'Hi, thanks for calling! How can we help with your fitness goals today?',
+    instructions: 'e.g. Ask if they are a current member. Mention we offer a free trial week for new members.',
+  },
+  PLUMBING: {
+    greeting: 'Hi, thanks for calling! How can we help you today?',
+    instructions: 'e.g. Always ask if the issue is urgent or an emergency. Mention we offer same-day service for emergencies.',
+  },
+  HVAC: {
+    greeting: 'Hi, thanks for calling! How can we help with your heating or cooling today?',
+    instructions: 'e.g. Ask what type of system they have (central air, mini-split, etc.). Mention our seasonal tune-up specials.',
+  },
+  ELECTRICAL: {
+    greeting: 'Hi, thanks for calling! How can we help you today?',
+    instructions: 'e.g. Always ask if they are experiencing any safety concerns like sparking or burning smells. Mention we are licensed and insured.',
+  },
+  GENERAL_CONTRACTOR: {
+    greeting: 'Hi, thanks for calling! How can we help with your project?',
+    instructions: 'e.g. Ask about their project timeline and budget range. Mention we offer free estimates.',
+  },
+  LANDSCAPING: {
+    greeting: 'Hi, thanks for calling! How can we help with your yard today?',
+    instructions: 'e.g. Ask about the size of their property. Mention we offer free on-site estimates.',
+  },
+  ROOFING: {
+    greeting: 'Hi, thanks for calling! How can we help with your roof today?',
+    instructions: 'e.g. Ask if the issue is storm-related (may be covered by insurance). Mention we offer free roof inspections.',
+  },
+  PAINTING: {
+    greeting: 'Hi, thanks for calling! How can we help with your painting project?',
+    instructions: 'e.g. Ask if the job is interior or exterior. Mention we offer free color consultations and estimates.',
+  },
+  OTHER: {
+    greeting: 'Hi, thanks for calling! How can I help you today?',
+    instructions: 'e.g. Add any special instructions for your receptionist here.',
+  },
+}
+
 const EMPTY_SERVICE: Service = {
   name: '',
   price_min: '',
@@ -59,6 +134,7 @@ export default function ReceptionistPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   const telnyxPhone = (business as unknown as { telnyx_phone_number?: string | null } | null)?.telnyx_phone_number ?? null
+  const categoryPlaceholders = CATEGORY_PLACEHOLDERS[business?.category ?? ''] || CATEGORY_PLACEHOLDERS['']
 
   const loadConfig = useCallback(async () => {
     if (!business) return
@@ -279,7 +355,7 @@ export default function ReceptionistPage() {
           <textarea
             value={greeting}
             onChange={(e) => setGreeting(e.target.value)}
-            placeholder="Hi, thank you for calling! How can I help you today?"
+            placeholder={categoryPlaceholders.greeting}
             rows={3}
             className="mt-4 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
           />
@@ -562,7 +638,7 @@ export default function ReceptionistPage() {
         <textarea
           value={instructions}
           onChange={(e) => setInstructions(e.target.value)}
-          placeholder="e.g., Always ask for the caller's name before booking. We don't accept walk-ins on Saturdays."
+          placeholder={categoryPlaceholders.instructions}
           rows={4}
           className="mt-4 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
         />
