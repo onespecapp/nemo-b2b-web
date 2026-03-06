@@ -68,7 +68,8 @@ interface AgentConfig {
   customInstructions?: string
   businessHours?: string
   servicesOffered?: string
-  smsNotificationsEnabled?: boolean
+  smsNotifyOwner?: boolean
+  smsNotifyCustomer?: boolean
 }
 
 interface Business {
@@ -806,21 +807,43 @@ export default function SettingsPage() {
 
               <div className="flex items-center justify-between rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-4 py-3">
                 <div>
-                  <span className="block text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/60">SMS notifications</span>
-                  <span className="block text-xs text-[#0f1f1a]/40 mt-0.5">Get a text summary after every call to your transfer number</span>
+                  <span className="block text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/60">Notify me after calls</span>
+                  <span className="block text-xs text-[#0f1f1a]/40 mt-0.5">Get a text summary of each call to your transfer number</span>
                 </div>
                 <button
                   type="button"
                   role="switch"
-                  aria-checked={!!agentConfig.smsNotificationsEnabled}
-                  onClick={() => setAgentConfig({ ...agentConfig, smsNotificationsEnabled: !agentConfig.smsNotificationsEnabled })}
+                  aria-checked={!!agentConfig.smsNotifyOwner}
+                  onClick={() => setAgentConfig({ ...agentConfig, smsNotifyOwner: !agentConfig.smsNotifyOwner })}
                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                    agentConfig.smsNotificationsEnabled ? 'bg-[#f97316]' : 'bg-[#0f1f1a]/20'
+                    agentConfig.smsNotifyOwner ? 'bg-[#f97316]' : 'bg-[#0f1f1a]/20'
                   }`}
                 >
                   <span
                     className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-                      agentConfig.smsNotificationsEnabled ? 'translate-x-5' : 'translate-x-0'
+                      agentConfig.smsNotifyOwner ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-4 py-3">
+                <div>
+                  <span className="block text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/60">Text caller after calls</span>
+                  <span className="block text-xs text-[#0f1f1a]/40 mt-0.5">Send the caller a thank-you text after their call</span>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={!!agentConfig.smsNotifyCustomer}
+                  onClick={() => setAgentConfig({ ...agentConfig, smsNotifyCustomer: !agentConfig.smsNotifyCustomer })}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                    agentConfig.smsNotifyCustomer ? 'bg-[#f97316]' : 'bg-[#0f1f1a]/20'
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                      agentConfig.smsNotifyCustomer ? 'translate-x-5' : 'translate-x-0'
                     }`}
                   />
                 </button>
