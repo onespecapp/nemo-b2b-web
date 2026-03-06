@@ -31,45 +31,19 @@ const TIMEZONES = [
 ]
 
 const VOICES: { id: string; name: string; description: string; tag?: string }[] = [
-  { id: 'f786b574-daa5-4673-aa0c-cbe3e8534c02', name: 'Katie', description: 'Friendly and helpful — recommended for front desk calls', tag: 'Recommended' },
+  { id: '5ee9feff-1265-424a-9d7f-8e4d431a12c7', name: 'Ronald', description: 'Calm and thoughtful — ideal for professional conversations', tag: 'Recommended' },
+  { id: 'f786b574-daa5-4673-aa0c-cbe3e8534c02', name: 'Katie', description: 'Friendly and helpful — great for front desk calls' },
   { id: 'e07c00bc-4134-4eae-9ea4-1a55fb45746b', name: 'Brooke', description: 'Warm and approachable — great for customer service' },
-  { id: '5ee9feff-1265-424a-9d7f-8e4d431a12c7', name: 'Ronald', description: 'Calm and thoughtful — ideal for professional conversations' },
   { id: '248be419-c632-4f23-adf1-5324ed7dbf1d', name: 'Professional Woman', description: 'Polished and confident — suited for business inquiries' },
-  { id: '156fb8d2-335b-4950-9cb3-a2d33befec77', name: 'Helpful Woman', description: 'Warm and supportive — great for scheduling and follow-ups' },
   { id: '829ccd10-f8b3-43cd-b8a0-4aeaa81f3b30', name: 'Customer Support Lady', description: 'Clear and patient — perfect for service calls' },
-  { id: 'a167e0f3-df7e-4d52-a9c3-f949145efdab', name: 'Customer Support Man', description: 'Friendly and reliable — ideal for inbound support' },
-  { id: '00a77add-48d5-4ef6-8157-71e5437b282d', name: 'Calm Lady', description: 'Soothing and composed — good for reassuring callers' },
-  { id: 'ee7ea9f8-c0c1-498c-9279-764d6b56d189', name: 'Polite Man', description: 'Courteous and professional — great for formal interactions' },
-  { id: '79a125e8-cd45-4c13-8a67-188112f4dd22', name: 'British Lady', description: 'Elegant and articulate — adds a distinguished touch' },
-  { id: '95856005-0332-41b0-935f-352e296aa0df', name: 'Classy British Man', description: 'Refined and authoritative — premium feel' },
-  { id: '820a3788-2b37-4d21-847a-b65d8a68c99a', name: 'Salesman', description: 'Energetic and persuasive — great for sales outreach' },
 ]
 
-const OPENAI_VOICES: { id: string; name: string; description: string; tag?: string }[] = [
-  { id: 'marin', name: 'Marin', description: 'Warm and friendly — natural conversational tone', tag: 'Recommended' },
-  { id: 'alloy', name: 'Alloy', description: 'Neutral and balanced — versatile for any business' },
-  { id: 'ash', name: 'Ash', description: 'Calm and steady — great for professional calls' },
-  { id: 'ballad', name: 'Ballad', description: 'Expressive and engaging — adds personality' },
-  { id: 'coral', name: 'Coral', description: 'Bright and clear — ideal for customer service' },
-  { id: 'echo', name: 'Echo', description: 'Deep and resonant — authoritative feel' },
-  { id: 'sage', name: 'Sage', description: 'Thoughtful and composed — reassuring tone' },
-  { id: 'shimmer', name: 'Shimmer', description: 'Light and upbeat — energetic and welcoming' },
-  { id: 'verse', name: 'Verse', description: 'Refined and articulate — polished delivery' },
-]
-
-const DEFAULT_VOICE_ID = 'f786b574-daa5-4673-aa0c-cbe3e8534c02' // Katie
-const DEFAULT_OPENAI_VOICE = 'marin'
-
+const DEFAULT_VOICE_ID = '5ee9feff-1265-424a-9d7f-8e4d431a12c7' // Ronald
 const STRIPE_STARTER_PRICE_ID = process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID || ''
 const STRIPE_PRO_PRICE_ID = process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID || ''
 
-function normalizeVoicePreference(rawVoice: string | null | undefined, architecture: string): string {
+function normalizeVoicePreference(rawVoice: string | null | undefined): string {
   const normalized = (rawVoice || '').trim()
-  if (architecture === 'realtime') {
-    if (!normalized) return DEFAULT_OPENAI_VOICE
-    if (OPENAI_VOICES.some((v) => v.id === normalized)) return normalized
-    return DEFAULT_OPENAI_VOICE
-  }
   if (!normalized) return DEFAULT_VOICE_ID
   if (VOICES.some((voice) => voice.id === normalized)) return normalized
   return DEFAULT_VOICE_ID
@@ -265,8 +239,7 @@ export default function SettingsPage() {
         setBusinessCategory(businessData.category || '')
         const loadedAgentConfig = businessData.agent_config || {}
         setAgentConfig(loadedAgentConfig)
-        const arch = loadedAgentConfig.voiceArchitecture || 'pipeline'
-        const normalizedVoice = normalizeVoicePreference(businessData.voice_preference, arch)
+        const normalizedVoice = normalizeVoicePreference(businessData.voice_preference)
         setSelectedVoice(normalizedVoice)
         setSelectedTimezone(businessData.timezone || 'America/Los_Angeles')
         setTransferPhone(businessData.transfer_phone || '')
@@ -715,41 +688,8 @@ export default function SettingsPage() {
             <h3 className="font-display text-2xl">AI voice</h3>
             <p className="mt-2 text-sm text-[#0f1f1a]/60">Choose the voice callers will hear on inbound and follow-up calls.</p>
 
-            <div className="mt-4">
-              <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
-                Voice engine
-              </label>
-              <div className="mt-2 flex gap-2">
-                {([
-                  { value: 'pipeline', label: 'Pipeline', desc: 'Cartesia TTS — high quality, more voices' },
-                  { value: 'realtime', label: 'Realtime', desc: 'OpenAI Realtime — lower latency' },
-                ] as const).map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => {
-                      const newArch = opt.value
-                      setAgentConfig({ ...agentConfig, voiceArchitecture: newArch })
-                      const defaultVoice = newArch === 'realtime' ? DEFAULT_OPENAI_VOICE : DEFAULT_VOICE_ID
-                      setSelectedVoice(defaultVoice)
-                    }}
-                    className={`flex-1 rounded-2xl border px-3 py-2.5 text-left transition ${
-                      (agentConfig.voiceArchitecture || 'pipeline') === opt.value
-                        ? 'border-[#f97316] bg-[#f97316] text-white'
-                        : 'border-[#0f1f1a]/10 bg-white text-[#0f1f1a]/70 hover:border-[#0f1f1a]/30'
-                    }`}
-                  >
-                    <span className="block text-xs font-semibold uppercase tracking-wider">{opt.label}</span>
-                    <span className={`block text-[10px] ${
-                      (agentConfig.voiceArchitecture || 'pipeline') === opt.value ? 'text-white/70' : 'text-[#0f1f1a]/40'
-                    }`}>{opt.desc}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <div className="mt-4 grid gap-3">
-              {((agentConfig.voiceArchitecture || 'pipeline') === 'realtime' ? OPENAI_VOICES : VOICES).map((voice) => (
+              {VOICES.map((voice) => (
                 <label
                   key={voice.id}
                   className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm transition ${
