@@ -33,8 +33,8 @@ const VOICES: { id: string; name: string; description: string; tag?: string }[] 
   { id: '5ee9feff-1265-424a-9d7f-8e4d431a12c7', name: 'Ronald', description: 'Calm and thoughtful — ideal for professional conversations', tag: 'Recommended' },
   { id: 'f786b574-daa5-4673-aa0c-cbe3e8534c02', name: 'Katie', description: 'Friendly and helpful — great for front desk calls' },
   { id: 'e07c00bc-4134-4eae-9ea4-1a55fb45746b', name: 'Brooke', description: 'Warm and approachable — great for customer service' },
-  { id: '248be419-c632-4f23-adf1-5324ed7dbf1d', name: 'Professional Woman', description: 'Polished and confident — suited for business inquiries' },
-  { id: '829ccd10-f8b3-43cd-b8a0-4aeaa81f3b30', name: 'Customer Support Lady', description: 'Clear and patient — perfect for service calls' },
+  { id: '248be419-c632-4f23-adf1-5324ed7dbf1d', name: 'Victoria', description: 'Polished and confident — suited for business inquiries' },
+  { id: '829ccd10-f8b3-43cd-b8a0-4aeaa81f3b30', name: 'Sarah', description: 'Clear and patient — perfect for service calls' },
 ]
 
 const DEFAULT_VOICE_ID = '5ee9feff-1265-424a-9d7f-8e4d431a12c7' // Ronald
