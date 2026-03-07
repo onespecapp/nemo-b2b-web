@@ -209,7 +209,7 @@ export default function ReceptionistPage() {
       <div>
         <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Receptionist</p>
         <h1 className="font-display text-3xl sm:text-4xl">AI Receptionist</h1>
-        <p className="mt-2 text-sm text-[#0f1f1a]/60">Configure how your dealership AI handles inbound calls and follow-ups.</p>
+        <p className="mt-2 text-sm text-[#0f1f1a]/60">Configure how your AI receptionist handles inbound calls and follow-ups.</p>
       </div>
 
       {/* Assigned phone number */}
@@ -221,7 +221,7 @@ export default function ReceptionistPage() {
             </svg>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#0f766e]/70">Your dealership AI number</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-[#0f766e]/70">Your business phone number</p>
             <p className="mt-0.5 text-lg font-semibold text-[#0f766e]">{telnyxPhone}</p>
             <p className="text-xs text-[#0f766e]/60">Inbound calls to this line are handled by your AI assistant</p>
           </div>
@@ -251,7 +251,7 @@ export default function ReceptionistPage() {
           <div>
             <h3 className="font-display text-2xl">Receptionist Status</h3>
             <p className="mt-1 text-sm text-[#0f1f1a]/60">
-              {enabled ? 'Your dealership AI is answering calls.' : 'Your dealership AI is currently off.'}
+              {enabled ? 'Your AI receptionist is answering calls.' : 'Your AI receptionist is currently off.'}
             </p>
           </div>
           <button
@@ -275,11 +275,11 @@ export default function ReceptionistPage() {
         {/* Greeting Message */}
         <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
           <h3 className="font-display text-2xl">Greeting Message</h3>
-          <p className="mt-2 text-sm text-[#0f1f1a]/60">What callers hear first when your dealership AI picks up.</p>
+          <p className="mt-2 text-sm text-[#0f1f1a]/60">What callers hear first when your AI receptionist picks up.</p>
           <textarea
             value={greeting}
             onChange={(e) => setGreeting(e.target.value)}
-            placeholder="Thanks for calling Sunset Motors. How can I help you today?"
+            placeholder="Thanks for calling [Your Business]. How can I help you today?"
             rows={3}
             className="mt-4 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
           />
@@ -288,7 +288,7 @@ export default function ReceptionistPage() {
         {/* Transfer Number */}
         <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
           <h3 className="font-display text-2xl">Transfer Number</h3>
-          <p className="mt-2 text-sm text-[#0f1f1a]/60">Fallback number for a sales or service manager when AI should hand off.</p>
+          <p className="mt-2 text-sm text-[#0f1f1a]/60">Fallback number when the AI should hand off to a real person.</p>
           <input
             type="tel"
             value={transferPhone}
@@ -303,8 +303,8 @@ export default function ReceptionistPage() {
       <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-display text-2xl">Test Drive &amp; Service Booking</h3>
-            <p className="mt-1 text-sm text-[#0f1f1a]/60">Allow your AI to book test drive or service appointments during calls.</p>
+            <h3 className="font-display text-2xl">Appointment Booking</h3>
+            <p className="mt-1 text-sm text-[#0f1f1a]/60">Allow your AI to book appointments during calls.</p>
           </div>
           <button
             onClick={() => setBookingEnabled(!bookingEnabled)}
@@ -355,7 +355,7 @@ export default function ReceptionistPage() {
       {/* Business Hours */}
       <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
         <h3 className="font-display text-2xl">Business Hours</h3>
-        <p className="mt-2 text-sm text-[#0f1f1a]/60">Set showroom or service hours so the AI can route callers correctly.</p>
+        <p className="mt-2 text-sm text-[#0f1f1a]/60">Set your operating hours so the AI can inform callers correctly.</p>
         <div className="mt-4 space-y-3">
           {DAYS.map((day) => (
             <div key={day} className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-4 py-3">
@@ -393,8 +393,8 @@ export default function ReceptionistPage() {
 
       {/* Services */}
       <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
-        <h3 className="font-display text-2xl">Departments &amp; Offers</h3>
-        <p className="mt-2 text-sm text-[#0f1f1a]/60">Add sales/service offerings so the AI can answer and route calls accurately.</p>
+        <h3 className="font-display text-2xl">Services</h3>
+        <p className="mt-2 text-sm text-[#0f1f1a]/60">Add your services so the AI can answer questions and route calls accurately.</p>
 
         {services.length > 0 && (
           <div className="mt-4 space-y-3">
@@ -447,7 +447,7 @@ export default function ReceptionistPage() {
                 value={newService.name}
                 onChange={(e) => setNewService((s) => ({ ...s, name: e.target.value }))}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addService())}
-                placeholder="e.g. New SUV test drive"
+                placeholder="e.g. Emergency plumbing repair"
                 className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
                 autoFocus
               />
@@ -522,7 +522,7 @@ export default function ReceptionistPage() {
       {/* FAQs */}
       <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
         <h3 className="font-display text-2xl">Knowledge Base FAQs</h3>
-        <p className="mt-2 text-sm text-[#0f1f1a]/60">Common dealership answers your AI can reuse during calls.</p>
+        <p className="mt-2 text-sm text-[#0f1f1a]/60">Common answers your AI can reference during calls.</p>
         <div className="mt-4 space-y-4">
           {faqs.map((faq, i) => (
             <div key={i} className="rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] p-4 space-y-3">
@@ -558,11 +558,11 @@ export default function ReceptionistPage() {
       {/* Custom Instructions */}
       <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
         <h3 className="font-display text-2xl">Custom Instructions</h3>
-        <p className="mt-2 text-sm text-[#0f1f1a]/60">Special handling rules for sales, service, finance, and follow-up calls.</p>
+        <p className="mt-2 text-sm text-[#0f1f1a]/60">Special rules or instructions for how your AI should handle calls.</p>
         <textarea
           value={instructions}
           onChange={(e) => setInstructions(e.target.value)}
-          placeholder="e.g., Prioritize test drive leads and collect year/make/model for service calls before handoff."
+          placeholder="e.g., Always collect the caller's address and describe the issue before booking."
           rows={4}
           className="mt-4 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
         />
