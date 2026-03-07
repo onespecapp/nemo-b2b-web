@@ -90,6 +90,8 @@ export default function SettingsPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [isUpgrading, setIsUpgrading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState('')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
   const searchParams = useSearchParams()
@@ -753,42 +755,74 @@ export default function SettingsPage() {
         <p className="mt-2 text-sm text-[#0f1f1a]/60">
           This will permanently delete your business, all call history, appointments, customers, and messages.
         </p>
-        <button
-          onClick={async () => {
-            if (!window.confirm('Are you sure you want to delete your account? This cannot be undone.')) return
-            setIsDeleting(true)
-            setMessage(null)
-            try {
-              const { data: { session } } = await supabase.auth.getSession()
-              if (!session) {
-                setMessage({ type: 'error', text: 'Please sign in to delete your account' })
-                return
-              }
-              const res = await fetch(`${API_URL}/api/account/delete`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${session.access_token}`,
-                },
-              })
-              const data = await res.json()
-              if (res.ok && data.success) {
-                await supabase.auth.signOut()
-                window.location.href = '/'
-              } else {
-                setMessage({ type: 'error', text: data.error || 'Failed to delete account' })
-              }
-            } catch {
-              setMessage({ type: 'error', text: 'Failed to delete account. Is the backend running?' })
-            } finally {
-              setIsDeleting(false)
-            }
-          }}
-          disabled={isDeleting}
-          className="mt-4 rounded-full bg-[#ef4444] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#dc2626] disabled:opacity-60"
-        >
-          {isDeleting ? 'Deleting...' : 'Delete my account'}
-        </button>
+
+        {!showDeleteConfirm ? (
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="mt-4 rounded-full bg-[#ef4444] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#dc2626]"
+          >
+            Delete my account
+          </button>
+        ) : (
+          <div className="mt-4 space-y-3">
+            <label htmlFor="delete-confirm" className="block text-sm text-[#991b1b] font-medium">
+              Type <span className="font-mono font-bold">DELETE</span> to confirm
+            </label>
+            <input
+              type="text"
+              id="delete-confirm"
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              placeholder="DELETE"
+              className="w-full rounded-2xl border border-[#ef4444]/30 bg-white px-4 py-3 text-sm focus:border-[#ef4444] focus:outline-none"
+              autoFocus
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={async () => {
+                  setIsDeleting(true)
+                  setMessage(null)
+                  try {
+                    const { data: { session } } = await supabase.auth.getSession()
+                    if (!session) {
+                      setMessage({ type: 'error', text: 'Please sign in to delete your account' })
+                      return
+                    }
+                    const res = await fetch(`${API_URL}/api/account/delete`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`,
+                      },
+                    })
+                    const data = await res.json()
+                    if (res.ok && data.success) {
+                      await supabase.auth.signOut()
+                      window.location.href = '/'
+                    } else {
+                      setMessage({ type: 'error', text: data.error || 'Failed to delete account' })
+                    }
+                  } catch {
+                    setMessage({ type: 'error', text: 'Failed to delete account. Is the backend running?' })
+                  } finally {
+                    setIsDeleting(false)
+                  }
+                }}
+                disabled={isDeleting || deleteConfirm !== 'DELETE'}
+                className="rounded-full bg-[#ef4444] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#dc2626] disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isDeleting ? 'Deleting...' : 'Permanently delete'}
+              </button>
+              <button
+                onClick={() => { setShowDeleteConfirm(false); setDeleteConfirm('') }}
+                disabled={isDeleting}
+                className="rounded-full border border-[#0f1f1a]/20 bg-white px-6 py-3 text-sm font-semibold text-[#0f1f1a]/70 transition hover:border-[#0f1f1a]/40"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
