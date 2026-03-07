@@ -1,71 +1,95 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/lib/context/UserContext'
 
-const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
-
-const DEFAULT_HOURS: Record<string, { open: string; close: string; closed: boolean }> = {
-  monday: { open: '09:00', close: '17:00', closed: false },
-  tuesday: { open: '09:00', close: '17:00', closed: false },
-  wednesday: { open: '09:00', close: '17:00', closed: false },
-  thursday: { open: '09:00', close: '17:00', closed: false },
-  friday: { open: '09:00', close: '17:00', closed: false },
-  saturday: { open: '10:00', close: '16:00', closed: false },
-  sunday: { open: '10:00', close: '16:00', closed: true },
+const CATEGORY_PLACEHOLDERS: Record<string, { greeting: string; servicesOffered: string; customInstructions: string }> = {
+  '': {
+    greeting: 'Hi, thanks for calling! How can I help you today?',
+    servicesOffered: 'e.g. List your main services here',
+    customInstructions: 'e.g. Add any special instructions for your receptionist here.',
+  },
+  AUTO_DEALERSHIP: {
+    greeting: 'Hi, thanks for calling Sunset Motors! How can I help you today?',
+    servicesOffered: 'e.g. Oil Change, Car Sales, Test Drives, Brake Service',
+    customInstructions: 'e.g. Always mention our current promotion: 20% off oil changes this month.',
+  },
+  AUTO_REPAIR: {
+    greeting: 'Hi, thanks for calling! How can I help with your vehicle today?',
+    servicesOffered: 'e.g. Oil Change, Brake Repair, Engine Diagnostics, Tire Rotation',
+    customInstructions: 'e.g. Always ask what vehicle make, model, and year they have.',
+  },
+  AUTO_BODY: {
+    greeting: 'Hi, thanks for calling! How can we help with your vehicle today?',
+    servicesOffered: 'e.g. Collision Repair, Dent Removal, Paint Jobs, Frame Straightening',
+    customInstructions: 'e.g. Ask if they have an insurance claim number.',
+  },
+  PLUMBING: {
+    greeting: 'Hi, thanks for calling! How can we help you today?',
+    servicesOffered: 'e.g. Drain Cleaning, Water Heater Repair, Pipe Repair, Leak Detection',
+    customInstructions: 'e.g. Always ask if the issue is urgent or an emergency.',
+  },
+  HVAC: {
+    greeting: 'Hi, thanks for calling! How can we help with your heating or cooling today?',
+    servicesOffered: 'e.g. AC Repair, Furnace Installation, Duct Cleaning, Thermostat Setup',
+    customInstructions: 'e.g. Ask what type of system they have (central air, mini-split, etc.).',
+  },
+  ELECTRICAL: {
+    greeting: 'Hi, thanks for calling! How can we help you today?',
+    servicesOffered: 'e.g. Panel Upgrades, Outlet Installation, Lighting, Wiring Repair',
+    customInstructions: 'e.g. Always ask if they are experiencing any safety concerns like sparking or burning smells.',
+  },
+  GENERAL_CONTRACTOR: {
+    greeting: 'Hi, thanks for calling! How can we help with your project?',
+    servicesOffered: 'e.g. Kitchen Remodel, Bathroom Renovation, Room Addition, Deck Building',
+    customInstructions: 'e.g. Ask about their project timeline and budget range.',
+  },
+  ROOFING: {
+    greeting: 'Hi, thanks for calling! How can we help with your roof today?',
+    servicesOffered: 'e.g. Roof Repair, New Roof Installation, Gutter Cleaning, Leak Repair',
+    customInstructions: 'e.g. Ask if the issue is storm-related (may be covered by insurance).',
+  },
+  OTHER: {
+    greeting: 'Hi, thanks for calling! How can I help you today?',
+    servicesOffered: 'e.g. List your main services here',
+    customInstructions: 'e.g. Add any special instructions for your receptionist here.',
+  },
 }
 
-interface FAQ {
-  question: string
-  answer: string
-}
-
-interface Service {
-  name: string
-  price_min: string
-  price_max: string
-  duration_min: string
-  is_emergency: boolean
-}
-
-const EMPTY_SERVICE: Service = {
-  name: '',
-  price_min: '',
-  price_max: '',
-  duration_min: '',
-  is_emergency: false,
+interface AgentConfig {
+  greeting?: string
+  customInstructions?: string
+  businessHours?: string
+  servicesOffered?: string
+  smsNotifyOwner?: boolean
+  smsNotifyCustomer?: boolean
 }
 
 export default function ReceptionistPage() {
-  const { business, loading: userLoading } = useUser()
+  const { business, loading: userLoading, refreshBusiness } = useUser()
   const supabase = createClient()
 
   const [enabled, setEnabled] = useState(false)
-  const [greeting, setGreeting] = useState('')
-  const [businessHours, setBusinessHours] = useState<Record<string, { open: string; close: string; closed: boolean }>>(DEFAULT_HOURS)
-  const [services, setServices] = useState<Service[]>([])
-  const [addingService, setAddingService] = useState(false)
-  const [newService, setNewService] = useState<Service>({ ...EMPTY_SERVICE })
-  const [faqs, setFaqs] = useState<FAQ[]>([])
+  const [agentConfig, setAgentConfig] = useState<AgentConfig>({})
   const [transferPhone, setTransferPhone] = useState('')
-  const [instructions, setInstructions] = useState('')
-  const [bookingEnabled, setBookingEnabled] = useState(false)
-  const [defaultDuration, setDefaultDuration] = useState('60')
-  const [bookingAdvanceDays, setBookingAdvanceDays] = useState('30')
-  const [isSaving, setIsSaving] = useState(false)
+  const [businessCategory, setBusinessCategory] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [copied, setCopied] = useState(false)
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   const telnyxPhone = (business as unknown as { telnyx_phone_number?: string | null } | null)?.telnyx_phone_number ?? null
+
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const hasMountedRef = useRef(false)
+  const savedTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const loadConfig = useCallback(async () => {
     if (!business) return
     try {
       const { data, error } = await supabase
         .from('b2b_businesses')
-        .select('receptionist_enabled, receptionist_greeting, business_hours, services, faqs, transfer_phone, receptionist_instructions, booking_enabled, default_appointment_duration, booking_advance_days')
+        .select('receptionist_enabled, agent_config, transfer_phone, category')
         .eq('id', business.id)
         .single()
 
@@ -77,26 +101,9 @@ export default function ReceptionistPage() {
 
       if (data) {
         setEnabled(data.receptionist_enabled ?? false)
-        setGreeting(data.receptionist_greeting ?? '')
-        if (data.business_hours && typeof data.business_hours === 'object') {
-          setBusinessHours({ ...DEFAULT_HOURS, ...data.business_hours })
-        }
-        if (Array.isArray(data.services)) {
-          // Support both legacy string[] and new Service[]
-          const normalised = (data.services as unknown[]).map((s) => {
-            if (typeof s === 'string') return { name: s, price_min: '', price_max: '', duration_min: '', is_emergency: false }
-            return s as Service
-          })
-          setServices(normalised)
-        }
-        if (Array.isArray(data.faqs)) {
-          setFaqs(data.faqs)
-        }
-        setTransferPhone(data.transfer_phone ?? '')
-        setInstructions(data.receptionist_instructions ?? '')
-        setBookingEnabled(data.booking_enabled ?? false)
-        setDefaultDuration(String(data.default_appointment_duration ?? 60))
-        setBookingAdvanceDays(String(data.booking_advance_days ?? 30))
+        setAgentConfig(data.agent_config || {})
+        setTransferPhone(((data.transfer_phone || '') as string).replace(/^\+?1/, ''))
+        setBusinessCategory(data.category || '')
       }
     } catch (err) {
       console.error('Failed to load receptionist config:', err)
@@ -113,67 +120,56 @@ export default function ReceptionistPage() {
     loadConfig()
   }, [business, userLoading, loadConfig])
 
-  async function handleSave() {
+  // Auto-save on changes (debounced)
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true
+      return
+    }
     if (!business) return
-    setIsSaving(true)
-    setMessage(null)
+
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+
+    saveTimeoutRef.current = setTimeout(() => {
+      performSave()
+    }, 800)
+
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+    }
+  }, [enabled, agentConfig, transferPhone])
+
+  async function performSave() {
+    if (!business) return
+    setSaveStatus('saving')
 
     try {
+      const cleanAgentConfig: Record<string, unknown> = {}
+      for (const [key, val] of Object.entries(agentConfig)) {
+        if (val !== undefined && val !== '') cleanAgentConfig[key] = val
+      }
+
       const { error } = await supabase
         .from('b2b_businesses')
         .update({
           receptionist_enabled: enabled,
-          receptionist_greeting: greeting || null,
-          business_hours: businessHours,
-          services,
-          faqs,
-          transfer_phone: transferPhone || null,
-          receptionist_instructions: instructions || null,
-          booking_enabled: bookingEnabled,
-          default_appointment_duration: parseInt(defaultDuration) || 60,
-          booking_advance_days: parseInt(bookingAdvanceDays) || 30,
+          agent_config: cleanAgentConfig,
+          transfer_phone: transferPhone.trim() ? `+1${transferPhone.replace(/\D/g, '')}` : null,
         })
         .eq('id', business.id)
 
       if (error) throw error
-      setMessage({ type: 'success', text: 'Receptionist settings saved!' })
+
+      await refreshBusiness()
+      setSaveStatus('saved')
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+      savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000)
     } catch (err) {
       console.error('Failed to save:', err)
-      const msg = err instanceof Error ? err.message : 'Failed to save settings'
-      setMessage({ type: 'error', text: msg })
-    } finally {
-      setIsSaving(false)
+      setSaveStatus('error')
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+      savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), 3000)
     }
-  }
-
-  function updateHours(day: string, field: 'open' | 'close' | 'closed', value: string | boolean) {
-    setBusinessHours((prev) => ({
-      ...prev,
-      [day]: { ...prev[day], [field]: value },
-    }))
-  }
-
-  function addService() {
-    if (!newService.name.trim()) return
-    setServices((prev) => [...prev, { ...newService, name: newService.name.trim() }])
-    setNewService({ ...EMPTY_SERVICE })
-    setAddingService(false)
-  }
-
-  function removeService(index: number) {
-    setServices((prev) => prev.filter((_, i) => i !== index))
-  }
-
-  function addFaq() {
-    setFaqs((prev) => [...prev, { question: '', answer: '' }])
-  }
-
-  function updateFaq(index: number, field: 'question' | 'answer', value: string) {
-    setFaqs((prev) => prev.map((f, i) => (i === index ? { ...f, [field]: value } : f)))
-  }
-
-  function removeFaq(index: number) {
-    setFaqs((prev) => prev.filter((_, i) => i !== index))
   }
 
   function handleCopyPhone() {
@@ -182,6 +178,8 @@ export default function ReceptionistPage() {
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
+
+  const placeholders = CATEGORY_PLACEHOLDERS[businessCategory] || CATEGORY_PLACEHOLDERS['']
 
   if (isLoading || userLoading) {
     return (
@@ -209,7 +207,16 @@ export default function ReceptionistPage() {
       <div>
         <p className="text-xs uppercase tracking-[0.3em] text-[#0f1f1a]/50">Receptionist</p>
         <h1 className="font-display text-3xl sm:text-4xl">AI Receptionist</h1>
-        <p className="mt-2 text-sm text-[#0f1f1a]/60">Configure how your AI receptionist handles inbound calls and follow-ups.</p>
+        <p className={`mt-2 text-sm transition-colors ${
+          saveStatus === 'saved' ? 'text-[#0f766e]' :
+          saveStatus === 'error' ? 'text-[#ef4444]' :
+          'text-[#0f1f1a]/60'
+        }`}>
+          {saveStatus === 'saving' ? 'Saving...' :
+           saveStatus === 'saved' ? 'All changes saved' :
+           saveStatus === 'error' ? 'Failed to save' :
+           'Configure how your AI receptionist handles inbound calls.'}
+        </p>
       </div>
 
       {/* Assigned phone number */}
@@ -223,7 +230,7 @@ export default function ReceptionistPage() {
           <div className="flex-1 min-w-0">
             <p className="text-xs uppercase tracking-[0.2em] text-[#0f766e]/70">Your business phone number</p>
             <p className="mt-0.5 text-lg font-semibold text-[#0f766e]">{telnyxPhone}</p>
-            <p className="text-xs text-[#0f766e]/60">Inbound calls to this line are handled by your AI assistant</p>
+            <p className="text-xs text-[#0f766e]/60">Inbound calls to this line are handled by your AI receptionist</p>
           </div>
           <button
             type="button"
@@ -236,12 +243,6 @@ export default function ReceptionistPage() {
       ) : (
         <div className="rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-5 py-4 text-sm text-[#0f1f1a]/60">
           No phone number assigned yet. Contact your administrator to get a number set up.
-        </div>
-      )}
-
-      {message && (
-        <div className={`rounded-2xl border px-4 py-3 text-sm ${message.type === 'success' ? 'border-[#0f766e]/30 bg-[#0f766e]/10 text-[#0f766e]' : 'border-[#ef4444]/30 bg-[#ef4444]/10 text-[#991b1b]'}`}>
-          {message.text}
         </div>
       )}
 
@@ -271,312 +272,144 @@ export default function ReceptionistPage() {
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Greeting Message */}
-        <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
-          <h3 className="font-display text-2xl">Greeting Message</h3>
-          <p className="mt-2 text-sm text-[#0f1f1a]/60">What callers hear first when your AI receptionist picks up.</p>
-          <textarea
-            value={greeting}
-            onChange={(e) => setGreeting(e.target.value)}
-            placeholder="Thanks for calling [Your Business]. How can I help you today?"
-            rows={3}
-            className="mt-4 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
-          />
-        </div>
-
-        {/* Transfer Number */}
-        <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
-          <h3 className="font-display text-2xl">Transfer Number</h3>
-          <p className="mt-2 text-sm text-[#0f1f1a]/60">Fallback number when the AI should hand off to a real person.</p>
-          <input
-            type="tel"
-            value={transferPhone}
-            onChange={(e) => setTransferPhone(e.target.value)}
-            placeholder="+1 (555) 123-4567"
-            className="mt-4 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
-          />
-        </div>
-      </div>
-
-      {/* Appointment Booking */}
+      {/* Greeting & Persona */}
       <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
-        <div className="flex items-center justify-between">
+        <h3 className="font-display text-2xl">Greeting &amp; persona</h3>
+        <p className="mt-2 text-sm text-[#0f1f1a]/60">Customize how your receptionist greets callers and handles conversations.</p>
+
+        <div className="mt-6 space-y-4">
           <div>
-            <h3 className="font-display text-2xl">Appointment Booking</h3>
-            <p className="mt-1 text-sm text-[#0f1f1a]/60">Allow your AI to book appointments during calls.</p>
-          </div>
-          <button
-            onClick={() => setBookingEnabled(!bookingEnabled)}
-            className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors ${bookingEnabled ? 'bg-[#0f766e]' : 'bg-[#0f1f1a]/20'}`}
-            role="switch"
-            aria-checked={bookingEnabled}
-          >
-            <span className={`inline-block h-6 w-6 transform rounded-full bg-white shadow transition-transform ${bookingEnabled ? 'translate-x-7' : 'translate-x-1'}`} />
-          </button>
-        </div>
-
-        {bookingEnabled && (
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="default-duration" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
-                Default appointment slot (minutes)
-              </label>
-              <input
-                type="number"
-                id="default-duration"
-                value={defaultDuration}
-                onChange={(e) => setDefaultDuration(e.target.value)}
-                min="15"
-                step="15"
-                placeholder="60"
-                className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
-              />
-            </div>
-            <div>
-              <label htmlFor="advance-days" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
-                Booking window (days)
-              </label>
-              <input
-                type="number"
-                id="advance-days"
-                value={bookingAdvanceDays}
-                onChange={(e) => setBookingAdvanceDays(e.target.value)}
-                min="1"
-                placeholder="30"
-                className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
-              />
-              <p className="mt-1 text-xs text-[#0f1f1a]/40">How far in advance callers can request a slot</p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Business Hours */}
-      <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
-        <h3 className="font-display text-2xl">Business Hours</h3>
-        <p className="mt-2 text-sm text-[#0f1f1a]/60">Set your operating hours so the AI can inform callers correctly.</p>
-        <div className="mt-4 space-y-3">
-          {DAYS.map((day) => (
-            <div key={day} className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-4 py-3">
-              <span className="w-24 text-sm font-semibold capitalize">{day}</span>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={businessHours[day]?.closed ?? false}
-                  onChange={(e) => updateHours(day, 'closed', e.target.checked)}
-                  className="h-4 w-4 rounded"
-                />
-                Closed
-              </label>
-              {!businessHours[day]?.closed && (
-                <>
-                  <input
-                    type="time"
-                    value={businessHours[day]?.open ?? '09:00'}
-                    onChange={(e) => updateHours(day, 'open', e.target.value)}
-                    className="rounded-xl border border-[#0f1f1a]/20 bg-white px-3 py-2 text-sm focus:border-[#f97316] focus:outline-none"
-                  />
-                  <span className="text-sm text-[#0f1f1a]/50">to</span>
-                  <input
-                    type="time"
-                    value={businessHours[day]?.close ?? '17:00'}
-                    onChange={(e) => updateHours(day, 'close', e.target.value)}
-                    className="rounded-xl border border-[#0f1f1a]/20 bg-white px-3 py-2 text-sm focus:border-[#f97316] focus:outline-none"
-                  />
-                </>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Services */}
-      <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
-        <h3 className="font-display text-2xl">Services</h3>
-        <p className="mt-2 text-sm text-[#0f1f1a]/60">Add your services so the AI can answer questions and route calls accurately.</p>
-
-        {services.length > 0 && (
-          <div className="mt-4 space-y-3">
-            {services.map((service, i) => (
-              <div key={i} className="rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-4 py-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-semibold text-[#0f1f1a]">{service.name}</span>
-                      {service.is_emergency && (
-                        <span className="rounded-full bg-[#ef4444]/15 px-2 py-0.5 text-[10px] font-semibold text-[#991b1b]">
-                          Priority
-                        </span>
-                      )}
-                    </div>
-                    <div className="mt-1 flex flex-wrap gap-3 text-xs text-[#0f1f1a]/60">
-                      {(service.price_min || service.price_max) && (
-                        <span>
-                          {service.price_min && service.price_max
-                            ? `$${service.price_min} – $${service.price_max}`
-                            : service.price_min
-                            ? `From $${service.price_min}`
-                            : `Up to $${service.price_max}`}
-                        </span>
-                      )}
-                      {service.duration_min && (
-                        <span>{service.duration_min} min</span>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => removeService(i)}
-                    className="shrink-0 rounded-full border border-[#0f1f1a]/10 px-3 py-1 text-xs text-[#0f1f1a]/50 hover:text-[#ef4444]"
-                    aria-label={`Remove ${service.name}`}
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {addingService ? (
-          <div className="mt-4 rounded-2xl border border-[#0f1f1a]/15 bg-[#f8f5ef] p-4 space-y-3">
-            <div>
-              <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Service name *</label>
-              <input
-                type="text"
-                value={newService.name}
-                onChange={(e) => setNewService((s) => ({ ...s, name: e.target.value }))}
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addService())}
-                placeholder="e.g. Emergency plumbing repair"
-                className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
-                autoFocus
-              />
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div>
-                <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Price min ($)</label>
-                <input
-                  type="number"
-                  value={newService.price_min}
-                  onChange={(e) => setNewService((s) => ({ ...s, price_min: e.target.value }))}
-                  placeholder="150"
-                  className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Price max ($)</label>
-                <input
-                  type="number"
-                  value={newService.price_max}
-                  onChange={(e) => setNewService((s) => ({ ...s, price_max: e.target.value }))}
-                  placeholder="500"
-                  className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">Duration (min)</label>
-                <input
-                  type="number"
-                  value={newService.duration_min}
-                  onChange={(e) => setNewService((s) => ({ ...s, duration_min: e.target.value }))}
-                  placeholder="90"
-                  className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
-                />
-              </div>
-            </div>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={newService.is_emergency}
-                onChange={(e) => setNewService((s) => ({ ...s, is_emergency: e.target.checked }))}
-                className="h-4 w-4 rounded"
-              />
-              Mark as priority request type
+            <label htmlFor="greeting" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+              Greeting message
             </label>
-            <div className="flex gap-2">
-              <button
-                onClick={addService}
-                disabled={!newService.name.trim()}
-                className="rounded-full bg-[#0f1f1a] px-6 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white disabled:opacity-60"
-              >
-                Add service
-              </button>
-              <button
-                onClick={() => { setAddingService(false); setNewService({ ...EMPTY_SERVICE }) }}
-                className="rounded-full border border-[#0f1f1a]/15 bg-white px-6 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/70"
-              >
-                Cancel
-              </button>
-            </div>
+            <input
+              type="text"
+              id="greeting"
+              value={agentConfig.greeting || ''}
+              onChange={(e) => setAgentConfig({ ...agentConfig, greeting: e.target.value })}
+              placeholder={placeholders.greeting}
+              className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+            />
+            <p className="mt-1 text-xs text-[#0f1f1a]/40">Leave blank for a default greeting using your business name.</p>
           </div>
-        ) : (
-          <button
-            onClick={() => setAddingService(true)}
-            className="mt-4 rounded-full border border-[#0f1f1a]/15 bg-white px-6 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/70 transition hover:border-[#0f1f1a]/30"
-          >
-            + Add service
-          </button>
-        )}
-      </div>
 
-      {/* FAQs */}
-      <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
-        <h3 className="font-display text-2xl">Knowledge Base FAQs</h3>
-        <p className="mt-2 text-sm text-[#0f1f1a]/60">Common answers your AI can reference during calls.</p>
-        <div className="mt-4 space-y-4">
-          {faqs.map((faq, i) => (
-            <div key={i} className="rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] p-4 space-y-3">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 space-y-3">
-                  <input
-                    type="text"
-                    value={faq.question}
-                    onChange={(e) => updateFaq(i, 'question', e.target.value)}
-                    placeholder="Question..."
-                    className="w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
-                  />
-                  <textarea
-                    value={faq.answer}
-                    onChange={(e) => updateFaq(i, 'answer', e.target.value)}
-                    placeholder="Answer..."
-                    rows={2}
-                    className="w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
-                  />
-                </div>
-                <button onClick={() => removeFaq(i)} className="shrink-0 rounded-full border border-[#0f1f1a]/10 px-3 py-1 text-xs text-[#0f1f1a]/50 hover:text-[#ef4444]">
-                  Remove
-                </button>
-              </div>
+          <div>
+            <label htmlFor="services-offered" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+              Services offered
+            </label>
+            <input
+              type="text"
+              id="services-offered"
+              value={agentConfig.servicesOffered || ''}
+              onChange={(e) => setAgentConfig({ ...agentConfig, servicesOffered: e.target.value })}
+              placeholder={placeholders.servicesOffered}
+              className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+            />
+            <p className="mt-1 text-xs text-[#0f1f1a]/40">Comma-separated. Your receptionist will only book appointments for these services.</p>
+          </div>
+
+          <div>
+            <label htmlFor="custom-instructions" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+              Custom instructions
+            </label>
+            <textarea
+              id="custom-instructions"
+              rows={4}
+              value={agentConfig.customInstructions || ''}
+              onChange={(e) => setAgentConfig({ ...agentConfig, customInstructions: e.target.value })}
+              placeholder={placeholders.customInstructions}
+              className="mt-2 w-full resize-none rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+            />
+            <p className="mt-1 text-xs text-[#0f1f1a]/40">Extra instructions your receptionist will follow on every call.</p>
+          </div>
+
+          <div>
+            <label htmlFor="business-hours" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+              Business hours
+            </label>
+            <input
+              type="text"
+              id="business-hours"
+              value={agentConfig.businessHours || ''}
+              onChange={(e) => setAgentConfig({ ...agentConfig, businessHours: e.target.value })}
+              placeholder="Monday-Friday 9AM-6PM, Saturday 10AM-4PM"
+              className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
+            />
+            <p className="mt-1 text-xs text-[#0f1f1a]/40">Your receptionist will reference these hours when callers ask.</p>
+          </div>
+
+          <div>
+            <label htmlFor="transfer-phone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
+              Transfer phone number
+            </label>
+            <div className={`mt-2 flex items-center rounded-2xl border bg-white overflow-hidden ${
+              transferPhone && transferPhone.replace(/\D/g, '').length === 10
+                ? 'border-[#0f766e]'
+                : transferPhone && transferPhone.replace(/\D/g, '').length > 0
+                  ? 'border-[#ef4444]'
+                  : 'border-[#0f1f1a]/20'
+            }`}>
+              <span className="select-none bg-[#f8f5ef] px-3 py-3 text-sm text-[#0f1f1a]/50 border-r border-[#0f1f1a]/10">+1</span>
+              <input
+                type="tel"
+                id="transfer-phone"
+                value={transferPhone}
+                onChange={(e) => setTransferPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                placeholder="2506828899"
+                className="w-full px-3 py-3 text-sm focus:outline-none bg-transparent"
+              />
             </div>
-          ))}
+            {transferPhone && transferPhone.replace(/\D/g, '').length > 0 && transferPhone.replace(/\D/g, '').length !== 10 ? (
+              <p className="mt-1 text-xs text-[#ef4444]">Enter a 10-digit phone number</p>
+            ) : (
+              <p className="mt-1 text-xs text-[#0f1f1a]/40">When a caller asks for a human, the AI will transfer to this number.</p>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-4 py-3">
+            <div>
+              <span className="block text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/60">Notify me after calls</span>
+              <span className="block text-xs text-[#0f1f1a]/40 mt-0.5">Get a text summary of each call to your transfer number</span>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={!!agentConfig.smsNotifyOwner}
+              onClick={() => setAgentConfig({ ...agentConfig, smsNotifyOwner: !agentConfig.smsNotifyOwner })}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                agentConfig.smsNotifyOwner ? 'bg-[#f97316]' : 'bg-[#0f1f1a]/20'
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                  agentConfig.smsNotifyOwner ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-4 py-3">
+            <div>
+              <span className="block text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/60">Text caller after calls</span>
+              <span className="block text-xs text-[#0f1f1a]/40 mt-0.5">Send the caller a thank-you text after their call</span>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={!!agentConfig.smsNotifyCustomer}
+              onClick={() => setAgentConfig({ ...agentConfig, smsNotifyCustomer: !agentConfig.smsNotifyCustomer })}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                agentConfig.smsNotifyCustomer ? 'bg-[#f97316]' : 'bg-[#0f1f1a]/20'
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                  agentConfig.smsNotifyCustomer ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
         </div>
-        <button onClick={addFaq} className="mt-4 rounded-full border border-[#0f1f1a]/15 bg-white px-6 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/70 transition hover:border-[#0f1f1a]/30">
-          + Add FAQ
-        </button>
-      </div>
-
-      {/* Custom Instructions */}
-      <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
-        <h3 className="font-display text-2xl">Custom Instructions</h3>
-        <p className="mt-2 text-sm text-[#0f1f1a]/60">Special rules or instructions for how your AI should handle calls.</p>
-        <textarea
-          value={instructions}
-          onChange={(e) => setInstructions(e.target.value)}
-          placeholder="e.g., Always collect the caller's address and describe the issue before booking."
-          rows={4}
-          className="mt-4 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
-        />
-      </div>
-
-      {/* Save Button */}
-      <div className="flex justify-end">
-        <button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="rounded-full bg-[#f97316] px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition disabled:opacity-60"
-        >
-          {isSaving ? 'Saving...' : 'Save all settings'}
-        </button>
       </div>
     </div>
   )

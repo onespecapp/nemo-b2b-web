@@ -61,69 +61,6 @@ const BUSINESS_CATEGORIES = [
   { value: 'OTHER', label: 'Other' },
 ]
 
-const CATEGORY_PLACEHOLDERS: Record<string, { greeting: string; servicesOffered: string; customInstructions: string }> = {
-  '': {
-    greeting: 'Hi, thanks for calling! How can I help you today?',
-    servicesOffered: 'e.g. List your main services here',
-    customInstructions: 'e.g. Add any special instructions for your receptionist here.',
-  },
-  AUTO_DEALERSHIP: {
-    greeting: 'Hi, thanks for calling Sunset Motors! How can I help you today?',
-    servicesOffered: 'e.g. Oil Change, Car Sales, Test Drives, Brake Service',
-    customInstructions: 'e.g. Always mention our current promotion: 20% off oil changes this month. If asked about financing, mention we work with all credit types.',
-  },
-  AUTO_REPAIR: {
-    greeting: 'Hi, thanks for calling! How can I help with your vehicle today?',
-    servicesOffered: 'e.g. Oil Change, Brake Repair, Engine Diagnostics, Tire Rotation',
-    customInstructions: 'e.g. Always ask what vehicle make, model, and year they have. Mention our free diagnostic check for new customers.',
-  },
-  AUTO_BODY: {
-    greeting: 'Hi, thanks for calling! How can we help with your vehicle today?',
-    servicesOffered: 'e.g. Collision Repair, Dent Removal, Paint Jobs, Frame Straightening',
-    customInstructions: 'e.g. Ask if they have an insurance claim number. Mention we work with all major insurance providers.',
-  },
-  PLUMBING: {
-    greeting: 'Hi, thanks for calling! How can we help you today?',
-    servicesOffered: 'e.g. Drain Cleaning, Water Heater Repair, Pipe Repair, Leak Detection',
-    customInstructions: 'e.g. Always ask if the issue is urgent or an emergency. Mention we offer same-day service for emergencies.',
-  },
-  HVAC: {
-    greeting: 'Hi, thanks for calling! How can we help with your heating or cooling today?',
-    servicesOffered: 'e.g. AC Repair, Furnace Installation, Duct Cleaning, Thermostat Setup',
-    customInstructions: 'e.g. Ask what type of system they have (central air, mini-split, etc.). Mention our seasonal tune-up specials.',
-  },
-  ELECTRICAL: {
-    greeting: 'Hi, thanks for calling! How can we help you today?',
-    servicesOffered: 'e.g. Panel Upgrades, Outlet Installation, Lighting, Wiring Repair',
-    customInstructions: 'e.g. Always ask if they are experiencing any safety concerns like sparking or burning smells. Mention we are licensed and insured.',
-  },
-  GENERAL_CONTRACTOR: {
-    greeting: 'Hi, thanks for calling! How can we help with your project?',
-    servicesOffered: 'e.g. Kitchen Remodel, Bathroom Renovation, Room Addition, Deck Building',
-    customInstructions: 'e.g. Ask about their project timeline and budget range. Mention we offer free estimates.',
-  },
-  ROOFING: {
-    greeting: 'Hi, thanks for calling! How can we help with your roof today?',
-    servicesOffered: 'e.g. Roof Repair, New Roof Installation, Gutter Cleaning, Leak Repair',
-    customInstructions: 'e.g. Ask if the issue is storm-related (may be covered by insurance). Mention we offer free roof inspections.',
-  },
-  OTHER: {
-    greeting: 'Hi, thanks for calling! How can I help you today?',
-    servicesOffered: 'e.g. List your main services here',
-    customInstructions: 'e.g. Add any special instructions for your receptionist here.',
-  },
-}
-
-interface AgentConfig {
-  voiceArchitecture?: string
-  greeting?: string
-  customInstructions?: string
-  businessHours?: string
-  servicesOffered?: string
-  smsNotifyOwner?: boolean
-  smsNotifyCustomer?: boolean
-}
-
 interface Business {
   id: string
   name: string
@@ -135,8 +72,6 @@ interface Business {
   timezone: string | null
   subscription_tier: string
   subscription_status: string
-  agent_config: AgentConfig | null
-  transfer_phone: string | null
 }
 
 export default function SettingsPage() {
@@ -148,8 +83,6 @@ export default function SettingsPage() {
   const [businessCategory, setBusinessCategory] = useState('')
   const [selectedVoice, setSelectedVoice] = useState(DEFAULT_VOICE_ID)
   const [selectedTimezone, setSelectedTimezone] = useState('America/Los_Angeles')
-  const [agentConfig, setAgentConfig] = useState<AgentConfig>({})
-  const [transferPhone, setTransferPhone] = useState('')
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [testPhoneNumber, setTestPhoneNumber] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -187,7 +120,7 @@ export default function SettingsPage() {
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
     }
-  }, [businessName, businessEmail, businessCategory, selectedVoice, selectedTimezone, agentConfig, transferPhone])
+  }, [businessName, businessEmail, businessCategory, selectedVoice, selectedTimezone])
 
   useEffect(() => {
     const billing = searchParams.get('billing')
@@ -290,12 +223,9 @@ export default function SettingsPage() {
         setBusinessEmail(businessData.email || user.email || '')
         setBusinessPhone(businessData.phone || '')
         setBusinessCategory(businessData.category || '')
-        const loadedAgentConfig = businessData.agent_config || {}
-        setAgentConfig(loadedAgentConfig)
         const normalizedVoice = normalizeVoicePreference(businessData.voice_preference)
         setSelectedVoice(normalizedVoice)
         setSelectedTimezone(businessData.timezone || 'America/Los_Angeles')
-        setTransferPhone((businessData.transfer_phone || '').replace(/^\+?1/, ''))
       } else {
         setBusinessEmail(user.email || '')
         const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -358,12 +288,6 @@ export default function SettingsPage() {
     setSaveStatus('saving')
 
     try {
-      // Strip undefined values from agentConfig before saving
-      const cleanAgentConfig: Record<string, unknown> = {}
-      for (const [key, val] of Object.entries(agentConfig)) {
-        if (val !== undefined && val !== '') cleanAgentConfig[key] = val
-      }
-
       const { error } = await supabase
         .from('b2b_businesses')
         .update({
@@ -372,8 +296,6 @@ export default function SettingsPage() {
           category: businessCategory || null,
           voice_preference: selectedVoice,
           timezone: selectedTimezone,
-          agent_config: cleanAgentConfig,
-          transfer_phone: transferPhone.trim() ? `+1${transferPhone.replace(/\D/g, '')}` : null,
         })
         .eq('id', business.id)
 
@@ -776,145 +698,6 @@ export default function SettingsPage() {
 
           </div>
 
-          {/* Greeting & Persona card */}
-          <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
-            <h3 className="font-display text-2xl">Greeting &amp; persona</h3>
-            <p className="mt-2 text-sm text-[#0f1f1a]/60">Customize how your receptionist greets callers and handles conversations.</p>
-
-            <div className="mt-6 space-y-4">
-              <div>
-                <label htmlFor="greeting" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
-                  Greeting message
-                </label>
-                <input
-                  type="text"
-                  id="greeting"
-                  value={agentConfig.greeting || ''}
-                  onChange={(e) => setAgentConfig({ ...agentConfig, greeting: e.target.value })}
-                  placeholder={(CATEGORY_PLACEHOLDERS[businessCategory] || CATEGORY_PLACEHOLDERS['']).greeting}
-                  className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
-                />
-                <p className="mt-1 text-xs text-[#0f1f1a]/40">Leave blank for a default greeting using your business name.</p>
-              </div>
-
-              <div>
-                <label htmlFor="services-offered" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
-                  Services offered
-                </label>
-                <input
-                  type="text"
-                  id="services-offered"
-                  value={agentConfig.servicesOffered || ''}
-                  onChange={(e) => setAgentConfig({ ...agentConfig, servicesOffered: e.target.value })}
-                  placeholder={(CATEGORY_PLACEHOLDERS[businessCategory] || CATEGORY_PLACEHOLDERS['']).servicesOffered}
-                  className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
-                />
-                <p className="mt-1 text-xs text-[#0f1f1a]/40">Comma-separated. Your receptionist will only book appointments for these services. Leave blank to allow all.</p>
-              </div>
-
-              <div>
-                <label htmlFor="custom-instructions" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
-                  Custom instructions
-                </label>
-                <textarea
-                  id="custom-instructions"
-                  rows={4}
-                  value={agentConfig.customInstructions || ''}
-                  onChange={(e) => setAgentConfig({ ...agentConfig, customInstructions: e.target.value })}
-                  placeholder={(CATEGORY_PLACEHOLDERS[businessCategory] || CATEGORY_PLACEHOLDERS['']).customInstructions}
-                  className="mt-2 w-full resize-none rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
-                />
-                <p className="mt-1 text-xs text-[#0f1f1a]/40">Extra instructions your receptionist will follow on every call.</p>
-              </div>
-
-              <div>
-                <label htmlFor="business-hours-config" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
-                  Business hours
-                </label>
-                <input
-                  type="text"
-                  id="business-hours-config"
-                  value={agentConfig.businessHours || ''}
-                  onChange={(e) => setAgentConfig({ ...agentConfig, businessHours: e.target.value })}
-                  placeholder="Monday-Friday 9AM-6PM, Saturday 10AM-4PM"
-                  className="mt-2 w-full rounded-2xl border border-[#0f1f1a]/20 bg-white px-4 py-3 text-sm focus:border-[#f97316] focus:outline-none"
-                />
-                <p className="mt-1 text-xs text-[#0f1f1a]/40">Your receptionist will reference these hours when callers ask.</p>
-              </div>
-
-              <div>
-                <label htmlFor="transfer-phone" className="block text-xs uppercase tracking-[0.2em] text-[#0f1f1a]/60">
-                  Transfer phone number
-                </label>
-                <div className={`mt-2 flex items-center rounded-2xl border bg-white overflow-hidden ${
-                  transferPhone && transferPhone.replace(/\D/g, '').length === 10
-                    ? 'border-[#0f766e]'
-                    : transferPhone && transferPhone.replace(/\D/g, '').length > 0
-                      ? 'border-[#ef4444]'
-                      : 'border-[#0f1f1a]/20'
-                }`}>
-                  <span className="select-none bg-[#f8f5ef] px-3 py-3 text-sm text-[#0f1f1a]/50 border-r border-[#0f1f1a]/10">+1</span>
-                  <input
-                    type="tel"
-                    id="transfer-phone"
-                    value={transferPhone}
-                    onChange={(e) => setTransferPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    placeholder="2506828899"
-                    className="w-full px-3 py-3 text-sm focus:outline-none bg-transparent"
-                  />
-                </div>
-                {transferPhone && transferPhone.replace(/\D/g, '').length > 0 && transferPhone.replace(/\D/g, '').length !== 10 ? (
-                  <p className="mt-1 text-xs text-[#ef4444]">Enter a 10-digit phone number</p>
-                ) : (
-                  <p className="mt-1 text-xs text-[#0f1f1a]/40">When a caller asks for a human, the AI will transfer to this number. Leave blank to disable transfers.</p>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-4 py-3">
-                <div>
-                  <span className="block text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/60">Notify me after calls</span>
-                  <span className="block text-xs text-[#0f1f1a]/40 mt-0.5">Get a text summary of each call to your transfer number</span>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={!!agentConfig.smsNotifyOwner}
-                  onClick={() => setAgentConfig({ ...agentConfig, smsNotifyOwner: !agentConfig.smsNotifyOwner })}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                    agentConfig.smsNotifyOwner ? 'bg-[#f97316]' : 'bg-[#0f1f1a]/20'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-                      agentConfig.smsNotifyOwner ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between rounded-2xl border border-[#0f1f1a]/10 bg-[#f8f5ef] px-4 py-3">
-                <div>
-                  <span className="block text-xs font-semibold uppercase tracking-[0.2em] text-[#0f1f1a]/60">Text caller after calls</span>
-                  <span className="block text-xs text-[#0f1f1a]/40 mt-0.5">Send the caller a thank-you text after their call</span>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={!!agentConfig.smsNotifyCustomer}
-                  onClick={() => setAgentConfig({ ...agentConfig, smsNotifyCustomer: !agentConfig.smsNotifyCustomer })}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                    agentConfig.smsNotifyCustomer ? 'bg-[#f97316]' : 'bg-[#0f1f1a]/20'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-                      agentConfig.smsNotifyCustomer ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="rounded-3xl border border-[#0f1f1a]/10 bg-white/90 p-6 shadow-sm">
