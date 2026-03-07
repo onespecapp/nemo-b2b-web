@@ -72,6 +72,7 @@ interface Business {
   timezone: string | null
   subscription_tier: string
   subscription_status: string
+  trial_ends_at: string | null
 }
 
 export default function SettingsPage() {
@@ -628,6 +629,19 @@ export default function SettingsPage() {
                   <span className="rounded-full bg-white px-3 py-1 text-[#0f1f1a]">{business.subscription_tier}</span>
                   <span className="rounded-full bg-[#0f1f1a]/10 px-3 py-1 text-[#0f1f1a]/70">{business.subscription_status}</span>
                 </div>
+                {business.subscription_status === 'TRIALING' && business.trial_ends_at && (() => {
+                  const msLeft = new Date(business.trial_ends_at).getTime() - Date.now()
+                  const days = Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24)))
+                  return (
+                    <p className={`mt-2 text-xs ${days <= 3 ? 'text-[#ef4444] font-semibold' : 'text-[#0f1f1a]/60'}`}>
+                      {days <= 0
+                        ? 'Your free trial has expired. Subscribe to continue using the service.'
+                        : days === 1
+                          ? '1 day remaining in your free trial'
+                          : `${days} days remaining in your free trial`}
+                    </p>
+                  )
+                })()}
 
                 <div className="mt-4 flex flex-wrap gap-2">
                   {business.subscription_tier === 'FREE' && STRIPE_STARTER_PRICE_ID && (

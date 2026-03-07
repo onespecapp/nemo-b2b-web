@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react'
 import { ToastProvider } from '@/components/ToastProvider'
 import { UserProvider, useUser } from '@/lib/context/UserContext'
 import { QueryProvider } from '@/lib/context/QueryProvider'
+import TrialBanner from '@/components/TrialBanner'
 
 export default function DashboardLayout({
   children,
@@ -202,6 +203,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
           <main className="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-10">
             <div className="mx-auto max-w-6xl space-y-6">
+              <TrialBanner />
               {children}
             </div>
           </main>

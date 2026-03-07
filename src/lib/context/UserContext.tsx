@@ -13,6 +13,7 @@ interface Business {
   timezone: string | null
   subscription_tier: string
   subscription_status: string
+  trial_ends_at: string | null
 }
 
 interface UserContextValue {
