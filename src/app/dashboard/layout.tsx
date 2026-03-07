@@ -165,7 +165,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         )}
 
         <div className="lg:flex lg:min-h-screen">
-          <aside className="hidden lg:flex lg:w-72 lg:flex-col lg:gap-6 lg:border-r lg:border-[#0f1f1a]/10 lg:bg-white/70 lg:px-6 lg:py-8">
+          <aside className="hidden lg:flex lg:w-72 lg:shrink-0 lg:flex-col lg:gap-6 lg:border-r lg:border-[#0f1f1a]/10 lg:bg-white/70 lg:px-6 lg:py-8">
             <Link href="/dashboard">
               <Image src="/logo.png" alt="OneSpec" width={250} height={60} className="w-full max-w-[220px]" />
             </Link>
@@ -200,7 +200,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
             </div>
           </aside>
 
-          <main className="flex-1 px-4 py-8 sm:px-6 lg:px-10">
+          <main className="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-10">
             <div className="mx-auto max-w-6xl space-y-6">
               {children}
             </div>
