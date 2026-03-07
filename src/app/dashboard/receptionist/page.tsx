@@ -80,8 +80,18 @@ export default function ReceptionistPage() {
 
   const telnyxPhone = (business as unknown as { telnyx_phone_number?: string | null } | null)?.telnyx_phone_number ?? null
 
+  // Refs to always read latest values in debounced save (avoids stale closures)
+  const enabledRef = useRef(enabled)
+  const agentConfigRef = useRef(agentConfig)
+  const transferPhoneRef = useRef(transferPhone)
+  const businessRef = useRef(business)
+  enabledRef.current = enabled
+  agentConfigRef.current = agentConfig
+  transferPhoneRef.current = transferPhone
+  businessRef.current = business
+
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const hasMountedRef = useRef(false)
+  const isLoadedRef = useRef(false)
   const savedTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const loadConfig = useCallback(async () => {
@@ -109,6 +119,8 @@ export default function ReceptionistPage() {
       console.error('Failed to load receptionist config:', err)
     } finally {
       setIsLoading(false)
+      // Mark loaded AFTER state is set, so auto-save ignores the initial state hydration
+      setTimeout(() => { isLoadedRef.current = true }, 0)
     }
   }, [business, supabase])
 
@@ -120,57 +132,55 @@ export default function ReceptionistPage() {
     loadConfig()
   }, [business, userLoading, loadConfig])
 
-  // Auto-save on changes (debounced)
-  useEffect(() => {
-    if (!hasMountedRef.current) {
-      hasMountedRef.current = true
-      return
-    }
-    if (!business) return
+  // Debounced save that reads latest values from refs
+  const scheduleSave = useCallback(() => {
+    if (!isLoadedRef.current) return
 
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+    saveTimeoutRef.current = setTimeout(async () => {
+      const biz = businessRef.current
+      if (!biz) return
+      setSaveStatus('saving')
 
-    saveTimeoutRef.current = setTimeout(() => {
-      performSave()
+      try {
+        const config = agentConfigRef.current
+        const cleanAgentConfig: Record<string, unknown> = {}
+        for (const [key, val] of Object.entries(config)) {
+          if (val !== undefined && val !== '') cleanAgentConfig[key] = val
+        }
+
+        const tp = transferPhoneRef.current
+        const { error } = await supabase
+          .from('b2b_businesses')
+          .update({
+            receptionist_enabled: enabledRef.current,
+            agent_config: cleanAgentConfig,
+            transfer_phone: tp.trim() ? `+1${tp.replace(/\D/g, '')}` : null,
+          })
+          .eq('id', biz.id)
+
+        if (error) throw error
+
+        await refreshBusiness()
+        setSaveStatus('saved')
+        if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+        savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000)
+      } catch (err) {
+        console.error('Failed to save:', err)
+        setSaveStatus('error')
+        if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+        savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), 3000)
+      }
     }, 800)
+  }, [supabase, refreshBusiness])
 
+  // Auto-save when any field changes
+  useEffect(() => {
+    scheduleSave()
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
     }
-  }, [enabled, agentConfig, transferPhone])
-
-  async function performSave() {
-    if (!business) return
-    setSaveStatus('saving')
-
-    try {
-      const cleanAgentConfig: Record<string, unknown> = {}
-      for (const [key, val] of Object.entries(agentConfig)) {
-        if (val !== undefined && val !== '') cleanAgentConfig[key] = val
-      }
-
-      const { error } = await supabase
-        .from('b2b_businesses')
-        .update({
-          receptionist_enabled: enabled,
-          agent_config: cleanAgentConfig,
-          transfer_phone: transferPhone.trim() ? `+1${transferPhone.replace(/\D/g, '')}` : null,
-        })
-        .eq('id', business.id)
-
-      if (error) throw error
-
-      await refreshBusiness()
-      setSaveStatus('saved')
-      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
-      savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000)
-    } catch (err) {
-      console.error('Failed to save:', err)
-      setSaveStatus('error')
-      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
-      savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), 3000)
-    }
-  }
+  }, [enabled, agentConfig, transferPhone, scheduleSave])
 
   function handleCopyPhone() {
     if (!telnyxPhone) return
