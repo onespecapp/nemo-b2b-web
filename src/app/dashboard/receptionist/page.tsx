@@ -67,7 +67,7 @@ interface AgentConfig {
 }
 
 export default function ReceptionistPage() {
-  const { business, loading: userLoading, refreshBusiness } = useUser()
+  const { business, loading: userLoading } = useUser()
   const supabase = createClient()
 
   const [enabled, setEnabled] = useState(false)
@@ -78,7 +78,7 @@ export default function ReceptionistPage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [copied, setCopied] = useState(false)
 
-  const telnyxPhone = (business as unknown as { telnyx_phone_number?: string | null } | null)?.telnyx_phone_number ?? null
+  const telnyxPhone = business?.telnyx_phone_number ?? null
 
   // Refs to always read latest values in debounced save (avoids stale closures)
   const enabledRef = useRef(enabled)
@@ -161,7 +161,6 @@ export default function ReceptionistPage() {
 
         if (error) throw error
 
-        await refreshBusiness()
         setSaveStatus('saved')
         if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
         savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000)
@@ -172,7 +171,7 @@ export default function ReceptionistPage() {
         savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), 3000)
       }
     }, 800)
-  }, [supabase, refreshBusiness])
+  }, [supabase])
 
   // Auto-save when any field changes
   useEffect(() => {

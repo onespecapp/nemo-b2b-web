@@ -8,6 +8,7 @@ interface Business {
   name: string
   email: string | null
   phone: string | null
+  telnyx_phone_number: string | null
   voice_preference: string
   timezone: string | null
   subscription_tier: string

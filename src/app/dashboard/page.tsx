@@ -30,13 +30,6 @@ interface UpcomingAppointment {
   customer: { name: string; phone: string } | null
 }
 
-interface BusinessExtended {
-  id: string
-  timezone: string | null
-  telnyx_phone_number: string | null
-  [key: string]: unknown
-}
-
 export default function DashboardPage() {
   const { business, loading: userLoading } = useUser()
   const supabase = createClient()
@@ -192,9 +185,8 @@ export default function DashboardPage() {
     onChange: fetchStats,
   })
 
-  const extBusiness = business as unknown as BusinessExtended | null
-  const businessTimezone = extBusiness?.timezone || 'America/Los_Angeles'
-  const telnyxPhone = extBusiness?.telnyx_phone_number ?? null
+  const businessTimezone = business?.timezone || 'America/Los_Angeles'
+  const telnyxPhone = business?.telnyx_phone_number ?? null
 
   const stats = [
     {
